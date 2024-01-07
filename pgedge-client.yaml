@@ -1,0 +1,121 @@
+swagger: "2.0"
+info:
+  title: pgEdge API
+  version: 1.0.0
+paths:
+  /oauth/token:
+    post:
+      summary: Get OAuth Token
+      description: Request an OAuth token for authentication
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: client_id
+          in: formData
+          type: string
+          required: true
+        - name: client_secret
+          in: formData
+          type: string
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          schema:
+            type: object
+            properties:
+              access_token:
+                type: string
+              expires_in:
+                type: integer
+              token_type:
+                type: string
+        '400':
+          description: Bad Request
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+  /databases:
+    get:
+      summary: Get All Databases
+      description: Retrieve a list of all databases
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          schema:
+            type: array
+            items:
+              $ref: '#/definitions/Database'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
+
+definitions:
+  Database:
+    type: object
+    properties:
+      created_at:
+        type: string
+        format: date-time
+      domain:
+        type: string
+      id:
+        type: string
+        format: uuid
+      name:
+        type: string
+      nodes:
+        type: array
+        items:
+          $ref: '#/definitions/Node'
+      status:
+        type: string
+      updated_at:
+        type: string
+        format: date-time
+
+  Node:
+    type: object
+    properties:
+      connection:
+        type: object
+        properties:
+          database:
+            type: string
+          host:
+            type: string
+          password:
+            type: string
+          port:
+            type: integer
+          username:
+            type: string
+      location:
+        type: object
+        properties:
+          code:
+            type: string
+          country:
+            type: string
+          latitude:
+            type: number
+          longitude:
+            type: number
+          name:
+            type: string
+          region:
+            type: string
+          region_code:
+            type: string
+      name:
+        type: string
