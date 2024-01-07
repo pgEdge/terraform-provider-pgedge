@@ -59,6 +59,30 @@ paths:
           description: Unauthorized
         '500':
           description: Internal Server Error
+  /databases/{id}:
+    get:
+      summary: Get Database by ID
+      description: Retrieve detailed information about a specific database
+      parameters:
+        - name: id
+          in: path
+          type: string
+          format: uuid
+          required: true
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          schema:
+            $ref: '#/definitions/DatabaseDetails'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Internal Server Error
 
 definitions:
   Database:
@@ -80,6 +104,98 @@ definitions:
           $ref: '#/definitions/Node'
       status:
         type: string
+      updated_at:
+        type: string
+        format: date-time
+
+  DatabaseDetails:
+    type: object
+    properties:
+      components:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            release_date:
+              type: string
+              format: date
+            status:
+              type: string
+            version:
+              type: string
+      created_at:
+        type: string
+        format: date-time
+      id:
+        type: string
+        format: uuid
+      name:
+        type: string
+      nodes:
+        type: array
+        items:
+          $ref: '#/definitions/Node'
+      pg_version:
+        type: string
+      roles:
+        type: array
+        items:
+          type: object
+          properties:
+            bypass_rls:
+              type: boolean
+            connection_limit:
+              type: integer
+            create_db:
+              type: boolean
+            create_role:
+              type: boolean
+            inherit:
+              type: boolean
+            login:
+              type: boolean
+            name:
+              type: string
+            replication:
+              type: boolean
+            superuser:
+              type: boolean
+      status:
+        type: string
+      storage_used:
+        type: integer
+      tables:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+            primary_key:
+              type: array
+              items:
+                type: string
+            replication_sets:
+              type: object
+            schema:
+              type: string
+            status:
+              type: array
+              items:
+                type: object
+                properties:
+                  aligned:
+                    type: boolean
+                  node_name:
+                    type: string
+                  present:
+                    type: boolean
+                  replicating:
+                    type: boolean
       updated_at:
         type: string
         format: date-time
