@@ -38,7 +38,7 @@ type ClientService interface {
 
 	PostDatabases(params *PostDatabasesParams, opts ...ClientOption) (*PostDatabasesOK, error)
 
-	PostDatabasesIDReplication(params *PostDatabasesIDReplicationParams, opts ...ClientOption) (*PostDatabasesIDReplicationOK, error)
+	PostDatabasesIDReplicate(params *PostDatabasesIDReplicateParams, opts ...ClientOption) (*PostDatabasesIDReplicateOK, error)
 
 	PostOauthToken(params *PostOauthTokenParams, opts ...ClientOption) (*PostOauthTokenOK, error)
 
@@ -206,24 +206,24 @@ func (a *Client) PostDatabases(params *PostDatabasesParams, opts ...ClientOption
 }
 
 /*
-PostDatabasesIDReplication replicates database
+PostDatabasesIDReplicate replicates database
 
 Replicate the database with the specified ID
 */
-func (a *Client) PostDatabasesIDReplication(params *PostDatabasesIDReplicationParams, opts ...ClientOption) (*PostDatabasesIDReplicationOK, error) {
+func (a *Client) PostDatabasesIDReplicate(params *PostDatabasesIDReplicateParams, opts ...ClientOption) (*PostDatabasesIDReplicateOK, error) {
 	// TODO: Validate the params before sending
 	if params == nil {
-		params = NewPostDatabasesIDReplicationParams()
+		params = NewPostDatabasesIDReplicateParams()
 	}
 	op := &runtime.ClientOperation{
-		ID:                 "PostDatabasesIDReplication",
+		ID:                 "PostDatabasesIDReplicate",
 		Method:             "POST",
-		PathPattern:        "/databases/{id}/replication",
+		PathPattern:        "/databases/{id}/replicate",
 		ProducesMediaTypes: []string{"application/json"},
 		ConsumesMediaTypes: []string{"application/json"},
 		Schemes:            []string{"http"},
 		Params:             params,
-		Reader:             &PostDatabasesIDReplicationReader{formats: a.formats},
+		Reader:             &PostDatabasesIDReplicateReader{formats: a.formats},
 		Context:            params.Context,
 		Client:             params.HTTPClient,
 	}
@@ -235,13 +235,13 @@ func (a *Client) PostDatabasesIDReplication(params *PostDatabasesIDReplicationPa
 	if err != nil {
 		return nil, err
 	}
-	success, ok := result.(*PostDatabasesIDReplicationOK)
+	success, ok := result.(*PostDatabasesIDReplicateOK)
 	if ok {
 		return success, nil
 	}
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for PostDatabasesIDReplication: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	msg := fmt.Sprintf("unexpected success response for PostDatabasesIDReplicate: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
