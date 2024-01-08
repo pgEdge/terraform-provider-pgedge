@@ -38,6 +38,8 @@ type ClientService interface {
 
 	PostDatabases(params *PostDatabasesParams, opts ...ClientOption) (*PostDatabasesOK, error)
 
+	PostDatabasesIDReplication(params *PostDatabasesIDReplicationParams, opts ...ClientOption) (*PostDatabasesIDReplicationOK, error)
+
 	PostOauthToken(params *PostOauthTokenParams, opts ...ClientOption) (*PostOauthTokenOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
@@ -200,6 +202,46 @@ func (a *Client) PostDatabases(params *PostDatabasesParams, opts ...ClientOption
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for PostDatabases: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostDatabasesIDReplication replicates database
+
+Replicate the database with the specified ID
+*/
+func (a *Client) PostDatabasesIDReplication(params *PostDatabasesIDReplicationParams, opts ...ClientOption) (*PostDatabasesIDReplicationOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostDatabasesIDReplicationParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "PostDatabasesIDReplication",
+		Method:             "POST",
+		PathPattern:        "/databases/{id}/replication",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PostDatabasesIDReplicationReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostDatabasesIDReplicationOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for PostDatabasesIDReplication: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

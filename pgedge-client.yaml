@@ -21,7 +21,7 @@ paths:
           type: string
           required: true
       responses:
-        '200':
+        "200":
           description: Successful response
           schema:
             type: object
@@ -32,11 +32,11 @@ paths:
                 type: integer
               token_type:
                 type: string
-        '400':
+        "400":
           description: Bad Request
-        '401':
+        "401":
           description: Unauthorized
-        '500':
+        "500":
           description: Internal Server Error
   /databases:
     get:
@@ -49,15 +49,15 @@ paths:
           format: Bearer {access_token}
           required: true
       responses:
-        '200':
+        "200":
           description: Successful response
           schema:
             type: array
             items:
-              $ref: '#/definitions/Database'
-        '401':
+              $ref: "#/definitions/Database"
+        "401":
           description: Unauthorized
-        '500':
+        "500":
           description: Internal Server Error
     post:
       summary: Create a new Database
@@ -77,15 +77,15 @@ paths:
           description: Database creation request body
           required: true
           schema:
-            $ref: '#/definitions/DatabaseCreationRequest'
+            $ref: "#/definitions/DatabaseCreationRequest"
       responses:
-        '200':
+        "200":
           description: Successful response
           schema:
-            $ref: '#/definitions/DatabaseCreationResponse'
-        '401':
+            $ref: "#/definitions/DatabaseCreationResponse"
+        "401":
           description: Unauthorized
-        '500':
+        "500":
           description: Internal Server Error
 
   /databases/{id}:
@@ -104,13 +104,13 @@ paths:
           format: Bearer {access_token}
           required: true
       responses:
-        '200':
+        "200":
           description: Successful response
           schema:
-            $ref: '#/definitions/DatabaseDetails'
-        '401':
+            $ref: "#/definitions/DatabaseDetails"
+        "401":
           description: Unauthorized
-        '500':
+        "500":
           description: Internal Server Error
     delete:
       summary: Delete a Database
@@ -127,15 +127,42 @@ paths:
           format: Bearer {access_token}
           required: true
       responses:
-        '204':
+        "204":
           description: No Content (successful deletion)
-        '401':
+        "401":
           description: Unauthorized
-        '404':
+        "404":
           description: Database not found
-        '500':
+        "500":
           description: Internal Server Error
-          
+
+  /databases/{id}/replication:
+    post:
+      summary: Replicate Database
+      description: Replicate the database with the specified ID
+      parameters:
+        - name: id
+          in: path
+          type: string
+          format: uuid
+          required: true
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: "#/definitions/ReplicationResponse"
+        "401":
+          description: Unauthorized
+        "404":
+          description: Database not found
+        "500":
+          description: Internal Server Error
+
 definitions:
   Database:
     type: object
@@ -153,12 +180,19 @@ definitions:
       nodes:
         type: array
         items:
-          $ref: '#/definitions/Node'
+          $ref: "#/definitions/Node"
       status:
         type: string
       updated_at:
         type: string
         format: date-time
+  ReplicationResponse:
+    type: object
+    properties:
+      message:
+        type: string
+      status:
+        type: string
 
   DatabaseDetails:
     type: object
@@ -190,7 +224,7 @@ definitions:
       nodes:
         type: array
         items:
-          $ref: '#/definitions/Node'
+          $ref: "#/definitions/Node"
       pg_version:
         type: string
       roles:
@@ -280,7 +314,7 @@ definitions:
       nodes:
         type: array
         items:
-          $ref: '#/definitions/Node'
+          $ref: "#/definitions/Node"
       status:
         type: string
       updated_at:
