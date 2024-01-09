@@ -6,17 +6,18 @@ package client
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
-	"net/http"
+	// "net/http"
 
-	"github.com/go-openapi/errors"
+	// "github.com/go-openapi/errors"
 	"github.com/go-openapi/runtime"
 	httptransport "github.com/go-openapi/runtime/client"
-	"github.com/go-openapi/spec"
+	"github.com/pgEdge/terraform-provider-pgedge/client/operations"
+	// "github.com/go-openapi/spec"
 	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
+	// "github.com/go-openapi/swag"
 
-	"github.com/pgEdge/terraform-provider-pgedge/client"
-	"github.com/pgEdge/terraform-provider-pgedge/models"
+	// "github.com/pgEdge/terraform-provider-pgedge/client"
+	// "github.com/pgEdge/terraform-provider-pgedge/models"
 )
 
 // Default pg edge API HTTP client.
