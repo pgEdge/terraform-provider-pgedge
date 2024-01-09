@@ -1,4 +1,4 @@
-package client1
+package client
 
 import (
 	"context"
@@ -12,13 +12,12 @@ import (
 	"github.com/pgEdge/terraform-provider-pgedge/models"
 
 	httptransport "github.com/go-openapi/runtime/client"
-	apiclient "github.com/pgEdge/terraform-provider-pgedge/client"
 )
 
 type Client struct {
 	AuthHeader      string
 	HTTPClient      *http.Client
-	PgEdgeAPIClient *apiclient.PgEdgeAPI
+	PgEdgeAPIClient *PgEdgeAPI
 }
 
 type errorResponse struct {
@@ -51,7 +50,7 @@ func NewClient(baseUrl,authHeader string) *Client {
     fmt.Println("url: ", url)
 
 	transport := httptransport.New(url, "", schemas)
-	client := apiclient.New(transport, strfmt.Default)
+	client := New(transport, strfmt.Default)
 
 	return &Client{
 		AuthHeader: authHeader,

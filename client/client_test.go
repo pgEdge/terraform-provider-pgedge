@@ -1,4 +1,4 @@
-package client1
+package client
 
 import (
 	"context"
