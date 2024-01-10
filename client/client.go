@@ -20,16 +20,6 @@ type Client struct {
 	PgEdgeAPIClient *PgEdgeAPI
 }
 
-type errorResponse struct {
-	Code    int    `json:"code"`
-	Message string `json:"message"`
-}
-
-type successResponse struct {
-	Code int         `json:"code"`
-	Data interface{} `json:"data"`
-}
-
 func NewClient(baseUrl,authHeader string) *Client {
 	var url string
     var schemas []string
@@ -67,12 +57,7 @@ func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
         Context:    ctx,
     }
 
-    fmt.Println("c.AuthHeader: ", request.Authorization)
-
     request.SetAuthorization(c.AuthHeader)
-
-    fmt.Println("c.AuthHeader: ", request.Authorization)
-
 
     resp, err := c.PgEdgeAPIClient.Operations.GetDatabases(request)
     if err != nil {
@@ -81,4 +66,98 @@ func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
     }
 
     return resp.Payload, nil
+}
+
+
+func (c *Client) GetDatabase(ctx context.Context, id strfmt.UUID) (*models.DatabaseDetails, error) {
+	fmt.Println("id: ", id)
+	request := &operations.GetDatabasesIDParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		ID: id,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	resp, err := c.PgEdgeAPIClient.Operations.GetDatabasesID(request)
+	if err != nil {
+		fmt.Println("err: ", err)
+		return nil, err
+	}
+
+	return resp.Payload, nil
+}
+
+func (c *Client) CreateDatabase(ctx context.Context, database *models.DatabaseCreationRequest) (*models.DatabaseCreationResponse, error) {
+	request := &operations.PostDatabasesParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		Body:   database,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	resp, err := c.PgEdgeAPIClient.Operations.PostDatabases(request)
+	if err != nil {
+		fmt.Println("err: ", err)
+		return nil, err
+	}
+
+	return resp.Payload, nil
+}
+
+func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) (error) {
+	request := &operations.DeleteDatabasesIDParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		ID: id,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	_, err := c.PgEdgeAPIClient.Operations.DeleteDatabasesID(request)
+	if err != nil {
+		fmt.Println("err: ", err)
+		return err
+	}
+
+	return nil
+}
+
+func (c *Client) ReplicateDatabase(ctx context.Context, id strfmt.UUID) (*models.ReplicationResponse, error) {
+	request := &operations.PostDatabasesIDReplicateParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		ID: id,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	resp, err := c.PgEdgeAPIClient.Operations.PostDatabasesIDReplicate(request)
+	if err != nil {
+		fmt.Println("err: ", err)
+		return nil, err
+	}
+
+	return resp.Payload, nil
+}
+
+func (c *Client) OAuthToken(ctx context.Context) (*operations.PostOauthTokenOKBody, error) {
+	request := &operations.PostOauthTokenParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		ClientID: "CIzx5xcvt9MFRYVIoFl7Bz9Kl8ryNSdh",
+		ClientSecret: "XqRDtkdyyVKNjjT-NiDXdP-ovAJMEmTqKlbMD89WonZhRLyQocKA11rddxw85H8r",
+	}
+
+	fmt.Println("clientId: ", request.ClientID)
+	fmt.Println("clientId: ", request.ClientSecret)
+
+	resp, err := c.PgEdgeAPIClient.Operations.PostOauthToken(request)
+	if err != nil {
+		fmt.Println("err: ", err)
+		return nil, err
+	}
+
+	return resp.Payload, nil
 }
