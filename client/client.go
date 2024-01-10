@@ -21,7 +21,7 @@ type Client struct {
 	PgEdgeAPIClient *PgEdgeAPI
 }
 
-func NewClient(baseUrl, authHeader string) *Client {
+func NewClient(baseUrl, authHeader, clusterId string) *Client {
 	var url string
 	var schemas []string
 	if baseUrl == "" {
@@ -46,7 +46,7 @@ func NewClient(baseUrl, authHeader string) *Client {
 		HTTPClient: &http.Client{
 			Timeout: time.Minute,
 		},
-		ClusterID: "5e7478e5-4e68-464b-902d-747db528eccc",
+		ClusterID: clusterId,
 		PgEdgeAPIClient: client,
 	}
 }
