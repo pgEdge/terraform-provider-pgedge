@@ -246,9 +246,9 @@ func (a *Client) PostDatabasesIDReplicate(params *PostDatabasesIDReplicateParams
 }
 
 /*
-PostOauthToken gets o auth token
+PostOauthToken obtains o auth token
 
-Request an OAuth token for authentication
+Get an OAuth token using client credentials
 */
 func (a *Client) PostOauthToken(params *PostOauthTokenParams, opts ...ClientOption) (*PostOauthTokenOK, error) {
 	// TODO: Validate the params before sending

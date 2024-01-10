@@ -29,12 +29,6 @@ func (o *PostOauthTokenReader) ReadResponse(response runtime.ClientResponse, con
 			return nil, err
 		}
 		return result, nil
-	case 400:
-		result := NewPostOauthTokenBadRequest()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
 	case 401:
 		result := NewPostOauthTokenUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -116,62 +110,6 @@ func (o *PostOauthTokenOK) readResponse(response runtime.ClientResponse, consume
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
 		return err
 	}
-
-	return nil
-}
-
-// NewPostOauthTokenBadRequest creates a PostOauthTokenBadRequest with default headers values
-func NewPostOauthTokenBadRequest() *PostOauthTokenBadRequest {
-	return &PostOauthTokenBadRequest{}
-}
-
-/*
-PostOauthTokenBadRequest describes a response with status code 400, with default header values.
-
-Bad Request
-*/
-type PostOauthTokenBadRequest struct {
-}
-
-// IsSuccess returns true when this post oauth token bad request response has a 2xx status code
-func (o *PostOauthTokenBadRequest) IsSuccess() bool {
-	return false
-}
-
-// IsRedirect returns true when this post oauth token bad request response has a 3xx status code
-func (o *PostOauthTokenBadRequest) IsRedirect() bool {
-	return false
-}
-
-// IsClientError returns true when this post oauth token bad request response has a 4xx status code
-func (o *PostOauthTokenBadRequest) IsClientError() bool {
-	return true
-}
-
-// IsServerError returns true when this post oauth token bad request response has a 5xx status code
-func (o *PostOauthTokenBadRequest) IsServerError() bool {
-	return false
-}
-
-// IsCode returns true when this post oauth token bad request response a status code equal to that given
-func (o *PostOauthTokenBadRequest) IsCode(code int) bool {
-	return code == 400
-}
-
-// Code gets the status code for the post oauth token bad request response
-func (o *PostOauthTokenBadRequest) Code() int {
-	return 400
-}
-
-func (o *PostOauthTokenBadRequest) Error() string {
-	return fmt.Sprintf("[POST /oauth/token][%d] postOauthTokenBadRequest ", 400)
-}
-
-func (o *PostOauthTokenBadRequest) String() string {
-	return fmt.Sprintf("[POST /oauth/token][%d] postOauthTokenBadRequest ", 400)
-}
-
-func (o *PostOauthTokenBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	return nil
 }
@@ -285,6 +223,47 @@ func (o *PostOauthTokenInternalServerError) String() string {
 
 func (o *PostOauthTokenInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
+	return nil
+}
+
+/*
+PostOauthTokenBody post oauth token body
+swagger:model PostOauthTokenBody
+*/
+type PostOauthTokenBody struct {
+
+	// client id
+	ClientID string `json:"client_id,omitempty"`
+
+	// client secret
+	ClientSecret string `json:"client_secret,omitempty"`
+}
+
+// Validate validates this post oauth token body
+func (o *PostOauthTokenBody) Validate(formats strfmt.Registry) error {
+	return nil
+}
+
+// ContextValidate validates this post oauth token body based on context it is used
+func (o *PostOauthTokenBody) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	return nil
+}
+
+// MarshalBinary interface implementation
+func (o *PostOauthTokenBody) MarshalBinary() ([]byte, error) {
+	if o == nil {
+		return nil, nil
+	}
+	return swag.WriteJSON(o)
+}
+
+// UnmarshalBinary interface implementation
+func (o *PostOauthTokenBody) UnmarshalBinary(b []byte) error {
+	var res PostOauthTokenBody
+	if err := swag.ReadJSON(b, &res); err != nil {
+		return err
+	}
+	*o = res
 	return nil
 }
 

@@ -5,21 +5,24 @@ info:
 paths:
   /oauth/token:
     post:
-      summary: Get OAuth Token
-      description: Request an OAuth token for authentication
+      summary: Obtain OAuth Token
+      description: Get an OAuth token using client credentials
       consumes:
         - application/json
       produces:
         - application/json
       parameters:
-        - name: client_id
-          in: formData
-          type: string
+        - in: body
+          name: body
+          description: Client credentials for obtaining the OAuth token
           required: true
-        - name: client_secret
-          in: formData
-          type: string
-          required: true
+          schema:
+            type: object
+            properties:
+              client_id:
+                type: string
+              client_secret:
+                type: string
       responses:
         "200":
           description: Successful response
@@ -28,16 +31,15 @@ paths:
             properties:
               access_token:
                 type: string
-              expires_in:
-                type: integer
               token_type:
                 type: string
-        "400":
-          description: Bad Request
+              expires_in:
+                type: integer
         "401":
           description: Unauthorized
         "500":
           description: Internal Server Error
+
   /databases:
     get:
       summary: Get All Databases

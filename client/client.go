@@ -2,8 +2,8 @@ package client
 
 import (
 	"context"
-	"fmt"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -16,28 +16,27 @@ import (
 
 type Client struct {
 	AuthHeader      string
+	ClusterID	   	string
 	HTTPClient      *http.Client
 	PgEdgeAPIClient *PgEdgeAPI
 }
 
-func NewClient(baseUrl,authHeader string) *Client {
+func NewClient(baseUrl, authHeader string) *Client {
 	var url string
-    var schemas []string
+	var schemas []string
 	if baseUrl == "" {
 		url = "localhost"
 	} else {
 		url = baseUrl
-        schemas = strings.Split(url, "://")
+		schemas = strings.Split(url, "://")
 	}
 
-    if strings.HasPrefix(url, "https") {
+	if strings.HasPrefix(url, "https") {
 		url += ":443"
 	}
 
 	url = strings.ReplaceAll(url, "http://", "")
 	url = strings.ReplaceAll(url, "https://", "")
-
-    fmt.Println("url: ", url)
 
 	transport := httptransport.New(url, "", schemas)
 	client := New(transport, strfmt.Default)
@@ -47,41 +46,38 @@ func NewClient(baseUrl,authHeader string) *Client {
 		HTTPClient: &http.Client{
 			Timeout: time.Minute,
 		},
+		ClusterID: "5e7478e5-4e68-464b-902d-747db528eccc",
 		PgEdgeAPIClient: client,
 	}
 }
 
 func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
 	request := &operations.GetDatabasesParams{
-        HTTPClient: c.HTTPClient,
-        Context:    ctx,
-    }
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+	}
 
-    request.SetAuthorization(c.AuthHeader)
+	request.SetAuthorization(c.AuthHeader)
 
-    resp, err := c.PgEdgeAPIClient.Operations.GetDatabases(request)
-    if err != nil {
-        fmt.Println("err: ", err)
-        return nil, err
-    }
+	resp, err := c.PgEdgeAPIClient.Operations.GetDatabases(request)
+	if err != nil {
+		return nil, err
+	}
 
-    return resp.Payload, nil
+	return resp.Payload, nil
 }
 
-
 func (c *Client) GetDatabase(ctx context.Context, id strfmt.UUID) (*models.DatabaseDetails, error) {
-	fmt.Println("id: ", id)
 	request := &operations.GetDatabasesIDParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
-		ID: id,
+		ID:         id,
 	}
 
 	request.SetAuthorization(c.AuthHeader)
 
 	resp, err := c.PgEdgeAPIClient.Operations.GetDatabasesID(request)
 	if err != nil {
-		fmt.Println("err: ", err)
 		return nil, err
 	}
 
@@ -92,32 +88,30 @@ func (c *Client) CreateDatabase(ctx context.Context, database *models.DatabaseCr
 	request := &operations.PostDatabasesParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
-		Body:   database,
+		Body:       database,
 	}
-
+	request.Body.ClusterID = c.ClusterID
 	request.SetAuthorization(c.AuthHeader)
 
 	resp, err := c.PgEdgeAPIClient.Operations.PostDatabases(request)
 	if err != nil {
-		fmt.Println("err: ", err)
 		return nil, err
 	}
 
 	return resp.Payload, nil
 }
 
-func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) (error) {
+func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) error {
 	request := &operations.DeleteDatabasesIDParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
-		ID: id,
+		ID:         id,
 	}
 
 	request.SetAuthorization(c.AuthHeader)
 
 	_, err := c.PgEdgeAPIClient.Operations.DeleteDatabasesID(request)
 	if err != nil {
-		fmt.Println("err: ", err)
 		return err
 	}
 
@@ -128,14 +122,13 @@ func (c *Client) ReplicateDatabase(ctx context.Context, id strfmt.UUID) (*models
 	request := &operations.PostDatabasesIDReplicateParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
-		ID: id,
+		ID:         id,
 	}
 
 	request.SetAuthorization(c.AuthHeader)
 
 	resp, err := c.PgEdgeAPIClient.Operations.PostDatabasesIDReplicate(request)
 	if err != nil {
-		fmt.Println("err: ", err)
 		return nil, err
 	}
 
@@ -143,19 +136,22 @@ func (c *Client) ReplicateDatabase(ctx context.Context, id strfmt.UUID) (*models
 }
 
 func (c *Client) OAuthToken(ctx context.Context) (*operations.PostOauthTokenOKBody, error) {
+	// temporary
+	os.Setenv("CLIENT_ID", "CIzx5xcvt9MFRYVIoFl7Bz9Kl8ryNSdh")
+	os.Setenv("CLIENT_SECRET", "XqRDtkdyyVKNjjT-NiDXdP-ovAJMEmTqKlbMD89WonZhRLyQocKA11rddxw85H8r")
+
+
 	request := &operations.PostOauthTokenParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
-		ClientID: "CIzx5xcvt9MFRYVIoFl7Bz9Kl8ryNSdh",
-		ClientSecret: "XqRDtkdyyVKNjjT-NiDXdP-ovAJMEmTqKlbMD89WonZhRLyQocKA11rddxw85H8r",
+		Body: operations.PostOauthTokenBody{
+			ClientID:     os.Getenv("CLIENT_ID"),
+			ClientSecret: os.Getenv("CLIENT_SECRET"),
+		},
 	}
-
-	fmt.Println("clientId: ", request.ClientID)
-	fmt.Println("clientId: ", request.ClientSecret)
 
 	resp, err := c.PgEdgeAPIClient.Operations.PostOauthToken(request)
 	if err != nil {
-		fmt.Println("err: ", err)
 		return nil, err
 	}
 

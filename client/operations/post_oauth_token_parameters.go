@@ -61,11 +61,11 @@ PostOauthTokenParams contains all the parameters to send to the API endpoint
 */
 type PostOauthTokenParams struct {
 
-	// ClientID.
-	ClientID string
+	/* Body.
 
-	// ClientSecret.
-	ClientSecret string
+	   Client credentials for obtaining the OAuth token
+	*/
+	Body PostOauthTokenBody
 
 	timeout    time.Duration
 	Context    context.Context
@@ -120,26 +120,15 @@ func (o *PostOauthTokenParams) SetHTTPClient(client *http.Client) {
 	o.HTTPClient = client
 }
 
-// WithClientID adds the clientID to the post oauth token params
-func (o *PostOauthTokenParams) WithClientID(clientID string) *PostOauthTokenParams {
-	o.SetClientID(clientID)
+// WithBody adds the body to the post oauth token params
+func (o *PostOauthTokenParams) WithBody(body PostOauthTokenBody) *PostOauthTokenParams {
+	o.SetBody(body)
 	return o
 }
 
-// SetClientID adds the clientId to the post oauth token params
-func (o *PostOauthTokenParams) SetClientID(clientID string) {
-	o.ClientID = clientID
-}
-
-// WithClientSecret adds the clientSecret to the post oauth token params
-func (o *PostOauthTokenParams) WithClientSecret(clientSecret string) *PostOauthTokenParams {
-	o.SetClientSecret(clientSecret)
-	return o
-}
-
-// SetClientSecret adds the clientSecret to the post oauth token params
-func (o *PostOauthTokenParams) SetClientSecret(clientSecret string) {
-	o.ClientSecret = clientSecret
+// SetBody adds the body to the post oauth token params
+func (o *PostOauthTokenParams) SetBody(body PostOauthTokenBody) {
+	o.Body = body
 }
 
 // WriteToRequest writes these params to a swagger request
@@ -149,23 +138,8 @@ func (o *PostOauthTokenParams) WriteToRequest(r runtime.ClientRequest, reg strfm
 		return err
 	}
 	var res []error
-
-	// form param client_id
-	frClientID := o.ClientID
-	fClientID := frClientID
-	if fClientID != "" {
-		if err := r.SetFormParam("client_id", fClientID); err != nil {
-			return err
-		}
-	}
-
-	// form param client_secret
-	frClientSecret := o.ClientSecret
-	fClientSecret := frClientSecret
-	if fClientSecret != "" {
-		if err := r.SetFormParam("client_secret", fClientSecret); err != nil {
-			return err
-		}
+	if err := r.SetBodyParam(o.Body); err != nil {
+		return err
 	}
 
 	if len(res) > 0 {
