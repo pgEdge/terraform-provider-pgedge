@@ -14,7 +14,7 @@ const BaseUrl = "https://devapi.pgedge.com"
 var (
 	AccessToken *string
 	DatabaseID  *strfmt.UUID
-	ClusterID   = "5e7478e5-4e68-464b-902d-747db528eccc"
+	ClusterID   = "5e7478e5-4e68-464b-902d-747db528eccc" //your cluster id here
 )
 
 func TestOAuthToken(t *testing.T) {

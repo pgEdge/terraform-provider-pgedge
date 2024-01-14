@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -52,6 +53,15 @@ func NewClient(baseUrl, authHeader, clusterId string) *Client {
 }
 
 func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
+	fmt.Println("GetDatabases called")
+    if c.PgEdgeAPIClient == nil {
+        return nil, fmt.Errorf("PgEdgeAPIClient is nil")
+    }
+
+    if c.PgEdgeAPIClient.Operations == nil {
+        return nil, fmt.Errorf("Operations is nil")
+    }
+
 	request := &operations.GetDatabasesParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
@@ -59,8 +69,11 @@ func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
 
 	request.SetAuthorization(c.AuthHeader)
 
+
 	resp, err := c.PgEdgeAPIClient.Operations.GetDatabases(request)
+	fmt.Println("c.HTTPClient: ", c.HTTPClient, "resp", resp)
 	if err != nil {
+		fmt.Println("GetDatabases error")
 		return nil, err
 	}
 
