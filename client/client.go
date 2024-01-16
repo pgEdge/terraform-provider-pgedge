@@ -108,6 +108,9 @@ func (c *Client) CreateDatabase(ctx context.Context, database *models.DatabaseCr
 
 	resp, err := c.PgEdgeAPIClient.Operations.PostDatabases(request)
 	if err != nil {
+		fmt.Println("request.Body.Name",request.Body.Name)
+		fmt.Println("request.Body.ClusterID",request.Body.ClusterID)
+	fmt.Println("err---------------------------------------------------------------------------------------------------: ", err)
 		return nil, err
 	}
 

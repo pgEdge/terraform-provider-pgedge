@@ -6,7 +6,9 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/pgEdge/terraform-provider-pgedge/client"
+
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
 )
 
 var (
@@ -19,7 +21,7 @@ func NewDatabasesDataSource() datasource.DataSource {
 }
 
 type databasesDataSource struct {
-	client *client.Client
+	client *pgEdge.Client
 }
 
 func (d *databasesDataSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -31,11 +33,11 @@ func (d *databasesDataSource) Configure(_ context.Context, req datasource.Config
 		return
 	}
 
-	client, ok := req.ProviderData.(*client.Client)
+	client, ok := req.ProviderData.(*pgEdge.Client)
 	if !ok {
 		resp.Diagnostics.AddError(
 			"Unexpected Data Source Configure Type",
-			fmt.Sprintf("Expected *client.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
+			fmt.Sprintf("Expected *pgEdge.Client, got: %T. Please report this issue to the provider developers.", req.ProviderData),
 		)
 
 		return
@@ -49,13 +51,14 @@ type DatabasesDataSourceModel struct {
 }
 
 type DatabaseDetails struct {
-	ID        string `tfsdk:"id"`
-	Name      string `tfsdk:"name"`
-	Domain    string `tfsdk:"domain"`
-	CreatedAt string `tfsdk:"created_at"`
-	UpdatedAt string `tfsdk:"updated_at"`
-	Status    string `tfsdk:"status"`
-	Nodes     []Node `tfsdk:"nodes"`
+	ID        types.String `tfsdk:"id"`
+	Name      types.String `tfsdk:"name"`
+	Domain    types.String `tfsdk:"domain"`
+	CreatedAt types.String `tfsdk:"created_at"`
+	UpdatedAt types.String `tfsdk:"updated_at"`
+	Status    types.String `tfsdk:"status"`
+	// Nodes     []Node `tfsdk:"nodes"`
+	// Options   []types.String  `tfsdk:"options"`
 }
 
 type Node struct {
@@ -96,7 +99,7 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							// Optional:    true,
 						},
 						"name": schema.StringAttribute{
-							Computed:    true,
+							Required:    true,
 							Description: "Name of the database",
 							// Optional:    true,
 						},
@@ -120,83 +123,87 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Description: "Updated at of the database",
 							// Optional:    true,
 						},
-						"nodes": schema.ListNestedAttribute{
-							Computed: true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"name": schema.StringAttribute{
-										Computed:    true,
-										Description: "Name of the node",
-										// Optional:    true,
-									},
-									"connection": schema.SingleNestedAttribute{
-										Computed: true,
-										Attributes: map[string]schema.Attribute{
-											"database": schema.StringAttribute{
-												Computed:    true,
-												Description: "Database of the node",
-												// Optional:    true,
-											},
-											"host": schema.StringAttribute{
-												Computed:    true,
-												Description: "Host of the node",
-												// Optional:    true,
-											},
-											"password": schema.StringAttribute{
-												Computed:    true,
-												Description: "Password of the node",
-												// Optional:    true,
-											},
-											"port": schema.NumberAttribute{
-												Computed:    true,
-												Description: "Port of the node",
-												// Optional:    true,
-											},
-											"username": schema.StringAttribute{
-												Computed:    true,
-												Description: "Username of the node",
-												// Optional:    true,
-											},
-										},
-									},
-									"location": schema.SingleNestedAttribute{
-										Computed: true,
-										Attributes: map[string]schema.Attribute{
-											"code": schema.StringAttribute{
-												Computed:    true,
-												Description: "Code of the location",
-												// Optional:    true,
-											},
-											"country": schema.StringAttribute{
-												Computed:    true,
-												Description: "Country of the location",
-												// Optional:    true,
-											},
-											"latitude": schema.NumberAttribute{
-												Computed:    true,
-												Description: "Latitude of the location",
-												// Optional:    true,
-											},
-											"longitude": schema.NumberAttribute{
-												Computed:    true,
-												Description: "Longitude of the location",
-												// Optional:    true,
-											},
-											"name": schema.StringAttribute{
-												Computed:    true,
-												Description: "Name of the location",
-												// Optional:    true,
-											},
-											"region": schema.StringAttribute{
-												Computed:    true,
-												Description: "Region of the location",
-												// Optional:    true,
-											},
-										},
-									},
-								},
-							},
-						},
+						// "options": schema.StringAttribute{
+						// 	Optional:    true,
+						// 	Description: "Options for creating the database",
+						// },
+						// "nodes": schema.ListNestedAttribute{
+						// 	Computed: true,
+						// 	NestedObject: schema.NestedAttributeObject{
+						// 		Attributes: map[string]schema.Attribute{
+						// 			"name": schema.StringAttribute{
+						// 				Computed:    true,
+						// 				Description: "Name of the node",
+						// 				// Optional:    true,
+						// 			},
+						// 			"connection": schema.SingleNestedAttribute{
+						// 				Computed: true,
+						// 				Attributes: map[string]schema.Attribute{
+						// 					"database": schema.StringAttribute{
+						// 						Computed:    true,
+						// 						Description: "Database of the node",
+						// 						// Optional:    true,
+						// 					},
+						// 					"host": schema.StringAttribute{
+						// 						Computed:    true,
+						// 						Description: "Host of the node",
+						// 						// Optional:    true,
+						// 					},
+						// 					"password": schema.StringAttribute{
+						// 						Computed:    true,
+						// 						Description: "Password of the node",
+						// 						// Optional:    true,
+						// 					},
+						// 					"port": schema.NumberAttribute{
+						// 						Computed:    true,
+						// 						Description: "Port of the node",
+						// 						// Optional:    true,
+						// 					},
+						// 					"username": schema.StringAttribute{
+						// 						Computed:    true,
+						// 						Description: "Username of the node",
+						// 						// Optional:    true,
+						// 					},
+						// 				},
+						// 			},
+						// 			"location": schema.SingleNestedAttribute{
+						// 				Computed: true,
+						// 				Attributes: map[string]schema.Attribute{
+						// 					"code": schema.StringAttribute{
+						// 						Computed:    true,
+						// 						Description: "Code of the location",
+						// 						// Optional:    true,
+						// 					},
+						// 					"country": schema.StringAttribute{
+						// 						Computed:    true,
+						// 						Description: "Country of the location",
+						// 						// Optional:    true,
+						// 					},
+						// 					"latitude": schema.NumberAttribute{
+						// 						Computed:    true,
+						// 						Description: "Latitude of the location",
+						// 						// Optional:    true,
+						// 					},
+						// 					"longitude": schema.NumberAttribute{
+						// 						Computed:    true,
+						// 						Description: "Longitude of the location",
+						// 						// Optional:    true,
+						// 					},
+						// 					"name": schema.StringAttribute{
+						// 						Computed:    true,
+						// 						Description: "Name of the location",
+						// 						// Optional:    true,
+						// 					},
+						// 					"region": schema.StringAttribute{
+						// 						Computed:    true,
+						// 						Description: "Region of the location",
+						// 						// Optional:    true,
+						// 					},
+						// 				},
+						// 			},
+						// 		},
+						// 	},
+						// },
 					},
 				},
 			},
@@ -225,12 +232,12 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		var database DatabaseDetails
 
 		// Populate DatabaseDetails fields
-		database.ID = db.ID.String()
-		database.Name = db.Name
-		database.Domain = db.Domain
-		database.CreatedAt = db.CreatedAt.String()
-		database.UpdatedAt = db.UpdatedAt.String()
-		database.Status = db.Status
+		database.ID = types.StringValue(db.ID.String())
+		database.Name = types.StringValue(db.Name)
+		database.Domain = types.StringValue(db.Domain)
+		database.CreatedAt = types.StringValue(db.CreatedAt.String())
+		database.UpdatedAt = types.StringValue(db.UpdatedAt.String())
+		database.Status = types.StringValue(db.Status)
 
 		// Populate Nodes
 		for _, node := range db.Nodes {
@@ -253,7 +260,7 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			n.Location.Region = node.Location.Region
 
 			// Append the populated Node to the DatabaseDetails Nodes
-			database.Nodes = append(database.Nodes, n)
+			// database.Nodes = append(database.Nodes, n)
 		}
 
 		// Append the populated DatabaseDetails to the state

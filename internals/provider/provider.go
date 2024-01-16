@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/pgEdge/terraform-provider-pgedge/client"
 )
 
@@ -61,6 +62,8 @@ func (p *PgEdgeProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 	}
 }
 func (p *PgEdgeProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+    tflog.Info(ctx, "Configuring pgEdge client")
+    
     // Retrieve provider data from configuration
     var config PgEdgeProviderModel
     diags := req.Config.Get(ctx, &config)
@@ -134,6 +137,11 @@ func (p *PgEdgeProvider) Configure(ctx context.Context, req provider.ConfigureRe
         return
     }
 
+    ctx = tflog.SetField(ctx, "pgEdge_cluster_id", clusterId)
+    ctx = tflog.MaskFieldValuesWithFieldKeys(ctx, "pgEdge_auth_header", authHeader)
+
+    tflog.Debug(ctx, "Creating pgEdge client")
+
     // Create a new pgEdge client using the configuration values
     client := client.NewClient("https://devapi.pgedge.com", authHeader, clusterId)
     // if err != nil {
@@ -150,11 +158,13 @@ func (p *PgEdgeProvider) Configure(ctx context.Context, req provider.ConfigureRe
     // type Configure methods.
     resp.DataSourceData = client
     resp.ResourceData = client
+
+    tflog.Info(ctx, "Configured pgEdge client", map[string]any{"success": true})
 }
 
 func (p *PgEdgeProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		NewExampleResource,
+		NewDatabasesResource,
 	}
 }
 
