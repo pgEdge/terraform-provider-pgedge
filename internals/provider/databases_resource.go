@@ -7,12 +7,14 @@ import (
 
 	// "time"
 
+	"strings"
+
+	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
 	"github.com/pgEdge/terraform-provider-pgedge/models"
-	"strings"
 )
 
 // Ensure the implementation satisfies the expected interfaces.
@@ -271,21 +273,36 @@ func (r *databasesResource) Create(ctx context.Context, req resource.CreateReque
 // Read refreshes the Terraform state with the latest data.
 func (r *databasesResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	fmt.Println("Inside Read function1------------------------------------------------------------------------")
-	// var state databasesResourceModel
-    // diags := req.State.Get(ctx, &state)
-    // resp.Diagnostics.Append(diags...)
-    // if resp.Diagnostics.HasError() {
-    //     return
-    // }
+	var state databasesResourceModel
+    diags := req.State.Get(ctx, &state)
+    resp.Diagnostics.Append(diags...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
 
-	// order, err := r.client.GetDatabase(state.ID.ValueString())
-    // if err != nil {
-    //     resp.Diagnostics.AddError(
-    //         "Error Reading HashiCups Order",
-    //         "Could not read HashiCups order ID "+state.ID.ValueString()+": "+err.Error(),
-    //     )
-    //     return
-    // }
+	order, err := r.client.GetDatabase(ctx,strfmt.UUID(state.Databases.ID.ValueString()))
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Reading HashiCups Order",
+            "Could not read HashiCups order ID "+state.Databases.ID.ValueString()+": "+err.Error(),
+        )
+        return
+    }
+
+	state.Databases = DatabaseDetails{}
+	state.Databases.ID = types.StringValue(order.ID.String())
+	state.Databases.Name = types.StringValue(order.Name)
+	state.Databases.Status = types.StringValue(order.Status)
+	state.Databases.CreatedAt = types.StringValue(order.CreatedAt.String())
+	state.Databases.UpdatedAt = types.StringValue(order.UpdatedAt.String())
+   
+
+    // Set refreshed state
+    diags = resp.State.Set(ctx, &state)
+    resp.Diagnostics.Append(diags...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
 }
 
 // Update updates the resource and sets the updated Terraform state on success.
