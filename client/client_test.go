@@ -9,18 +9,22 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const BaseUrl = "https://devapi.pgedge.com"
+const (
+	BaseUrl      = "" //your base url here
+	ClusterID    = "" //your cluster id here
+	ClientID     = "" //your client id here
+	ClientSecret = "" //your client secret here
+)
 
 var (
 	AccessToken *string
 	DatabaseID  *strfmt.UUID
-	ClusterID   = "5e7478e5-4e68-464b-902d-747db528eccc" //your cluster id here
 )
 
 func TestOAuthToken(t *testing.T) {
 	client := NewClient(BaseUrl, "", ClusterID)
 
-	token, err := client.OAuthToken(context.Background())
+	token, err := client.OAuthToken(context.Background(), ClientID, ClientSecret)
 	if err == nil {
 		AccessToken = &token.AccessToken
 	}

@@ -14,7 +14,6 @@ import (
 	"github.com/pgEdge/terraform-provider-pgedge/client"
 )
 
-// Ensure PgEdgeProvider satisfies various provider interfaces.
 var _ provider.Provider = &PgEdgeProvider{}
 
 func New(version string) func() provider.Provider {
@@ -25,18 +24,15 @@ func New(version string) func() provider.Provider {
 	}
 }
 
-// PgEdgeProvider defines the provider implementation.
 type PgEdgeProvider struct {
-	// version is set to the provider version on release, "dev" when the
-	// provider is built and ran locally, and "test" when running acceptance
-	// testing.
 	version string
 }
 
-// PgEdgeProviderModel describes the provider data model.
 type PgEdgeProviderModel struct {
-	AuthHeader types.String `tfsdk:"auth_header"`
-	ClusterID  types.String `tfsdk:"cluster_id"`
+	BaseUrl      types.String `tfsdk:"base_url"`
+	ClientId     types.String `tfsdk:"client_id"`
+	ClientSecret types.String `tfsdk:"client_secret"`
+	ClusterID    types.String `tfsdk:"cluster_id"`
 }
 
 func (p *PgEdgeProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -47,9 +43,18 @@ func (p *PgEdgeProvider) Metadata(ctx context.Context, req provider.MetadataRequ
 func (p *PgEdgeProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"auth_header": schema.StringAttribute{
+			"base_url": schema.StringAttribute{
 				Required:    true,
-				Description: "Authentication header to use when connecting to the PgEdge service.",
+				Description: "Base Url to use when connecting to the PgEdge service.",
+			},
+			"client_id": schema.StringAttribute{
+				Required:    true,
+				Description: "Client Id to use when connecting to the PgEdge service.",
+				Sensitive:   false,
+			},
+			"client_secret": schema.StringAttribute{
+				Required:    true,
+				Description: "Client Secret to use when connecting to the PgEdge service.",
 				Sensitive:   true,
 			},
 			"cluster_id": schema.StringAttribute{
@@ -62,104 +67,143 @@ func (p *PgEdgeProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 	}
 }
 func (p *PgEdgeProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
-    tflog.Info(ctx, "Configuring pgEdge client")
-    
-    // Retrieve provider data from configuration
-    var config PgEdgeProviderModel
-    diags := req.Config.Get(ctx, &config)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
+	tflog.Info(ctx, "Configuring pgEdge client")
 
-    // If practitioner provided a configuration value for any of the
-    // attributes, it must be a known value.
+	var config PgEdgeProviderModel
+	diags := req.Config.Get(ctx, &config)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-    if config.AuthHeader.IsUnknown() {
-        resp.Diagnostics.AddAttributeError(
-            path.Root("auth_header"),
-            "Unknown PgEdge API Auth Header",
-            "The provider cannot create the pgEdge API client as there is an unknown configuration value for the pgEdge API Auth Header. "+
-                "Either target apply the source of the value first, set the value statically in the configuration, or use the PGEDGE_AUTHHEADER environment variable.",
-        )
-    }
+	if config.ClientId.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("base_url"),
+			"Unknown PgEdge API Base Url",
+			"The provider cannot create the pgEdge API client as there is an unknown configuration value for the pgEdge API Base Url. "+
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the PGEDGE_BASE_URL environment variable.",
+		)
+	}
 
-    if config.ClusterID.IsUnknown() {
-        resp.Diagnostics.AddAttributeError(
-            path.Root("cluster_id"),
-            "Unknown pgEdge API Cluster ID",
-            "The provider cannot create the pgEdge API client as there is an unknown configuration value for the pgEdge API Cluster ID. "+
-                "Either target apply the source of the value first, set the value statically in the configuration, or use the PGEDGE_CLUSTERID environment variable.",
-        )
-    }
-    if resp.Diagnostics.HasError() {
-        return
-    }
+	if config.ClientId.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("client_id"),
+			"Unknown PgEdge API Client Id",
+			"The provider cannot create the pgEdge API client as there is an unknown configuration value for the pgEdge API Client Id. "+
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the PGEDGE_CLIENT_ID environment variable.",
+		)
+	}
 
-    // Default values to environment variables, but override
-    // with Terraform configuration value if set.
+	if config.ClientSecret.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("client_secret"),
+			"Unknown PgEdge API Client Secret",
+			"The provider cannot create the pgEdge API client as there is an unknown configuration value for the pgEdge API Client Secret. "+
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the PGEDGE_CLIENT_SECRET environment variable.",
+		)
+	}
 
-    authHeader := os.Getenv("PGEDGE_AUTHHEADER")
-    clusterId := os.Getenv("PGEDGE_CLUSTERID")
+	if config.ClusterID.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("cluster_id"),
+			"Unknown pgEdge API Cluster ID",
+			"The provider cannot create the pgEdge API client as there is an unknown configuration value for the pgEdge API Cluster ID. "+
+				"Either target apply the source of the value first, set the value statically in the configuration, or use the PGEDGE_CLUSTERID environment variable.",
+		)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-    if !config.AuthHeader.IsNull() {
-        authHeader = config.AuthHeader.ValueString()
-    }
+	baseUrl := os.Getenv("PGEDGE_BASE_URL")
+	clientId := os.Getenv("PGEDGE_CLIENT_ID")
+	ClientSecret := os.Getenv("PGEDGE_CLIENT_SECRET")
+	clusterId := os.Getenv("PGEDGE_CLUSTERID")
 
-    if !config.ClusterID.IsNull() {
-        clusterId = config.ClusterID.ValueString()
-    }
+	if !config.BaseUrl.IsNull() {
+		baseUrl = config.BaseUrl.ValueString()
+	}
 
-    // If any of the expected configurations are missing, return
-    // errors with provider-specific guidance.
+	if !config.ClientId.IsNull() {
+		clientId = config.ClientId.ValueString()
+	}
 
-    if authHeader == "" {
-        resp.Diagnostics.AddAttributeError(
-            path.Root("auth_header"),
-            "Missing pgEdge API auth_header",
-            "The provider cannot create the pgEdge API client as there is a missing or empty value for the pgEdge API auth_header. "+
-                "Set the auth_header value in the configuration or use the PGEDGE_AUTHHEADER environment variable. "+
-                "If either is already set, ensure the value is not empty.",
-        )
-    }
+	if !config.ClientSecret.IsNull() {
+		ClientSecret = config.ClientSecret.ValueString()
+	}
 
-    if clusterId == "" {
-        resp.Diagnostics.AddAttributeError(
-            path.Root("cluster_id"),
-            "Missing pgEdge API cluster_id",
-            "The provider cannot create the pgEdge API client as there is a missing or empty value for the pgEdge API cluster_id. "+
-                "Set the cluster_id value in the configuration or use the PGEDGE_CLUSTERID environment variable. "+
-                "If either is already set, ensure the value is not empty.",
-        )
-    }
+	if !config.ClusterID.IsNull() {
+		clusterId = config.ClusterID.ValueString()
+	}
 
-    if resp.Diagnostics.HasError() {
-        return
-    }
+	if baseUrl == "" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("base_url"),
+			"Missing pgEdge API base_url",
+			"The provider cannot create the pgEdge API client as there is a missing or empty value for the pgEdge API base_url. "+
+				"Set the base_url value in the configuration or use the PGEDGE_BASE_URL environment variable. "+
+				"If either is already set, ensure the value is not empty.",
+		)
+	}
 
-    ctx = tflog.SetField(ctx, "pgEdge_cluster_id", clusterId)
-    ctx = tflog.MaskFieldValuesWithFieldKeys(ctx, "pgEdge_auth_header", authHeader)
+	if clientId == "" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("client_id"),
+			"Missing pgEdge API client_id",
+			"The provider cannot create the pgEdge API client as there is a missing or empty value for the pgEdge API client_id. "+
+				"Set the client_id value in the configuration or use the PGEDGE_CLIENT_ID environment variable. "+
+				"If either is already set, ensure the value is not empty.",
+		)
+	}
 
-    tflog.Debug(ctx, "Creating pgEdge client")
+	if ClientSecret == "" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("client_secret"),
+			"Missing pgEdge API client_secret",
+			"The provider cannot create the pgEdge API client as there is a missing or empty value for the pgEdge API client_secret. "+
+				"Set the client_secret value in the configuration or use the PGEDGE_CLIENT_SECRET environment variable. "+
+				"If either is already set, ensure the value is not empty.",
+		)
+	}
 
-    // Create a new pgEdge client using the configuration values
-    client := client.NewClient("https://devapi.pgedge.com", authHeader, clusterId)
-    // if err != nil {
-    //     resp.Diagnostics.AddError(
-    //         "Unable to Create pgEdge API Client",
-    //         "An unexpected error occurred when creating the pgEdge API client. "+
-    //             "If the error is not clear, please contact the provider developers.\n\n"+
-    //             "pgEdge Client Error: "+err.Error(),
-    //     )
-    //     return
-    // }
+	if clusterId == "" {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("cluster_id"),
+			"Missing pgEdge API cluster_id",
+			"The provider cannot create the pgEdge API client as there is a missing or empty value for the pgEdge API cluster_id. "+
+				"Set the cluster_id value in the configuration or use the PGEDGE_CLUSTERID environment variable. "+
+				"If either is already set, ensure the value is not empty.",
+		)
+	}
 
-    // Make the pgEdge client available during DataSource and Resource
-    // type Configure methods.
-    resp.DataSourceData = client
-    resp.ResourceData = client
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-    tflog.Info(ctx, "Configured pgEdge client", map[string]any{"success": true})
+	ctx = tflog.SetField(ctx, "pgEdge_base_url", baseUrl)
+	ctx = tflog.SetField(ctx, "pgEdge_cluster_id", clusterId)
+	ctx = tflog.SetField(ctx, "pgEdge_client_id", clientId)
+	ctx = tflog.MaskFieldValuesWithFieldKeys(ctx, "pgEdge_client_secret", ClientSecret)
+
+	tflog.Debug(ctx, "Creating pgEdge client")
+
+	mockClient := client.NewClient(baseUrl, "", clusterId)
+	token, err := mockClient.OAuthToken(context.Background(), clientId, ClientSecret)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Unable to Create pgEdge API Client",
+			"An unexpected error occurred when creating the pgEdge API client. "+
+				"If the error is not clear, please contact the provider developers.\n\n"+
+				"pgEdge Client Error: "+err.Error(),
+		)
+		return
+	}
+
+	pgEdgeClient := client.NewClient(baseUrl, "Bearer "+token.AccessToken, clusterId)
+	resp.DataSourceData = pgEdgeClient
+	resp.ResourceData = pgEdgeClient
+
+	tflog.Info(ctx, "Configured pgEdge client", map[string]any{"success": true})
 }
 
 func (p *PgEdgeProvider) Resources(ctx context.Context) []func() resource.Resource {
@@ -170,6 +214,6 @@ func (p *PgEdgeProvider) Resources(ctx context.Context) []func() resource.Resour
 
 func (p *PgEdgeProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-        NewDatabasesDataSource,
+		NewDatabasesDataSource,
 	}
 }

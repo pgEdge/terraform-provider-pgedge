@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -146,18 +145,13 @@ func (c *Client) ReplicateDatabase(ctx context.Context, id strfmt.UUID) (*models
 	return resp.Payload, nil
 }
 
-func (c *Client) OAuthToken(ctx context.Context) (*operations.PostOauthTokenOKBody, error) {
-	// temporary
-	os.Setenv("CLIENT_ID", "CIzx5xcvt9MFRYVIoFl7Bz9Kl8ryNSdh")
-	os.Setenv("CLIENT_SECRET", "XqRDtkdyyVKNjjT-NiDXdP-ovAJMEmTqKlbMD89WonZhRLyQocKA11rddxw85H8r")
-
-
+func (c *Client) OAuthToken(ctx context.Context, clientId ,clientSecret string) (*operations.PostOauthTokenOKBody, error) {
 	request := &operations.PostOauthTokenParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
 		Body: operations.PostOauthTokenBody{
-			ClientID:     os.Getenv("CLIENT_ID"),
-			ClientSecret: os.Getenv("CLIENT_SECRET"),
+			ClientID:     clientId,
+			ClientSecret: clientSecret,
 		},
 	}
 
