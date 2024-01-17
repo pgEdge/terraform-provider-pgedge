@@ -15,14 +15,11 @@ provider "pgedge" {
 }
 
 data "pgedge_databases" "tech" {
-  # name       = "techie"
-  # cluster_id = "5e7478e5-4e68-464b-902d-747db528eccc"
 }
 
 resource "pgedge_databases" "tech" {
   databases = {
     name       = "newDatabase101",
-    cluster_id = "5e7478e5-4e68-464b-902d-747db528eccc"
   } //, options = ["install:northwind"]
 }
 
