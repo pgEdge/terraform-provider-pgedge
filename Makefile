@@ -1,8 +1,11 @@
-default: testacc
+# Run golangci-lint
+.PHONY: lint
+lint:
+	golangci-lint run ./...
 
-# Run acceptance tests
-.PHONY: testacc
-testacc:
+# Run all tests
+.PHONY: test
+test:
 	TF_ACC=1 go test ./... -v $(TESTARGS) -timeout 120m
 
 # Run doc generate
