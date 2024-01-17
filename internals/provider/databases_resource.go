@@ -13,18 +13,15 @@ import (
 	"github.com/pgEdge/terraform-provider-pgedge/models"
 )
 
-// Ensure the implementation satisfies the expected interfaces.
 var (
 	_ resource.Resource              = &databasesResource{}
 	_ resource.ResourceWithConfigure = &databasesResource{}
 )
 
-// NewDatabasesResource is a helper function to simplify the provider implementation.
 func NewDatabasesResource() resource.Resource {
 	return &databasesResource{}
 }
 
-// databasesResource is the resource implementation.
 type databasesResource struct {
 	client *pgEdge.Client
 }
@@ -35,12 +32,10 @@ type databasesResourceModel struct {
 	// LastUpdated types.String    `tfsdk:"last_updated"`
 }
 
-// Metadata returns the resource type name.
 func (r *databasesResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_databases"
 }
 
-// Configure adds the provider configured client to the resource.
 func (r *databasesResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
@@ -60,7 +55,6 @@ func (r *databasesResource) Configure(_ context.Context, req resource.ConfigureR
 	r.client = client
 }
 
-// Schema defines the schema for the resource.
 func (r *databasesResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
@@ -76,32 +70,26 @@ func (r *databasesResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 					"id": schema.StringAttribute{
 						Computed:    true,
 						Description: "ID of the database",
-						// Computed:    true,
 					},
 					"name": schema.StringAttribute{
 						Required:    true,
 						Description: "Name of the database",
-						// Computed:    true,
 					},
 					"domain": schema.StringAttribute{
 						Computed:    true,
 						Description: "Domain of the database",
-						// Computed:    true,
 					},
 					"status": schema.StringAttribute{
 						Computed:    true,
 						Description: "Status of the database",
-						// Computed:    true,
 					},
 					"created_at": schema.StringAttribute{
 						Computed:    true,
 						Description: "Created at of the database",
-						// Computed:    true,
 					},
 					"updated_at": schema.StringAttribute{
 						Computed:    true,
 						Description: "Updated at of the database",
-						// Computed:    true,
 					},
 					// 	"options": schema.ListAttribute{
 					// 		Optional:    true,
@@ -115,7 +103,6 @@ func (r *databasesResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 					// 				"name": schema.StringAttribute{
 					// 					Computed:    true,
 					// 					Description: "Name of the node",
-					// 					// Computed:    true,
 					// 				},
 					// 				"connection": schema.SingleNestedAttribute{
 					// 					Computed: true,
@@ -123,27 +110,22 @@ func (r *databasesResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 					// 						"database": schema.StringAttribute{
 					// 							Computed:    true,
 					// 							Description: "Database of the node",
-					// 							// Computed:    true,
 					// 						},
 					// 						"host": schema.StringAttribute{
 					// 							Computed:    true,
 					// 							Description: "Host of the node",
-					// 							// Computed:    true,
 					// 						},
 					// 						"password": schema.StringAttribute{
 					// 							Computed:    true,
 					// 							Description: "Password of the node",
-					// 							// Computed:    true,
 					// 						},
 					// 						"port": schema.NumberAttribute{
 					// 							Computed:    true,
 					// 							Description: "Port of the node",
-					// 							// Computed:    true,
 					// 						},
 					// 						"username": schema.StringAttribute{
 					// 							Computed:    true,
 					// 							Description: "Username of the node",
-					// 							// Computed:    true,
 					// 						},
 					// 					},
 					// 				},
@@ -153,32 +135,26 @@ func (r *databasesResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 					// 						"code": schema.StringAttribute{
 					// 							Computed:    true,
 					// 							Description: "Code of the location",
-					// 							// Computed:    true,
 					// 						},
 					// 						"country": schema.StringAttribute{
 					// 							Computed:    true,
 					// 							Description: "Country of the location",
-					// 							// Computed:    true,
 					// 						},
 					// 						"latitude": schema.NumberAttribute{
 					// 							Computed:    true,
 					// 							Description: "Latitude of the location",
-					// 							// Computed:    true,
 					// 						},
 					// 						"longitude": schema.NumberAttribute{
 					// 							Computed:    true,
 					// 							Description: "Longitude of the location",
-					// 							// Computed:    true,
 					// 						},
 					// 						"name": schema.StringAttribute{
 					// 							Computed:    true,
 					// 							Description: "Name of the location",
-					// 							// Computed:    true,
 					// 						},
 					// 						"region": schema.StringAttribute{
 					// 							Computed:    true,
 					// 							Description: "Region of the location",
-					// 							// Computed:    true,
 					// 						},
 					// 					},
 					// 				},
@@ -192,7 +168,6 @@ func (r *databasesResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 	}
 }
 
-// Create creates the resource and sets the initial Terraform state.
 func (r *databasesResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan databasesResourceModel
 	diags := req.Plan.Get(ctx, &plan)
@@ -208,27 +183,27 @@ func (r *databasesResource) Create(ctx context.Context, req resource.CreateReque
 		// Options:   []string{"install:northwind"}, //database.Options[0]
 	}
 
-	order, err := r.client.CreateDatabase(ctx, items)
+	database, err := r.client.CreateDatabase(ctx, items)
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error creating order",
-			"Could not create order, unexpected error: "+err.Error(),
+			"Error creating database",
+			"Could not create database, unexpected error: "+err.Error(),
 		)
 		return
 	}
 
-	if strings.ToLower(databaseName) != types.StringValue(strings.ToLower(order.Name)).ValueString() {
-		databaseName = order.Name
+	if strings.ToLower(databaseName) != types.StringValue(strings.ToLower(database.Name)).ValueString() {
+		databaseName = database.Name
 	}
 
-	// plan.ID = types.StringValue(order.ID.String())
+	// plan.ID = types.StringValue(database.ID.String())
 	plan.Databases = DatabaseDetails{
-		ID:        types.StringValue(order.ID.String()),
+		ID:        types.StringValue(database.ID.String()),
 		Name:      types.StringValue(databaseName),
-		Domain:    types.StringValue(order.Domain),
-		Status:    types.StringValue(order.Status),
-		CreatedAt: types.StringValue(order.CreatedAt.String()),
-		UpdatedAt: types.StringValue(order.UpdatedAt.String()),
+		Domain:    types.StringValue(database.Domain),
+		Status:    types.StringValue(database.Status),
+		CreatedAt: types.StringValue(database.CreatedAt.String()),
+		UpdatedAt: types.StringValue(database.UpdatedAt.String()),
 		// Options:  nil, //database.Options[0]
 	}
 	// plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
@@ -264,7 +239,6 @@ func (r *databasesResource) Create(ctx context.Context, req resource.CreateReque
 	}
 }
 
-// Read refreshes the Terraform state with the latest data.
 func (r *databasesResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
 	var state databasesResourceModel
 	diags := req.State.Get(ctx, &state)
@@ -273,23 +247,22 @@ func (r *databasesResource) Read(ctx context.Context, req resource.ReadRequest, 
 		return
 	}
 
-	order, err := r.client.GetDatabase(ctx, strfmt.UUID(state.Databases.ID.ValueString()))
+	database, err := r.client.GetDatabase(ctx, strfmt.UUID(state.Databases.ID.ValueString()))
 	if err != nil {
 		resp.Diagnostics.AddError(
-			"Error Reading HashiCups Order",
-			"Could not read HashiCups order ID "+state.Databases.ID.ValueString()+": "+err.Error(),
+			"Error Reading pgEdge Database",
+			"Could not read pgEdge database ID "+state.Databases.ID.ValueString()+": "+err.Error(),
 		)
 		return
 	}
 
 	state.Databases = DatabaseDetails{}
-	state.Databases.ID = types.StringValue(order.ID.String())
-	state.Databases.Name = types.StringValue(order.Name)
-	state.Databases.Status = types.StringValue(order.Status)
-	state.Databases.CreatedAt = types.StringValue(order.CreatedAt.String())
-	state.Databases.UpdatedAt = types.StringValue(order.UpdatedAt.String())
+	state.Databases.ID = types.StringValue(database.ID.String())
+	state.Databases.Name = types.StringValue(database.Name)
+	state.Databases.Status = types.StringValue(database.Status)
+	state.Databases.CreatedAt = types.StringValue(database.CreatedAt.String())
+	state.Databases.UpdatedAt = types.StringValue(database.UpdatedAt.String())
 
-	// Set refreshed state
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -297,11 +270,9 @@ func (r *databasesResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 }
 
-// Update updates the resource and sets the updated Terraform state on success.
 func (r *databasesResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 }
 
-// Delete deletes the resource and removes the Terraform state on success.
 func (r *databasesResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state databasesResourceModel
     diags := req.State.Get(ctx, &state)
@@ -310,12 +281,11 @@ func (r *databasesResource) Delete(ctx context.Context, req resource.DeleteReque
         return
     }
 
-    // Delete existing order
     err := r.client.DeleteDatabase(ctx, strfmt.UUID(state.Databases.ID.ValueString()))
     if err != nil {
         resp.Diagnostics.AddError(
-            "Error Deleting HashiCups Order",
-            "Could not delete order, unexpected error: "+err.Error(),
+            "Error Deleting pgEdge Database",
+            "Could not delete Database, unexpected error: "+err.Error(),
         )
         return
     }

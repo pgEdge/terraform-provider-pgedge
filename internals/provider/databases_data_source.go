@@ -84,9 +84,7 @@ type Location struct {
 	Region    string  `tfsdk:"region"`
 }
 
-// Schema defines the schema for the data source.
 func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
-	fmt.Println("Inside Schema function")
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"databases": schema.ListNestedAttribute{
@@ -96,32 +94,26 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 						"id": schema.StringAttribute{
 							Computed:    true,
 							Description: "ID of the database",
-							// Optional:    true,
 						},
 						"name": schema.StringAttribute{
 							Required:    true,
 							Description: "Name of the database",
-							// Optional:    true,
 						},
 						"domain": schema.StringAttribute{
 							Computed:    true,
 							Description: "Domain of the database",
-							// Optional:    true,
 						},
 						"status": schema.StringAttribute{
 							Computed:    true,
 							Description: "Status of the database",
-							// Optional:    true,
 						},
 						"created_at": schema.StringAttribute{
 							Computed:    true,
 							Description: "Created at of the database",
-							// Optional:    true,
 						},
 						"updated_at": schema.StringAttribute{
 							Computed:    true,
 							Description: "Updated at of the database",
-							// Optional:    true,
 						},
 						// "options": schema.StringAttribute{
 						// 	Optional:    true,
@@ -134,7 +126,6 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 						// 			"name": schema.StringAttribute{
 						// 				Computed:    true,
 						// 				Description: "Name of the node",
-						// 				// Optional:    true,
 						// 			},
 						// 			"connection": schema.SingleNestedAttribute{
 						// 				Computed: true,
@@ -142,27 +133,22 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 						// 					"database": schema.StringAttribute{
 						// 						Computed:    true,
 						// 						Description: "Database of the node",
-						// 						// Optional:    true,
 						// 					},
 						// 					"host": schema.StringAttribute{
 						// 						Computed:    true,
 						// 						Description: "Host of the node",
-						// 						// Optional:    true,
 						// 					},
 						// 					"password": schema.StringAttribute{
 						// 						Computed:    true,
 						// 						Description: "Password of the node",
-						// 						// Optional:    true,
 						// 					},
 						// 					"port": schema.NumberAttribute{
 						// 						Computed:    true,
 						// 						Description: "Port of the node",
-						// 						// Optional:    true,
 						// 					},
 						// 					"username": schema.StringAttribute{
 						// 						Computed:    true,
 						// 						Description: "Username of the node",
-						// 						// Optional:    true,
 						// 					},
 						// 				},
 						// 			},
@@ -172,32 +158,26 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 						// 					"code": schema.StringAttribute{
 						// 						Computed:    true,
 						// 						Description: "Code of the location",
-						// 						// Optional:    true,
 						// 					},
 						// 					"country": schema.StringAttribute{
 						// 						Computed:    true,
 						// 						Description: "Country of the location",
-						// 						// Optional:    true,
 						// 					},
 						// 					"latitude": schema.NumberAttribute{
 						// 						Computed:    true,
 						// 						Description: "Latitude of the location",
-						// 						// Optional:    true,
 						// 					},
 						// 					"longitude": schema.NumberAttribute{
 						// 						Computed:    true,
 						// 						Description: "Longitude of the location",
-						// 						// Optional:    true,
 						// 					},
 						// 					"name": schema.StringAttribute{
 						// 						Computed:    true,
 						// 						Description: "Name of the location",
-						// 						// Optional:    true,
 						// 					},
 						// 					"region": schema.StringAttribute{
 						// 						Computed:    true,
 						// 						Description: "Region of the location",
-						// 						// Optional:    true,
 						// 					},
 						// 				},
 						// 			},
@@ -213,11 +193,9 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 }
 
 func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
-	fmt.Println("Inside Read function")
 	var state DatabasesDataSourceModel
 
 	databases, err := d.client.GetDatabases(ctx)
-	fmt.Println("databases: ", databases[0].Name)
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Unable to Read pgEdge Databases",
@@ -226,12 +204,9 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		return
 	}
 
-	// Iterate over each database from the client response
 	for _, db := range databases {
-		// Create a new DatabaseDetails instance
 		var database DatabaseDetails
 
-		// Populate DatabaseDetails fields
 		database.ID = types.StringValue(db.ID.String())
 		database.Name = types.StringValue(db.Name)
 		database.Domain = types.StringValue(db.Domain)
@@ -239,19 +214,16 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		database.UpdatedAt = types.StringValue(db.UpdatedAt.String())
 		database.Status = types.StringValue(db.Status)
 
-		// Populate Nodes
 		for _, node := range db.Nodes {
 			var n Node
 			n.Name = node.Name
 
-			// Populate Connection
 			n.Connection.Database = node.Connection.Database
 			n.Connection.Host = node.Connection.Host
 			n.Connection.Password = node.Connection.Password
 			n.Connection.Port = node.Connection.Port
 			n.Connection.Username = node.Connection.Username
 
-			// Populate Location
 			n.Location.Code = node.Location.Code
 			n.Location.Country = node.Location.Country
 			n.Location.Latitude = node.Location.Latitude
@@ -259,15 +231,12 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			n.Location.Name = node.Location.Name
 			n.Location.Region = node.Location.Region
 
-			// Append the populated Node to the DatabaseDetails Nodes
 			// database.Nodes = append(database.Nodes, n)
 		}
 
-		// Append the populated DatabaseDetails to the state
 		state.Databases = append(state.Databases, database)
 	}
 
-	// Set state
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
