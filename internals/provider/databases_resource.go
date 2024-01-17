@@ -3,7 +3,6 @@ package provider
 import (
 	"context"
 	"fmt"
-	"time"
 	"strings"
 
 	"github.com/go-openapi/strfmt"
@@ -31,9 +30,9 @@ type databasesResource struct {
 }
 
 type databasesResourceModel struct {
-	ID          types.String    `tfsdk:"id"`
+	// ID          types.String    `tfsdk:"id"`
 	Databases   DatabaseDetails `tfsdk:"databases"`
-	LastUpdated types.String    `tfsdk:"last_updated"`
+	// LastUpdated types.String    `tfsdk:"last_updated"`
 }
 
 // Metadata returns the resource type name.
@@ -65,12 +64,12 @@ func (r *databasesResource) Configure(_ context.Context, req resource.ConfigureR
 func (r *databasesResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
-			"id": schema.StringAttribute{
-				Computed: true,
-			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
-			},
+			// "id": schema.StringAttribute{
+			// 	Computed: true,
+			// },
+			// "last_updated": schema.StringAttribute{
+			// 	Computed: true,
+			// },
 			"databases": schema.SingleNestedAttribute{
 				Required: true,
 				Attributes: map[string]schema.Attribute{
@@ -222,7 +221,7 @@ func (r *databasesResource) Create(ctx context.Context, req resource.CreateReque
 		databaseName = order.Name
 	}
 
-	plan.ID = types.StringValue(order.ID.String())
+	// plan.ID = types.StringValue(order.ID.String())
 	plan.Databases = DatabaseDetails{
 		ID:        types.StringValue(order.ID.String()),
 		Name:      types.StringValue(databaseName),
@@ -232,7 +231,7 @@ func (r *databasesResource) Create(ctx context.Context, req resource.CreateReque
 		UpdatedAt: types.StringValue(order.UpdatedAt.String()),
 		// Options:  nil, //database.Options[0]
 	}
-	plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
+	// plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 
 	// for nodeIndex, node := range orderItem.Nodes {
 	// 	plan.Databases[orderItemIndex].Nodes[nodeIndex] = Node{
@@ -304,4 +303,20 @@ func (r *databasesResource) Update(ctx context.Context, req resource.UpdateReque
 
 // Delete deletes the resource and removes the Terraform state on success.
 func (r *databasesResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var state databasesResourceModel
+    diags := req.State.Get(ctx, &state)
+    resp.Diagnostics.Append(diags...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
+
+    // Delete existing order
+    err := r.client.DeleteDatabase(ctx, strfmt.UUID(state.Databases.ID.ValueString()))
+    if err != nil {
+        resp.Diagnostics.AddError(
+            "Error Deleting HashiCups Order",
+            "Could not delete order, unexpected error: "+err.Error(),
+        )
+        return
+    }
 }

@@ -103,6 +103,7 @@ func (c *Client) CreateDatabase(ctx context.Context, database *models.DatabaseCr
 	request.Body.ClusterID = c.ClusterID
 	request.SetAuthorization(c.AuthHeader)
 
+
 	resp, err := c.PgEdgeAPIClient.Operations.PostDatabases(request)
 	if err != nil {
 		return nil, err
@@ -121,7 +122,7 @@ func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) error {
 	request.SetAuthorization(c.AuthHeader)
 
 	_, err := c.PgEdgeAPIClient.Operations.DeleteDatabasesID(request)
-	if err != nil {
+	if !strings.Contains(err.Error(), "200") {
 		return err
 	}
 

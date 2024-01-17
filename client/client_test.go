@@ -68,5 +68,5 @@ func TestDeleteDatabase(t *testing.T) {
 
 	err := client.DeleteDatabase(context.Background(), *DatabaseID)
 
-	assert.Contains(t, err.Error(), "200")
+	assert.Nil(t, err)
 }
