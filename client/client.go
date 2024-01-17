@@ -53,7 +53,6 @@ func NewClient(baseUrl, authHeader, clusterId string) *Client {
 }
 
 func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
-	fmt.Println("GetDatabases called")
     if c.PgEdgeAPIClient == nil {
         return nil, fmt.Errorf("PgEdgeAPIClient is nil")
     }
@@ -71,9 +70,7 @@ func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
 
 
 	resp, err := c.PgEdgeAPIClient.Operations.GetDatabases(request)
-	fmt.Println("c.HTTPClient: ", c.HTTPClient, "resp", resp)
 	if err != nil {
-		fmt.Println("GetDatabases error")
 		return nil, err
 	}
 
@@ -108,9 +105,6 @@ func (c *Client) CreateDatabase(ctx context.Context, database *models.DatabaseCr
 
 	resp, err := c.PgEdgeAPIClient.Operations.PostDatabases(request)
 	if err != nil {
-		fmt.Println("request.Body.Name",request.Body.Name)
-		fmt.Println("request.Body.ClusterID",request.Body.ClusterID)
-	fmt.Println("err---------------------------------------------------------------------------------------------------: ", err)
 		return nil, err
 	}
 

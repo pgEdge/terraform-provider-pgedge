@@ -4,9 +4,6 @@ import (
 	"context"
 	"fmt"
 	"time"
-
-	// "time"
-
 	"strings"
 
 	"github.com/go-openapi/strfmt"
@@ -34,9 +31,9 @@ type databasesResource struct {
 }
 
 type databasesResourceModel struct {
-	// ID          types.String      `tfsdk:"id"`
+	ID          types.String    `tfsdk:"id"`
 	Databases   DatabaseDetails `tfsdk:"databases"`
-	// LastUpdated types.String      `tfsdk:"last_updated"`
+	LastUpdated types.String    `tfsdk:"last_updated"`
 }
 
 // Metadata returns the resource type name.
@@ -68,39 +65,45 @@ func (r *databasesResource) Configure(_ context.Context, req resource.ConfigureR
 func (r *databasesResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed: true,
+			},
+			"last_updated": schema.StringAttribute{
+				Computed: true,
+			},
 			"databases": schema.SingleNestedAttribute{
 				Required: true,
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Computed:    true,
-							Description: "ID of the database",
-							// Computed:    true,
-						},
-						"name": schema.StringAttribute{
-							Required:   true,
-							Description: "Name of the database",
-							// Computed:    true,
-						},
-						"domain": schema.StringAttribute{
-							Computed:    true,
-							Description: "Domain of the database",
-							// Computed:    true,
-						},
-						"status": schema.StringAttribute{
-							Computed:    true,
-							Description: "Status of the database",
-							// Computed:    true,
-						},
-						"created_at": schema.StringAttribute{
-							Computed:    true,
-							Description: "Created at of the database",
-							// Computed:    true,
-						},
-						"updated_at": schema.StringAttribute{
-							Computed:    true,
-							Description: "Updated at of the database",
-							// Computed:    true,
-						},
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Computed:    true,
+						Description: "ID of the database",
+						// Computed:    true,
+					},
+					"name": schema.StringAttribute{
+						Required:    true,
+						Description: "Name of the database",
+						// Computed:    true,
+					},
+					"domain": schema.StringAttribute{
+						Computed:    true,
+						Description: "Domain of the database",
+						// Computed:    true,
+					},
+					"status": schema.StringAttribute{
+						Computed:    true,
+						Description: "Status of the database",
+						// Computed:    true,
+					},
+					"created_at": schema.StringAttribute{
+						Computed:    true,
+						Description: "Created at of the database",
+						// Computed:    true,
+					},
+					"updated_at": schema.StringAttribute{
+						Computed:    true,
+						Description: "Updated at of the database",
+						// Computed:    true,
+					},
 					// 	"options": schema.ListAttribute{
 					// 		Optional:    true,
 					// 		Description: "Options for creating the database",
@@ -183,8 +186,8 @@ func (r *databasesResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 					// 			},
 					// 		},
 					// 	},
-					},
 				},
+			},
 		},
 		Description: "Interface with the pgEdge service API.",
 	}
@@ -196,98 +199,89 @@ func (r *databasesResource) Create(ctx context.Context, req resource.CreateReque
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
-		fmt.Println("Inside Create function---------------------------------------------------------------------", resp.Diagnostics.Errors())
 		return
 	}
 
 	databaseName := plan.Databases.Name.ValueString()
-	fmt.Println("I can come till here---------------------------------------------------------------------")
-	// for index, database := range plan.Databases {
-		items := &models.DatabaseCreationRequest{
-			Name:      plan.Databases.Name.ValueString(),
-			ClusterID: r.client.ClusterID,
-			// Options:   []string{"install:northwind"}, //database.Options[0]
-		}
+	items := &models.DatabaseCreationRequest{
+		Name:      plan.Databases.Name.ValueString(),
+		ClusterID: r.client.ClusterID,
+		// Options:   []string{"install:northwind"}, //database.Options[0]
+	}
 
-		order, err := r.client.CreateDatabase(ctx, items)
-		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error creating order",
-				"Could not create order, unexpected error: "+err.Error(),
-			)
-			return
-		}
+	order, err := r.client.CreateDatabase(ctx, items)
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error creating order",
+			"Could not create order, unexpected error: "+err.Error(),
+		)
+		return
+	}
 
-				fmt.Println("---------------------------------------------")
-				fmt.Println("orderItem: ", order)
-				fmt.Println("---------------------------------------------", types.StringValue(strings.ToLower(order.Name)), strings.ToLower(plan.Databases.Name.ValueString()), "---------------------------------------------")
-				fmt.Println(types.StringValue(strings.ToLower(order.Name)).ValueString() == strings.ToLower(plan.Databases.Name.ValueString()))
-				fmt.Println(diags,"diags----------------------------------")
-				
-				if strings.ToLower(databaseName) != types.StringValue(strings.ToLower(order.Name)).ValueString() {
-					databaseName = order.Name
-				}
-				
-				plan.Databases = DatabaseDetails{
-					ID:        types.StringValue(order.ID.String()),
-					Name:      types.StringValue(databaseName),
-					Domain:    types.StringValue(order.Domain),
-					Status:    types.StringValue(order.Status),
-					CreatedAt: types.StringValue(time.Now().String()),
-					UpdatedAt: types.StringValue(time.Now().String()),
-					// Options:  nil, //database.Options[0]
-				}
+	if strings.ToLower(databaseName) != types.StringValue(strings.ToLower(order.Name)).ValueString() {
+		databaseName = order.Name
+	}
 
-				// for nodeIndex, node := range orderItem.Nodes {
-				// 	plan.Databases[orderItemIndex].Nodes[nodeIndex] = Node{
-				// 		Name: node.Name,
-				// 		Connection: Connection{
-				// 			Database: node.Connection.Database,
-				// 			Host:     node.Connection.Host,
-				// 			Password: node.Connection.Password,
-				// 			Port:     node.Connection.Port,
-				// 			Username: node.Connection.Username,
-				// 		},
-				// 		Location: Location{
-				// 			Code:      node.Location.Code,
-				// 			Country:   node.Location.Country,
-				// 			Latitude:  node.Location.Latitude,
-				// 			Longitude: node.Location.Longitude,
-				// 			Name:      node.Location.Name,
-				// 			Region:    node.Location.Region,
-				// 		},
-				// 	}
-				// }
+	plan.ID = types.StringValue(order.ID.String())
+	plan.Databases = DatabaseDetails{
+		ID:        types.StringValue(order.ID.String()),
+		Name:      types.StringValue(databaseName),
+		Domain:    types.StringValue(order.Domain),
+		Status:    types.StringValue(order.Status),
+		CreatedAt: types.StringValue(order.CreatedAt.String()),
+		UpdatedAt: types.StringValue(order.UpdatedAt.String()),
+		// Options:  nil, //database.Options[0]
+	}
+	plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 
-			// plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
+	// for nodeIndex, node := range orderItem.Nodes {
+	// 	plan.Databases[orderItemIndex].Nodes[nodeIndex] = Node{
+	// 		Name: node.Name,
+	// 		Connection: Connection{
+	// 			Database: node.Connection.Database,
+	// 			Host:     node.Connection.Host,
+	// 			Password: node.Connection.Password,
+	// 			Port:     node.Connection.Port,
+	// 			Username: node.Connection.Username,
+	// 		},
+	// 		Location: Location{
+	// 			Code:      node.Location.Code,
+	// 			Country:   node.Location.Country,
+	// 			Latitude:  node.Location.Latitude,
+	// 			Longitude: node.Location.Longitude,
+	// 			Name:      node.Location.Name,
+	// 			Region:    node.Location.Region,
+	// 		},
+	// 	}
+	// }
+
+	// plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 	// }
 
 	diags = resp.State.Set(ctx, plan)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-		fmt.Println("Error during diags---------------------------------------------------------------------", resp.Diagnostics.Errors())
-        return
-    }
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 // Read refreshes the Terraform state with the latest data.
 func (r *databasesResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	fmt.Println("Inside Read function1------------------------------------------------------------------------")
 	var state databasesResourceModel
-    diags := req.State.Get(ctx, &state)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-	order, err := r.client.GetDatabase(ctx,strfmt.UUID(state.Databases.ID.ValueString()))
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Reading HashiCups Order",
-            "Could not read HashiCups order ID "+state.Databases.ID.ValueString()+": "+err.Error(),
-        )
-        return
-    }
+	order, err := r.client.GetDatabase(ctx, strfmt.UUID(state.Databases.ID.ValueString()))
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Reading HashiCups Order",
+			"Could not read HashiCups order ID "+state.Databases.ID.ValueString()+": "+err.Error(),
+		)
+		return
+	}
 
 	state.Databases = DatabaseDetails{}
 	state.Databases.ID = types.StringValue(order.ID.String())
@@ -295,14 +289,13 @@ func (r *databasesResource) Read(ctx context.Context, req resource.ReadRequest, 
 	state.Databases.Status = types.StringValue(order.Status)
 	state.Databases.CreatedAt = types.StringValue(order.CreatedAt.String())
 	state.Databases.UpdatedAt = types.StringValue(order.UpdatedAt.String())
-   
 
-    // Set refreshed state
-    diags = resp.State.Set(ctx, &state)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
+	// Set refreshed state
+	diags = resp.State.Set(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 }
 
 // Update updates the resource and sets the updated Terraform state on success.
