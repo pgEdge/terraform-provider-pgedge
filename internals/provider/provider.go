@@ -30,8 +30,8 @@ type PgEdgeProvider struct {
 
 type PgEdgeProviderModel struct {
 	BaseUrl      types.String `tfsdk:"base_url"`
-	ClientId     types.String `tfsdk:"client_id"`
-	ClientSecret types.String `tfsdk:"client_secret"`
+	// ClientId     types.String `tfsdk:"client_id"`
+	// ClientSecret types.String `tfsdk:"client_secret"`
 	ClusterID    types.String `tfsdk:"cluster_id"`
 }
 
@@ -47,16 +47,16 @@ func (p *PgEdgeProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 				Required:    true,
 				Description: "Base Url to use when connecting to the PgEdge service.",
 			},
-			"client_id": schema.StringAttribute{
-				Required:    true,
-				Description: "Client Id to use when connecting to the PgEdge service.",
-				Sensitive:   false,
-			},
-			"client_secret": schema.StringAttribute{
-				Required:    true,
-				Description: "Client Secret to use when connecting to the PgEdge service.",
-				Sensitive:   true,
-			},
+			// "client_id": schema.StringAttribute{
+			// 	Required:    true,
+			// 	Description: "Client Id to use when connecting to the PgEdge service.",
+			// 	Sensitive:   false,
+			// },
+			// "client_secret": schema.StringAttribute{
+			// 	Required:    true,
+			// 	Description: "Client Secret to use when connecting to the PgEdge service.",
+			// 	Sensitive:   true,
+			// },
 			"cluster_id": schema.StringAttribute{
 				Required:    true,
 				Description: "The Cluster ID to use when connecting to the PgEdge service.",
@@ -76,7 +76,7 @@ func (p *PgEdgeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		return
 	}
 
-	if config.ClientId.IsUnknown() {
+	if config.BaseUrl.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("base_url"),
 			"Unknown PgEdge API Base Url",
@@ -85,23 +85,23 @@ func (p *PgEdgeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		)
 	}
 
-	if config.ClientId.IsUnknown() {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("client_id"),
-			"Unknown PgEdge API Client Id",
-			"The provider cannot create the pgEdge API client as there is an unknown configuration value for the pgEdge API Client Id. "+
-				"Either target apply the source of the value first, set the value statically in the configuration, or use the PGEDGE_CLIENT_ID environment variable.",
-		)
-	}
+	// if config.ClientId.IsUnknown() {
+	// 	resp.Diagnostics.AddAttributeError(
+	// 		path.Root("client_id"),
+	// 		"Unknown PgEdge API Client Id",
+	// 		"The provider cannot create the pgEdge API client as there is an unknown configuration value for the pgEdge API Client Id. "+
+	// 			"Either target apply the source of the value first, set the value statically in the configuration, or use the PGEDGE_CLIENT_ID environment variable.",
+	// 	)
+	// }
 
-	if config.ClientSecret.IsUnknown() {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("client_secret"),
-			"Unknown PgEdge API Client Secret",
-			"The provider cannot create the pgEdge API client as there is an unknown configuration value for the pgEdge API Client Secret. "+
-				"Either target apply the source of the value first, set the value statically in the configuration, or use the PGEDGE_CLIENT_SECRET environment variable.",
-		)
-	}
+	// if config.ClientSecret.IsUnknown() {
+	// 	resp.Diagnostics.AddAttributeError(
+	// 		path.Root("client_secret"),
+	// 		"Unknown PgEdge API Client Secret",
+	// 		"The provider cannot create the pgEdge API client as there is an unknown configuration value for the pgEdge API Client Secret. "+
+	// 			"Either target apply the source of the value first, set the value statically in the configuration, or use the PGEDGE_CLIENT_SECRET environment variable.",
+	// 	)
+	// }
 
 	if config.ClusterID.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
@@ -124,13 +124,13 @@ func (p *PgEdgeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		baseUrl = config.BaseUrl.ValueString()
 	}
 
-	if !config.ClientId.IsNull() {
-		clientId = config.ClientId.ValueString()
-	}
+	// if !config.ClientId.IsNull() {
+	// 	clientId = config.ClientId.ValueString()
+	// }
 
-	if !config.ClientSecret.IsNull() {
-		ClientSecret = config.ClientSecret.ValueString()
-	}
+	// if !config.ClientSecret.IsNull() {
+	// 	ClientSecret = config.ClientSecret.ValueString()
+	// }
 
 	if !config.ClusterID.IsNull() {
 		clusterId = config.ClusterID.ValueString()
