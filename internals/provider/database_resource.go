@@ -14,29 +14,29 @@ import (
 )
 
 var (
-	_ resource.Resource              = &databasesResource{}
-	_ resource.ResourceWithConfigure = &databasesResource{}
+	_ resource.Resource              = &databaseResource{}
+	_ resource.ResourceWithConfigure = &databaseResource{}
 )
 
-func NewDatabasesResource() resource.Resource {
-	return &databasesResource{}
+func NewDatabaseResource() resource.Resource {
+	return &databaseResource{}
 }
 
-type databasesResource struct {
+type databaseResource struct {
 	client *pgEdge.Client
 }
 
-type databasesResourceModel struct {
+type databaseResourceModel struct {
 	// ID          types.String    `tfsdk:"id"`
-	Databases   DatabaseDetails `tfsdk:"databases"`
+	Database   DatabaseDetails `tfsdk:"database"`
 	// LastUpdated types.String    `tfsdk:"last_updated"`
 }
 
-func (r *databasesResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
-	resp.TypeName = req.ProviderTypeName + "_databases"
+func (r *databaseResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_database"
 }
 
-func (r *databasesResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
+func (r *databaseResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
 		return
 	}
@@ -55,7 +55,7 @@ func (r *databasesResource) Configure(_ context.Context, req resource.ConfigureR
 	r.client = client
 }
 
-func (r *databasesResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			// "id": schema.StringAttribute{
@@ -64,7 +64,7 @@ func (r *databasesResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 			// "last_updated": schema.StringAttribute{
 			// 	Computed: true,
 			// },
-			"databases": schema.SingleNestedAttribute{
+			"database": schema.SingleNestedAttribute{
 				Required: true,
 				Attributes: map[string]schema.Attribute{
 					"id": schema.StringAttribute{
@@ -168,17 +168,17 @@ func (r *databasesResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 	}
 }
 
-func (r *databasesResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	var plan databasesResourceModel
+func (r *databaseResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var plan databaseResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	databaseName := plan.Databases.Name.ValueString()
+	databaseName := plan.Database.Name.ValueString()
 	items := &models.DatabaseCreationRequest{
-		Name:      plan.Databases.Name.ValueString(),
+		Name:      plan.Database.Name.ValueString(),
 		ClusterID: r.client.ClusterID,
 		// Options:   []string{"install:northwind"}, //database.Options[0]
 	}
@@ -197,7 +197,7 @@ func (r *databasesResource) Create(ctx context.Context, req resource.CreateReque
 	}
 
 	// plan.ID = types.StringValue(database.ID.String())
-	plan.Databases = DatabaseDetails{
+	plan.Database = DatabaseDetails{
 		ID:        types.StringValue(database.ID.String()),
 		Name:      types.StringValue(databaseName),
 		Domain:    types.StringValue(database.Domain),
@@ -209,7 +209,7 @@ func (r *databasesResource) Create(ctx context.Context, req resource.CreateReque
 	// plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 
 	// for nodeIndex, node := range orderItem.Nodes {
-	// 	plan.Databases[orderItemIndex].Nodes[nodeIndex] = Node{
+	// 	plan.Database[orderItemIndex].Nodes[nodeIndex] = Node{
 	// 		Name: node.Name,
 	// 		Connection: Connection{
 	// 			Database: node.Connection.Database,
@@ -239,29 +239,29 @@ func (r *databasesResource) Create(ctx context.Context, req resource.CreateReque
 	}
 }
 
-func (r *databasesResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state databasesResourceModel
+func (r *databaseResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var state databaseResourceModel
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	database, err := r.client.GetDatabase(ctx, strfmt.UUID(state.Databases.ID.ValueString()))
+	database, err := r.client.GetDatabase(ctx, strfmt.UUID(state.Database.ID.ValueString()))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading pgEdge Database",
-			"Could not read pgEdge database ID "+state.Databases.ID.ValueString()+": "+err.Error(),
+			"Could not read pgEdge database ID "+state.Database.ID.ValueString()+": "+err.Error(),
 		)
 		return
 	}
 
-	state.Databases = DatabaseDetails{}
-	state.Databases.ID = types.StringValue(database.ID.String())
-	state.Databases.Name = types.StringValue(database.Name)
-	state.Databases.Status = types.StringValue(database.Status)
-	state.Databases.CreatedAt = types.StringValue(database.CreatedAt.String())
-	state.Databases.UpdatedAt = types.StringValue(database.UpdatedAt.String())
+	state.Database = DatabaseDetails{}
+	state.Database.ID = types.StringValue(database.ID.String())
+	state.Database.Name = types.StringValue(database.Name)
+	state.Database.Status = types.StringValue(database.Status)
+	state.Database.CreatedAt = types.StringValue(database.CreatedAt.String())
+	state.Database.UpdatedAt = types.StringValue(database.UpdatedAt.String())
 
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -270,18 +270,18 @@ func (r *databasesResource) Read(ctx context.Context, req resource.ReadRequest, 
 	}
 }
 
-func (r *databasesResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *databaseResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 }
 
-func (r *databasesResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state databasesResourceModel
+func (r *databaseResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var state databaseResourceModel
     diags := req.State.Get(ctx, &state)
     resp.Diagnostics.Append(diags...)
     if resp.Diagnostics.HasError() {
         return
     }
 
-    err := r.client.DeleteDatabase(ctx, strfmt.UUID(state.Databases.ID.ValueString()))
+    err := r.client.DeleteDatabase(ctx, strfmt.UUID(state.Database.ID.ValueString()))
     if err != nil {
         resp.Diagnostics.AddError(
             "Error Deleting pgEdge Database",

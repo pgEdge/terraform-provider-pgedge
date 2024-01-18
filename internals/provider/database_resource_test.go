@@ -6,29 +6,29 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAccDatabasesResource(t *testing.T) {
+func TestAccDatabaseResource(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: providerConfig + `
-				resource "pgedge_databases" "tech" {
-				  databases = {
+				resource "pgedge_database" "tech" {
+				  database = {
 					name       = "newdatabase101",
 				  }
 				}
 				`,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"pgedge_databases.tech", "databases.name", "newdatabase101"),
+						"pgedge_database.tech", "database.name", "newdatabase101"),
 					resource.TestCheckResourceAttrSet(
-						"pgedge_databases.tech", "databases.id"),
+						"pgedge_database.tech", "database.id"),
             resource.TestCheckResourceAttrSet(
-              "pgedge_databases.tech", "databases.domain"),
+              "pgedge_database.tech", "database.domain"),
 					resource.TestCheckResourceAttrSet(
-						"pgedge_databases.tech", "databases.created_at"),
+						"pgedge_database.tech", "database.created_at"),
 					resource.TestCheckResourceAttrSet(
-						"pgedge_databases.tech", "databases.updated_at"),
+						"pgedge_database.tech", "database.updated_at"),
 				),
 			},
 			

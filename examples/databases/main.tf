@@ -17,8 +17,8 @@ provider "pgedge" {
 data "pgedge_databases" "tech" {
 }
 
-resource "pgedge_databases" "tech" {
-  databases = {
+resource "pgedge_database" "tech" {
+  database = {
     name = "newDatabase101",
   } //, options = ["install:northwind"]
 }
