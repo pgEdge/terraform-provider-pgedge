@@ -16,12 +16,11 @@ import (
 
 type Client struct {
 	AuthHeader      string
-	ClusterID	   	string
 	HTTPClient      *http.Client
 	PgEdgeAPIClient *PgEdgeAPI
 }
 
-func NewClient(baseUrl, authHeader, clusterId string) *Client {
+func NewClient(baseUrl, authHeader string) *Client {
 	var url string
 	var schemas []string
 	if baseUrl == "" {
@@ -46,7 +45,6 @@ func NewClient(baseUrl, authHeader, clusterId string) *Client {
 		HTTPClient: &http.Client{
 			Timeout: time.Minute,
 		},
-		ClusterID: clusterId,
 		PgEdgeAPIClient: client,
 	}
 }
@@ -99,7 +97,6 @@ func (c *Client) CreateDatabase(ctx context.Context, database *models.DatabaseCr
 		Context:    ctx,
 		Body:       database,
 	}
-	request.Body.ClusterID = c.ClusterID
 	request.SetAuthorization(c.AuthHeader)
 
 

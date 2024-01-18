@@ -57,6 +57,7 @@ type DatabaseDetails struct {
 	CreatedAt types.String `tfsdk:"created_at"`
 	UpdatedAt types.String `tfsdk:"updated_at"`
 	Status    types.String `tfsdk:"status"`
+	ClusterID types.String `tfsdk:"cluster_id"`
 	// Nodes     []Node `tfsdk:"nodes"`
 	// Options   []types.String  `tfsdk:"options"`
 }
@@ -112,6 +113,10 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Description: "Created at of the database",
 						},
 						"updated_at": schema.StringAttribute{
+							Computed:    true,
+							Description: "Updated at of the database",
+						},
+						"cluster_id": schema.StringAttribute{
 							Computed:    true,
 							Description: "Updated at of the database",
 						},

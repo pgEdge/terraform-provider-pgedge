@@ -75,6 +75,10 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						Required:    true,
 						Description: "Name of the database",
 					},
+					"cluster_id": schema.StringAttribute{
+						Required:    true,
+						Description: "Cluster Id of the database",
+					},
 					"domain": schema.StringAttribute{
 						Computed:    true,
 						Description: "Domain of the database",
@@ -179,7 +183,7 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 	databaseName := plan.Database.Name.ValueString()
 	items := &models.DatabaseCreationRequest{
 		Name:      plan.Database.Name.ValueString(),
-		ClusterID: r.client.ClusterID,
+		ClusterID: plan.Database.ClusterID.ValueString(),
 		// Options:   []string{"install:northwind"}, //database.Options[0]
 	}
 
@@ -202,6 +206,7 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 		Name:      types.StringValue(databaseName),
 		Domain:    types.StringValue(database.Domain),
 		Status:    types.StringValue(database.Status),
+		ClusterID: plan.Database.ClusterID,
 		CreatedAt: types.StringValue(database.CreatedAt.String()),
 		UpdatedAt: types.StringValue(database.UpdatedAt.String()),
 		// Options:  nil, //database.Options[0]

@@ -22,7 +22,7 @@ var (
 )
 
 func TestOAuthToken(t *testing.T) {
-	client := NewClient(BaseUrl, "", ClusterID)
+	client := NewClient(BaseUrl, "")
 
 	token, err := client.OAuthToken(context.Background(), ClientID, ClientSecret)
 	if err == nil {
@@ -33,17 +33,18 @@ func TestOAuthToken(t *testing.T) {
 }
 
 func TestGetDatabases(t *testing.T) {
-	client := NewClient(BaseUrl, "Bearer "+*AccessToken, ClusterID)
+	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 	_, err := client.GetDatabases(context.Background())
 
 	assert.Nil(t, err)
 }
 
 func TestCreateDatabase(t *testing.T) {
-	client := NewClient(BaseUrl, "Bearer "+*AccessToken, ClusterID)
+	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
 	request := &models.DatabaseCreationRequest{
 		Name: "test",
+		ClusterID: ClusterID,
 	}
 
 	database, err := client.CreateDatabase(context.Background(), request)
@@ -53,14 +54,14 @@ func TestCreateDatabase(t *testing.T) {
 }
 
 func TestGetDatabase(t *testing.T) {
-	client := NewClient(BaseUrl, "Bearer "+*AccessToken, ClusterID)
+	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 	_, err := client.GetDatabase(context.Background(), *DatabaseID)
 
 	assert.Nil(t, err)
 }
 
 func TestReplicateDatabase(t *testing.T) {
-	client := NewClient(BaseUrl, "Bearer "+*AccessToken, ClusterID)
+	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
 	_, err := client.ReplicateDatabase(context.Background(), *DatabaseID)
 
@@ -68,7 +69,7 @@ func TestReplicateDatabase(t *testing.T) {
 }
 
 func TestDeleteDatabase(t *testing.T) {
-	client := NewClient(BaseUrl, "Bearer "+*AccessToken, ClusterID)
+	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
 	err := client.DeleteDatabase(context.Background(), *DatabaseID)
 
