@@ -20,6 +20,7 @@ resource "pgedge_database" "tech" {
   database = {
     name = "newDatabase101",
     cluster_id    = "5e7478e5-4e68-464b-902d-747db528eccc"
+    options = ["install:northwind"]
   } //, options = ["install:northwind"]
 }
 

@@ -28,7 +28,7 @@ type databaseResource struct {
 
 type databaseResourceModel struct {
 	// ID          types.String    `tfsdk:"id"`
-	Database   DatabaseDetails `tfsdk:"database"`
+	Database DatabaseDetails `tfsdk:"database"`
 	// LastUpdated types.String    `tfsdk:"last_updated"`
 }
 
@@ -95,76 +95,76 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						Computed:    true,
 						Description: "Updated at of the database",
 					},
-					// 	"options": schema.ListAttribute{
-					// 		Optional:    true,
-					// 		Description: "Options for creating the database",
-					// 		ElementType: types.StringType,
-					// },
-					// 	"nodes": schema.ListNestedAttribute{
-					// 		Computed: true,
-					// 		NestedObject: schema.NestedAttributeObject{
-					// 			Attributes: map[string]schema.Attribute{
-					// 				"name": schema.StringAttribute{
-					// 					Computed:    true,
-					// 					Description: "Name of the node",
-					// 				},
-					// 				"connection": schema.SingleNestedAttribute{
-					// 					Computed: true,
-					// 					Attributes: map[string]schema.Attribute{
-					// 						"database": schema.StringAttribute{
-					// 							Computed:    true,
-					// 							Description: "Database of the node",
-					// 						},
-					// 						"host": schema.StringAttribute{
-					// 							Computed:    true,
-					// 							Description: "Host of the node",
-					// 						},
-					// 						"password": schema.StringAttribute{
-					// 							Computed:    true,
-					// 							Description: "Password of the node",
-					// 						},
-					// 						"port": schema.NumberAttribute{
-					// 							Computed:    true,
-					// 							Description: "Port of the node",
-					// 						},
-					// 						"username": schema.StringAttribute{
-					// 							Computed:    true,
-					// 							Description: "Username of the node",
-					// 						},
-					// 					},
-					// 				},
-					// 				"location": schema.SingleNestedAttribute{
-					// 					Computed: true,
-					// 					Attributes: map[string]schema.Attribute{
-					// 						"code": schema.StringAttribute{
-					// 							Computed:    true,
-					// 							Description: "Code of the location",
-					// 						},
-					// 						"country": schema.StringAttribute{
-					// 							Computed:    true,
-					// 							Description: "Country of the location",
-					// 						},
-					// 						"latitude": schema.NumberAttribute{
-					// 							Computed:    true,
-					// 							Description: "Latitude of the location",
-					// 						},
-					// 						"longitude": schema.NumberAttribute{
-					// 							Computed:    true,
-					// 							Description: "Longitude of the location",
-					// 						},
-					// 						"name": schema.StringAttribute{
-					// 							Computed:    true,
-					// 							Description: "Name of the location",
-					// 						},
-					// 						"region": schema.StringAttribute{
-					// 							Computed:    true,
-					// 							Description: "Region of the location",
-					// 						},
-					// 					},
-					// 				},
-					// 			},
-					// 		},
-					// 	},
+					"options": schema.ListAttribute{
+						ElementType: types.StringType,
+						Optional:    true,
+						Description: "Options for creating the database",
+					},
+						"nodes": schema.ListNestedAttribute{
+							Optional: true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"name": schema.StringAttribute{
+										Computed:    true,
+										Description: "Name of the node",
+									},
+									"connection": schema.SingleNestedAttribute{
+										Computed: true,
+										Attributes: map[string]schema.Attribute{
+											"database": schema.StringAttribute{
+												Computed:    true,
+												Description: "Database of the node",
+											},
+											"host": schema.StringAttribute{
+												Computed:    true,
+												Description: "Host of the node",
+											},
+											"password": schema.StringAttribute{
+												Computed:    true,
+												Description: "Password of the node",
+											},
+											"port": schema.NumberAttribute{
+												Computed:    true,
+												Description: "Port of the node",
+											},
+											"username": schema.StringAttribute{
+												Computed:    true,
+												Description: "Username of the node",
+											},
+										},
+									},
+									"location": schema.SingleNestedAttribute{
+										Computed: true,
+										Attributes: map[string]schema.Attribute{
+											"code": schema.StringAttribute{
+												Computed:    true,
+												Description: "Code of the location",
+											},
+											"country": schema.StringAttribute{
+												Computed:    true,
+												Description: "Country of the location",
+											},
+											"latitude": schema.NumberAttribute{
+												Computed:    true,
+												Description: "Latitude of the location",
+											},
+											"longitude": schema.NumberAttribute{
+												Computed:    true,
+												Description: "Longitude of the location",
+											},
+											"name": schema.StringAttribute{
+												Computed:    true,
+												Description: "Name of the location",
+											},
+											"region": schema.StringAttribute{
+												Computed:    true,
+												Description: "Region of the location",
+											},
+										},
+									},
+								},
+							},
+						},
 				},
 			},
 		},
@@ -180,11 +180,18 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
+	fmt.Println("plan.Database.Options", plan.Database.Options)
+
 	databaseName := plan.Database.Name.ValueString()
+	var databaseOptions []string
+	for _, option := range plan.Database.Options {
+		databaseOptions = append(databaseOptions, option.ValueString())
+	}
+
 	items := &models.DatabaseCreationRequest{
 		Name:      plan.Database.Name.ValueString(),
 		ClusterID: plan.Database.ClusterID.ValueString(),
-		// Options:   []string{"install:northwind"}, //database.Options[0]
+		Options:   databaseOptions,
 	}
 
 	database, err := r.client.CreateDatabase(ctx, items)
@@ -209,30 +216,30 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 		ClusterID: plan.Database.ClusterID,
 		CreatedAt: types.StringValue(database.CreatedAt.String()),
 		UpdatedAt: types.StringValue(database.UpdatedAt.String()),
-		// Options:  nil, //database.Options[0]
+		Options:  	plan.Database.Options,
 	}
 	// plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 
-	// for nodeIndex, node := range orderItem.Nodes {
-	// 	plan.Database[orderItemIndex].Nodes[nodeIndex] = Node{
-	// 		Name: node.Name,
-	// 		Connection: Connection{
-	// 			Database: node.Connection.Database,
-	// 			Host:     node.Connection.Host,
-	// 			Password: node.Connection.Password,
-	// 			Port:     node.Connection.Port,
-	// 			Username: node.Connection.Username,
-	// 		},
-	// 		Location: Location{
-	// 			Code:      node.Location.Code,
-	// 			Country:   node.Location.Country,
-	// 			Latitude:  node.Location.Latitude,
-	// 			Longitude: node.Location.Longitude,
-	// 			Name:      node.Location.Name,
-	// 			Region:    node.Location.Region,
-	// 		},
-	// 	}
-	// }
+	for nodeIndex, node := range database.Nodes {
+		plan.Database.Nodes[nodeIndex] = Node{
+			Name: node.Name,
+			Connection: Connection{
+				Database: node.Connection.Database,
+				Host:     node.Connection.Host,
+				Password: node.Connection.Password,
+				Port:     node.Connection.Port,
+				Username: node.Connection.Username,
+			},
+			Location: Location{
+				Code:      node.Location.Code,
+				Country:   node.Location.Country,
+				Latitude:  node.Location.Latitude,
+				Longitude: node.Location.Longitude,
+				Name:      node.Location.Name,
+				Region:    node.Location.Region,
+			},
+		}
+	}
 
 	// plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 	// }
@@ -280,18 +287,18 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 
 func (r *databaseResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state databaseResourceModel
-    diags := req.State.Get(ctx, &state)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
+	diags := req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-    err := r.client.DeleteDatabase(ctx, strfmt.UUID(state.Database.ID.ValueString()))
-    if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Deleting pgEdge Database",
-            "Could not delete Database, unexpected error: "+err.Error(),
-        )
-        return
-    }
+	err := r.client.DeleteDatabase(ctx, strfmt.UUID(state.Database.ID.ValueString()))
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Deleting pgEdge Database",
+			"Could not delete Database, unexpected error: "+err.Error(),
+		)
+		return
+	}
 }
