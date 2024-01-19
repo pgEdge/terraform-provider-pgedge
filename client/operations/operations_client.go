@@ -32,6 +32,8 @@ type ClientOption func(*runtime.ClientOperation)
 type ClientService interface {
 	DeleteDatabasesID(params *DeleteDatabasesIDParams, opts ...ClientOption) (*DeleteDatabasesIDNoContent, error)
 
+	GetClusters(params *GetClustersParams, opts ...ClientOption) (*GetClustersOK, error)
+
 	GetDatabases(params *GetDatabasesParams, opts ...ClientOption) (*GetDatabasesOK, error)
 
 	GetDatabasesID(params *GetDatabasesIDParams, opts ...ClientOption) (*GetDatabasesIDOK, error)
@@ -84,6 +86,46 @@ func (a *Client) DeleteDatabasesID(params *DeleteDatabasesIDParams, opts ...Clie
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for DeleteDatabasesID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetClusters gets clusters
+
+Retrieve a list of clusters with optional limit and offset
+*/
+func (a *Client) GetClusters(params *GetClustersParams, opts ...ClientOption) (*GetClustersOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetClustersParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "GetClusters",
+		Method:             "GET",
+		PathPattern:        "/clusters",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetClustersReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetClustersOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetClusters: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

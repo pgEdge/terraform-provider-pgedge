@@ -165,6 +165,36 @@ paths:
         "500":
           description: Internal Server Error
   /clusters:
+    get:
+      summary: Get All Clusters
+      description: Retrieve a list of clusters with optional limit and offset
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+        - name: limit
+          in: query
+          type: integer
+          format: int32
+          description: Number of clusters to retrieve (default is 10)
+        - name: offset
+          in: query
+          type: integer
+          format: int32
+          description: Offset for pagination (default is 0)
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/ClusterDetails"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
     post:
       summary: Create a new Cluster
       description: Create a new cluster with the specified options
@@ -468,6 +498,67 @@ definitions:
                   items:
                     type: string
                 type_:
+                  type: string
+      id:
+        type: string
+      name:
+        type: string
+      node_groups:
+        type: object
+        properties:
+          aws:
+            type: array
+            items:
+              type: object
+          azure:
+            type: array
+            items:
+              type: object
+          google:
+            type: array
+            items:
+              type: object
+      status:
+        type: string
+  ClusterDetails:
+    type: object
+    properties:
+      aws:
+        type: object
+        properties:
+          role_arn:
+            type: string
+      cloud_account_id:
+        type: string
+      created_at:
+        type: string
+        format: date-time
+      database:
+        type: object
+        properties:
+          name:
+            type: string
+          pg_version:
+            type: string
+          scripts:
+            type: object
+          username:
+            type: string
+      firewall:
+        type: object
+        properties:
+          rules:
+            type: array
+            items:
+              type: object
+              properties:
+                port:
+                  type: integer
+                sources:
+                  type: array
+                  items:
+                    type: string
+                type:
                   type: string
       id:
         type: string
