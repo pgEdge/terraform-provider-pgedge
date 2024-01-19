@@ -36,6 +36,8 @@ type ClientService interface {
 
 	GetDatabasesID(params *GetDatabasesIDParams, opts ...ClientOption) (*GetDatabasesIDOK, error)
 
+	PostClusters(params *PostClustersParams, opts ...ClientOption) (*PostClustersOK, error)
+
 	PostDatabases(params *PostDatabasesParams, opts ...ClientOption) (*PostDatabasesOK, error)
 
 	PostDatabasesIDReplicate(params *PostDatabasesIDReplicateParams, opts ...ClientOption) (*PostDatabasesIDReplicateOK, error)
@@ -162,6 +164,46 @@ func (a *Client) GetDatabasesID(params *GetDatabasesIDParams, opts ...ClientOpti
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for GetDatabasesID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostClusters creates a new cluster
+
+Create a new cluster with the specified options
+*/
+func (a *Client) PostClusters(params *PostClustersParams, opts ...ClientOption) (*PostClustersOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostClustersParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "PostClusters",
+		Method:             "POST",
+		PathPattern:        "/clusters",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PostClustersReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostClustersOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for PostClusters: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

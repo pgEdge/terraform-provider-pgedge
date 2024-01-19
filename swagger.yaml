@@ -164,6 +164,35 @@ paths:
           description: Database not found
         "500":
           description: Internal Server Error
+  /clusters:
+    post:
+      summary: Create a new Cluster
+      description: Create a new cluster with the specified options
+      consumes:
+        - application/json
+      produces:
+        - application/json
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+        - in: body
+          name: body
+          description: Cluster creation request body
+          required: true
+          schema:
+            $ref: "#/definitions/ClusterCreationRequest"
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: "#/definitions/ClusterCreationResponse"
+        "401":
+          description: Unauthorized
+        "500":
+          description: Internal Server Error
 
 definitions:
   Database:
@@ -356,4 +385,108 @@ definitions:
           region_code:
             type: string
       name:
+        type: string
+  ClusterCreationRequest:
+    type: object
+    properties:
+      name:
+        type: string
+      node_groups:
+        type: object
+        properties:
+          aws:
+            type: array
+            items:
+              type: object
+              properties:
+                region:
+                  type: string
+                nodes:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      display_name:
+                        type: string
+                      is_active:
+                        type: boolean
+      firewall:
+        type: object
+        properties:
+          rules:
+            type: array
+            items:
+              type: object
+              properties:
+                type:
+                  type: string
+                port:
+                  type: integer
+                sources:
+                  type: array
+                  items:
+                    type: string
+      cloud_account_id:
+        type: string
+
+  ClusterCreationResponse:
+    type: object
+    properties:
+      aws:
+        type: object
+        properties:
+          role_arn:
+            type: string
+      cloud_account_id:
+        type: string
+      created_at:
+        type: string
+        format: date-time
+      database:
+        type: object
+        properties:
+          name:
+            type: string
+          pg_version:
+            type: string
+          scripts:
+            type: object
+          username:
+            type: string
+      firewall:
+        type: object
+        properties:
+          rules:
+            type: array
+            items:
+              type: object
+              properties:
+                port:
+                  type: integer
+                sources:
+                  type: array
+                  items:
+                    type: string
+                type_:
+                  type: string
+      id:
+        type: string
+      name:
+        type: string
+      node_groups:
+        type: object
+        properties:
+          aws:
+            type: array
+            items:
+              type: object
+          azure:
+            type: array
+            items:
+              type: object
+          google:
+            type: array
+            items:
+              type: object
+      status:
         type: string
