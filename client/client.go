@@ -142,6 +142,73 @@ func (c *Client) ReplicateDatabase(ctx context.Context, id strfmt.UUID) (*models
 	return resp.Payload, nil
 }
 
+func (c *Client) GetAllClusters(ctx context.Context) ([]*models.ClusterDetails, error) {
+	request := &operations.GetClustersParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	resp, err := c.PgEdgeAPIClient.Operations.GetClusters(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Payload, nil
+}
+
+func (c *Client) GetCluster(ctx context.Context, id strfmt.UUID) (*models.ClusterDetails, error) {
+	request := &operations.GetClustersIDParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		ID:         id,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	resp, err := c.PgEdgeAPIClient.Operations.GetClustersID(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Payload, nil
+}
+
+func (c *Client) CreateCluster(ctx context.Context, cluster *models.ClusterCreationRequest) (*models.ClusterCreationResponse, error) {
+	request := &operations.PostClustersParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		Body:       cluster,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	resp, err := c.PgEdgeAPIClient.Operations.PostClusters(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Payload, nil
+}
+
+func (c *Client) DeleteCluster(ctx context.Context, id strfmt.UUID) error {
+	request := &operations.DeleteClustersIDParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		ID:         id,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	_, err := c.PgEdgeAPIClient.Operations.DeleteClustersID(request)
+	if !strings.Contains(err.Error(), "200") {
+		return err
+	}
+
+	return nil
+}
+
 func (c *Client) OAuthToken(ctx context.Context, clientId ,clientSecret string) (*operations.PostOauthTokenOKBody, error) {
 	request := &operations.PostOauthTokenParams{
 		HTTPClient: c.HTTPClient,
