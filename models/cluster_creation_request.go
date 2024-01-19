@@ -321,85 +321,22 @@ func (m *ClusterCreationRequestFirewallRulesItems0) UnmarshalBinary(b []byte) er
 type ClusterCreationRequestNodeGroups struct {
 
 	// aws
-	Aws []*ClusterCreationRequestNodeGroupsAwsItems0 `json:"aws"`
+	Aws []interface{} `json:"aws"`
+
+	// azure
+	Azure []interface{} `json:"azure"`
+
+	// google
+	Google []interface{} `json:"google"`
 }
 
 // Validate validates this cluster creation request node groups
 func (m *ClusterCreationRequestNodeGroups) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateAws(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
 	return nil
 }
 
-func (m *ClusterCreationRequestNodeGroups) validateAws(formats strfmt.Registry) error {
-	if swag.IsZero(m.Aws) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.Aws); i++ {
-		if swag.IsZero(m.Aws[i]) { // not required
-			continue
-		}
-
-		if m.Aws[i] != nil {
-			if err := m.Aws[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("node_groups" + "." + "aws" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("node_groups" + "." + "aws" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-// ContextValidate validate this cluster creation request node groups based on the context it is used
+// ContextValidate validates this cluster creation request node groups based on context it is used
 func (m *ClusterCreationRequestNodeGroups) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.contextValidateAws(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *ClusterCreationRequestNodeGroups) contextValidateAws(ctx context.Context, formats strfmt.Registry) error {
-
-	for i := 0; i < len(m.Aws); i++ {
-
-		if m.Aws[i] != nil {
-
-			if swag.IsZero(m.Aws[i]) { // not required
-				return nil
-			}
-
-			if err := m.Aws[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("node_groups" + "." + "aws" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("node_groups" + "." + "aws" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
 	return nil
 }
 
@@ -414,155 +351,6 @@ func (m *ClusterCreationRequestNodeGroups) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary interface implementation
 func (m *ClusterCreationRequestNodeGroups) UnmarshalBinary(b []byte) error {
 	var res ClusterCreationRequestNodeGroups
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// ClusterCreationRequestNodeGroupsAwsItems0 cluster creation request node groups aws items0
-//
-// swagger:model ClusterCreationRequestNodeGroupsAwsItems0
-type ClusterCreationRequestNodeGroupsAwsItems0 struct {
-
-	// nodes
-	Nodes []*ClusterCreationRequestNodeGroupsAwsItems0NodesItems0 `json:"nodes"`
-
-	// region
-	Region string `json:"region,omitempty"`
-}
-
-// Validate validates this cluster creation request node groups aws items0
-func (m *ClusterCreationRequestNodeGroupsAwsItems0) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateNodes(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *ClusterCreationRequestNodeGroupsAwsItems0) validateNodes(formats strfmt.Registry) error {
-	if swag.IsZero(m.Nodes) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.Nodes); i++ {
-		if swag.IsZero(m.Nodes[i]) { // not required
-			continue
-		}
-
-		if m.Nodes[i] != nil {
-			if err := m.Nodes[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("nodes" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("nodes" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-// ContextValidate validate this cluster creation request node groups aws items0 based on the context it is used
-func (m *ClusterCreationRequestNodeGroupsAwsItems0) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.contextValidateNodes(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *ClusterCreationRequestNodeGroupsAwsItems0) contextValidateNodes(ctx context.Context, formats strfmt.Registry) error {
-
-	for i := 0; i < len(m.Nodes); i++ {
-
-		if m.Nodes[i] != nil {
-
-			if swag.IsZero(m.Nodes[i]) { // not required
-				return nil
-			}
-
-			if err := m.Nodes[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("nodes" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("nodes" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *ClusterCreationRequestNodeGroupsAwsItems0) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *ClusterCreationRequestNodeGroupsAwsItems0) UnmarshalBinary(b []byte) error {
-	var res ClusterCreationRequestNodeGroupsAwsItems0
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// ClusterCreationRequestNodeGroupsAwsItems0NodesItems0 cluster creation request node groups aws items0 nodes items0
-//
-// swagger:model ClusterCreationRequestNodeGroupsAwsItems0NodesItems0
-type ClusterCreationRequestNodeGroupsAwsItems0NodesItems0 struct {
-
-	// display name
-	DisplayName string `json:"display_name,omitempty"`
-
-	// is active
-	IsActive bool `json:"is_active,omitempty"`
-}
-
-// Validate validates this cluster creation request node groups aws items0 nodes items0
-func (m *ClusterCreationRequestNodeGroupsAwsItems0NodesItems0) Validate(formats strfmt.Registry) error {
-	return nil
-}
-
-// ContextValidate validates this cluster creation request node groups aws items0 nodes items0 based on context it is used
-func (m *ClusterCreationRequestNodeGroupsAwsItems0NodesItems0) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *ClusterCreationRequestNodeGroupsAwsItems0NodesItems0) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *ClusterCreationRequestNodeGroupsAwsItems0NodesItems0) UnmarshalBinary(b []byte) error {
-	var res ClusterCreationRequestNodeGroupsAwsItems0NodesItems0
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

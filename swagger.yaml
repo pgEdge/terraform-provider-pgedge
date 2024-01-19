@@ -478,18 +478,48 @@ definitions:
             type: array
             items:
               type: object
-              properties:
-                region:
-                  type: string
-                nodes:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      display_name:
-                        type: string
-                      is_active:
-                        type: boolean
+              # properties:
+                # availability_zones:
+                #   type: array
+                #   items:
+                #     type: string
+                # cidr:
+                #   type: string
+                # instance_type:
+                #   type: string
+                # node_location:
+                #   type: string
+                # nodes:
+                #   type: array
+                #   items:
+                #     type: object
+                #     properties:
+                #       display_name:
+                #         type: string
+                #       is_active:
+                #         type: boolean
+                # public_subnets:
+                #   type: array
+                #   items:
+                #     type: string
+                # region:
+                #   type: string
+                # volume_size:
+                #   type: integer
+                # volume_type:
+                #   type: string
+          azure:
+            type: array
+            items:
+              type: object
+              # properties:
+                # Define Azure-specific properties here
+          google:
+            type: array
+            items:
+              type: object
+              # properties:
+                # Define Google-specific properties here
       firewall:
         type: object
         properties:
@@ -498,14 +528,14 @@ definitions:
             items:
               type: object
               properties:
-                type:
-                  type: string
                 port:
                   type: integer
                 sources:
                   type: array
                   items:
                     type: string
+                type:
+                  type: string
       cloud_account_id:
         type: string
 
