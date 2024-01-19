@@ -100,71 +100,71 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						Optional:    true,
 						Description: "Options for creating the database",
 					},
-						"nodes": schema.ListNestedAttribute{
-							Optional: true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
-									"name": schema.StringAttribute{
-										Computed:    true,
-										Description: "Name of the node",
-									},
-									"connection": schema.SingleNestedAttribute{
-										Computed: true,
-										Attributes: map[string]schema.Attribute{
-											"database": schema.StringAttribute{
-												Computed:    true,
-												Description: "Database of the node",
-											},
-											"host": schema.StringAttribute{
-												Computed:    true,
-												Description: "Host of the node",
-											},
-											"password": schema.StringAttribute{
-												Computed:    true,
-												Description: "Password of the node",
-											},
-											"port": schema.NumberAttribute{
-												Computed:    true,
-												Description: "Port of the node",
-											},
-											"username": schema.StringAttribute{
-												Computed:    true,
-												Description: "Username of the node",
-											},
-										},
-									},
-									"location": schema.SingleNestedAttribute{
-										Computed: true,
-										Attributes: map[string]schema.Attribute{
-											"code": schema.StringAttribute{
-												Computed:    true,
-												Description: "Code of the location",
-											},
-											"country": schema.StringAttribute{
-												Computed:    true,
-												Description: "Country of the location",
-											},
-											"latitude": schema.NumberAttribute{
-												Computed:    true,
-												Description: "Latitude of the location",
-											},
-											"longitude": schema.NumberAttribute{
-												Computed:    true,
-												Description: "Longitude of the location",
-											},
-											"name": schema.StringAttribute{
-												Computed:    true,
-												Description: "Name of the location",
-											},
-											"region": schema.StringAttribute{
-												Computed:    true,
-												Description: "Region of the location",
-											},
-										},
-									},
-								},
-							},
-						},
+					// "nodes": schema.ListNestedAttribute{
+					// 	Optional: true,
+					// 	NestedObject: schema.NestedAttributeObject{
+					// 		Attributes: map[string]schema.Attribute{
+					// 			"name": schema.StringAttribute{
+					// 				Computed:    true,
+					// 				Description: "Name of the node",
+					// 			},
+					// 			"connection": schema.SingleNestedAttribute{
+					// 				Computed: true,
+					// 				Attributes: map[string]schema.Attribute{
+					// 					"database": schema.StringAttribute{
+					// 						Computed:    true,
+					// 						Description: "Database of the node",
+					// 					},
+					// 					"host": schema.StringAttribute{
+					// 						Computed:    true,
+					// 						Description: "Host of the node",
+					// 					},
+					// 					"password": schema.StringAttribute{
+					// 						Computed:    true,
+					// 						Description: "Password of the node",
+					// 					},
+					// 					"port": schema.NumberAttribute{
+					// 						Computed:    true,
+					// 						Description: "Port of the node",
+					// 					},
+					// 					"username": schema.StringAttribute{
+					// 						Computed:    true,
+					// 						Description: "Username of the node",
+					// 					},
+					// 				},
+					// 			},
+					// 			"location": schema.SingleNestedAttribute{
+					// 				Computed: true,
+					// 				Attributes: map[string]schema.Attribute{
+					// 					"code": schema.StringAttribute{
+					// 						Computed:    true,
+					// 						Description: "Code of the location",
+					// 					},
+					// 					"country": schema.StringAttribute{
+					// 						Computed:    true,
+					// 						Description: "Country of the location",
+					// 					},
+					// 					"latitude": schema.NumberAttribute{
+					// 						Computed:    true,
+					// 						Description: "Latitude of the location",
+					// 					},
+					// 					"longitude": schema.NumberAttribute{
+					// 						Computed:    true,
+					// 						Description: "Longitude of the location",
+					// 					},
+					// 					"name": schema.StringAttribute{
+					// 						Computed:    true,
+					// 						Description: "Name of the location",
+					// 					},
+					// 					"region": schema.StringAttribute{
+					// 						Computed:    true,
+					// 						Description: "Region of the location",
+					// 					},
+					// 				},
+					// 			},
+					// 		},
+					// 	},
+					// },
 				},
 			},
 		},
@@ -203,6 +203,8 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 		return
 	}
 
+	fmt.Println("plan.Database.Nodes", database.Nodes)
+
 	if strings.ToLower(databaseName) != types.StringValue(strings.ToLower(database.Name)).ValueString() {
 		databaseName = database.Name
 	}
@@ -216,30 +218,30 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 		ClusterID: plan.Database.ClusterID,
 		CreatedAt: types.StringValue(database.CreatedAt.String()),
 		UpdatedAt: types.StringValue(database.UpdatedAt.String()),
-		Options:  	plan.Database.Options,
+		Options:   plan.Database.Options,
 	}
 	// plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 
-	for nodeIndex, node := range database.Nodes {
-		plan.Database.Nodes[nodeIndex] = Node{
-			Name: node.Name,
-			Connection: Connection{
-				Database: node.Connection.Database,
-				Host:     node.Connection.Host,
-				Password: node.Connection.Password,
-				Port:     node.Connection.Port,
-				Username: node.Connection.Username,
-			},
-			Location: Location{
-				Code:      node.Location.Code,
-				Country:   node.Location.Country,
-				Latitude:  node.Location.Latitude,
-				Longitude: node.Location.Longitude,
-				Name:      node.Location.Name,
-				Region:    node.Location.Region,
-			},
-		}
-	}
+	// for nodeIndex, node := range database.Nodes {
+	// 	plan.Database.Nodes[nodeIndex] = Node{
+	// 		Name: node.Name,
+	// 		Connection: Connection{
+	// 			Database: node.Connection.Database,
+	// 			Host:     node.Connection.Host,
+	// 			Password: node.Connection.Password,
+	// 			Port:     node.Connection.Port,
+	// 			Username: node.Connection.Username,
+	// 		},
+	// 		Location: Location{
+	// 			Code:      node.Location.Code,
+	// 			Country:   node.Location.Country,
+	// 			Latitude:  node.Location.Latitude,
+	// 			Longitude: node.Location.Longitude,
+	// 			Name:      node.Location.Name,
+	// 			Region:    node.Location.Region,
+	// 		},
+	// 	}
+	// }
 
 	// plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 	// }
@@ -274,6 +276,29 @@ func (r *databaseResource) Read(ctx context.Context, req resource.ReadRequest, r
 	state.Database.Status = types.StringValue(database.Status)
 	state.Database.CreatedAt = types.StringValue(database.CreatedAt.String())
 	state.Database.UpdatedAt = types.StringValue(database.UpdatedAt.String())
+
+	// for nodeIndex, node := range database.Nodes {
+	// 	state.Database.Nodes[nodeIndex] = Node{
+	// 		Name: node.Name,
+	// 		Connection: Connection{
+	// 			Database: node.Connection.Database,
+	// 			Host:     node.Connection.Host,
+	// 			Password: node.Connection.Password,
+	// 			Port:     node.Connection.Port,
+	// 			Username: node.Connection.Username,
+	// 		},
+	// 		Location: Location{
+	// 			Code:      node.Location.Code,
+	// 			Country:   node.Location.Country,
+	// 			Latitude:  node.Location.Latitude,
+	// 			Longitude: node.Location.Longitude,
+	// 			Name:      node.Location.Name,
+	// 			Region:    node.Location.Region,
+	// 		},
+	// 	}
+	// }
+
+	
 
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
