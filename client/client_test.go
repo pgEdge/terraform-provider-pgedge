@@ -13,6 +13,7 @@ const (
 	BaseUrl      = "" //your base url here
 	ClientID     = "" //your client id here
 	ClientSecret = "" //your client secret here
+	CloudAccountID = "" //your cloud account id here
 )
 
 var (
@@ -87,23 +88,23 @@ func TestGetAllClusters(t *testing.T) {
 func TestCreateCluster(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
-	request := &models.ClusterCreationRequest{
-		Name: "test4",
-		NodeGroups: &models.ClusterCreationRequestNodeGroups{
-			Aws: []interface{}{
-				map[string]interface{}{
-					"region":        "us-east-1",
-					"instance_type": "t4g.small",
-					"nodes": []interface{}{
-						map[string]interface{}{
-							"display_name": "Node1",
-							"is_active":    true,
-						},
-					},
-				},
+	var aws []*models.NodeGroup
+	aws = append(aws, &models.NodeGroup{
+		InstanceType: "t4g.small",
+		Region: "us-east-1",
+		Nodes: []*models.NodeGroupNodesItems0{
+			{
+				DisplayName: "Node1",
+				IsActive:    true,
 			},
-			Azure:  []interface{}{},
-			Google: []interface{}{},
+		},
+	})
+	request := &models.ClusterCreationRequest{
+		Name: "test8",
+		NodeGroups: &models.ClusterCreationRequestNodeGroups{
+			Aws: aws,
+			Azure:  []*models.NodeGroup{},
+			Google: []*models.NodeGroup{},
 		},
 		Firewall: &models.ClusterCreationRequestFirewall{
 			Rules: []*models.ClusterCreationRequestFirewallRulesItems0{
@@ -115,7 +116,7 @@ func TestCreateCluster(t *testing.T) {
 			},
 		},
 
-		CloudAccountID: "5984a9ec-7786-4ad9-9739-bbdf386eafec",
+		CloudAccountID: CloudAccountID,
 	}
 
 	cluster, err := client.CreateCluster(context.Background(), request)
