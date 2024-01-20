@@ -300,8 +300,14 @@ func (m *ClusterDetails) UnmarshalBinary(b []byte) error {
 // swagger:model ClusterDetailsAws
 type ClusterDetailsAws struct {
 
+	// key pair
+	KeyPair string `json:"key_pair,omitempty"`
+
 	// role arn
 	RoleArn string `json:"role_arn,omitempty"`
+
+	// tags
+	Tags map[string]string `json:"tags,omitempty"`
 }
 
 // Validate validates this cluster details aws
@@ -337,11 +343,20 @@ func (m *ClusterDetailsAws) UnmarshalBinary(b []byte) error {
 // swagger:model ClusterDetailsDatabase
 type ClusterDetailsDatabase struct {
 
+	// components
+	Components []string `json:"components"`
+
 	// name
 	Name string `json:"name,omitempty"`
 
+	// password
+	Password string `json:"password,omitempty"`
+
 	// pg version
 	PgVersion string `json:"pg_version,omitempty"`
+
+	// port
+	Port float64 `json:"port,omitempty"`
 
 	// scripts
 	Scripts *DatabaseScripts `json:"scripts,omitempty"`

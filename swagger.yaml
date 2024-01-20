@@ -561,6 +561,12 @@ definitions:
         properties:
           role_arn:
             type: string
+          key_pair:
+            type: string
+          tags:
+            type: object
+            additionalProperties:
+              type: string
       cloud_account_id:
         type: string
       created_at:
@@ -569,14 +575,23 @@ definitions:
       database:
         type: object
         properties:
-          name:
-            type: string
           pg_version:
             type: string
-          scripts:
-            type: object
           username:
             type: string
+          password:
+            type: string
+          name:
+            type: string
+          port:
+            type: number
+          components:
+            type: array
+            items:
+              type: string
+          scripts:
+            $ref: "#/definitions/DatabaseScripts"
+
       firewall:
         type: object
         properties:
@@ -622,6 +637,12 @@ definitions:
         properties:
           role_arn:
             type: string
+          key_pair:
+            type: string
+          tags:
+            type: object
+            additionalProperties:
+              type: string
       cloud_account_id:
         type: string
       created_at:
@@ -630,14 +651,22 @@ definitions:
       database:
         type: object
         properties:
-          name:
-            type: string
           pg_version:
             type: string
-          scripts:
-            $ref: "#/definitions/DatabaseScripts"
           username:
             type: string
+          password:
+            type: string
+          name:
+            type: string
+          port:
+            type: number
+          components:
+            type: array
+            items:
+              type: string
+          scripts:
+            $ref: "#/definitions/DatabaseScripts"
       firewall:
         type: object
         properties:

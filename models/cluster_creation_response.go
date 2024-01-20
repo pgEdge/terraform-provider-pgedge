@@ -300,8 +300,14 @@ func (m *ClusterCreationResponse) UnmarshalBinary(b []byte) error {
 // swagger:model ClusterCreationResponseAws
 type ClusterCreationResponseAws struct {
 
+	// key pair
+	KeyPair string `json:"key_pair,omitempty"`
+
 	// role arn
 	RoleArn string `json:"role_arn,omitempty"`
+
+	// tags
+	Tags map[string]string `json:"tags,omitempty"`
 }
 
 // Validate validates this cluster creation response aws
@@ -337,14 +343,23 @@ func (m *ClusterCreationResponseAws) UnmarshalBinary(b []byte) error {
 // swagger:model ClusterCreationResponseDatabase
 type ClusterCreationResponseDatabase struct {
 
+	// components
+	Components []string `json:"components"`
+
 	// name
 	Name string `json:"name,omitempty"`
+
+	// password
+	Password string `json:"password,omitempty"`
 
 	// pg version
 	PgVersion string `json:"pg_version,omitempty"`
 
+	// port
+	Port float64 `json:"port,omitempty"`
+
 	// scripts
-	Scripts interface{} `json:"scripts,omitempty"`
+	Scripts *DatabaseScripts `json:"scripts,omitempty"`
 
 	// username
 	Username string `json:"username,omitempty"`
@@ -352,11 +367,69 @@ type ClusterCreationResponseDatabase struct {
 
 // Validate validates this cluster creation response database
 func (m *ClusterCreationResponseDatabase) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.validateScripts(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
 	return nil
 }
 
-// ContextValidate validates this cluster creation response database based on context it is used
+func (m *ClusterCreationResponseDatabase) validateScripts(formats strfmt.Registry) error {
+	if swag.IsZero(m.Scripts) { // not required
+		return nil
+	}
+
+	if m.Scripts != nil {
+		if err := m.Scripts.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("database" + "." + "scripts")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("database" + "." + "scripts")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+// ContextValidate validate this cluster creation response database based on the context it is used
 func (m *ClusterCreationResponseDatabase) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateScripts(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *ClusterCreationResponseDatabase) contextValidateScripts(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Scripts != nil {
+
+		if swag.IsZero(m.Scripts) { // not required
+			return nil
+		}
+
+		if err := m.Scripts.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("database" + "." + "scripts")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("database" + "." + "scripts")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 

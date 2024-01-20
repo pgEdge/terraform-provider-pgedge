@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 
@@ -57,37 +58,62 @@ type ClusterDetails struct {
 	CreatedAt      types.String `tfsdk:"created_at"`
 	Status         types.String `tfsdk:"status"`
 
-	Aws        ClusterDetailsAws        `tfsdk:"aws"`
-	Database   ClusterDetailsDatabase   `tfsdk:"database"`
-	Firewall   ClusterDetailsFirewall   `tfsdk:"firewall"`
-	NodeGroups ClusterDetailsNodeGroups `tfsdk:"node_groups"`
+	Aws        AWS            `tfsdk:"aws"`
+	Database   Database       `tfsdk:"database"`
+	// Firewall   []FirewallRule `tfsdk:"firewall"`
+	NodeGroups NodeGroups     `tfsdk:"node_groups"`
 }
 
-type ClusterDetailsAws struct {
-	RoleArn types.String `tfsdk:"role_arn"`
+type AWS struct {
+	RoleARN types.String `tfsdk:"role_arn"`
+	KeyPair types.String `tfsdk:"key_pair"`
+	Tags    types.Map    `tfsdk:"tags"`
 }
 
-type ClusterDetailsDatabase struct {
-	Name      types.String `tfsdk:"name"`
-	PgVersion types.String `tfsdk:"pg_version"`
-	Scripts   interface{}  `tfsdk:"scripts"`
-	Username  types.String `tfsdk:"username"`
+type Database struct {
+	PGVersion  types.String    `tfsdk:"pg_version"`
+	Username   types.String    `tfsdk:"username"`
+	Password   types.String    `tfsdk:"password"`
+	Name       types.String    `tfsdk:"name"`
+	Port       types.Float64   `tfsdk:"port"`
+	Components []types.String  `tfsdk:"components"`
+	Scripts    DatabaseScripts `tfsdk:"scripts"`
 }
 
-type ClusterDetailsFirewall struct {
-	Rules []ClusterDetailsFirewallRulesItems0 `tfsdk:"rules"`
+type DatabaseScripts struct {
+	Init types.String `tfsdk:"init"`
 }
 
-type ClusterDetailsFirewallRulesItems0 struct {
-	Port    types.Int64    `tfsdk:"port"`
+type FirewallRule struct {
+	Type    types.String   `tfsdk:"type,omitempty"`
+	Port    types.Int64    `tfsdk:"port,omitempty"`
 	Sources []types.String `tfsdk:"sources"`
-	Type    types.String   `tfsdk:"type"`
 }
 
-type ClusterDetailsNodeGroups struct {
-	Aws    []interface{} `tfsdk:"aws"`
-	Azure  []interface{} `tfsdk:"azure"`
-	Google []interface{} `tfsdk:"google"`
+type ClusterNode struct {
+	DisplayName types.String `tfsdk:"display_name"`
+	IPAddress   types.String `tfsdk:"ip_address"`
+	IsActive    types.Bool   `tfsdk:"is_active"`
+}
+
+type NodeGroup struct {
+	Region            types.String   `tfsdk:"region"`
+	AvailabilityZones []types.String `tfsdk:"availability_zones"`
+	Cidr              types.String   `tfsdk:"cidr"`
+	PublicSubnets     []types.String `tfsdk:"public_subnets"`
+	PrivateSubnets    []types.String `tfsdk:"private_subnets"`
+	Nodes             []ClusterNode  `tfsdk:"nodes"`
+	NodeLocation      types.String   `tfsdk:"node_location"`
+	VolumeSize        types.Int64   `tfsdk:"volume_size"`
+	VolumeIOPS        types.Int64   `tfsdk:"volume_iops"`
+	VolumeType        types.String   `tfsdk:"volume_type"`
+	InstanceType      types.String   `tfsdk:"instance_type"`
+}
+
+type NodeGroups struct {
+	AWS    []NodeGroup `tfsdk:"aws"`
+	Azure  []NodeGroup `tfsdk:"azure"`
+	Google []NodeGroup `tfsdk:"google"`
 }
 
 func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -124,71 +150,279 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 									Computed:    true,
 									Description: "Role ARN of the AWS cluster",
 								},
+								"key_pair": schema.StringAttribute{
+									Computed:    true,
+									Description: "Key pair of the AWS cluster",
+								},
+								"tags": schema.MapAttribute{
+									ElementType: types.StringType,
+									Computed:    true,
+									Description: "Tags of the AWS cluster",
+								},
 							},
 						},
 						"database": schema.SingleNestedAttribute{
 							Computed: true,
 							Attributes: map[string]schema.Attribute{
-								"name": schema.StringAttribute{
-									Computed:    true,
-									Description: "Name of the database",
-								},
 								"pg_version": schema.StringAttribute{
 									Computed:    true,
 									Description: "PostgreSQL version of the database",
-								},
-								"scripts": schema.MapAttribute{
-									Computed:    true,
-									Description: "Scripts for the database",
 								},
 								"username": schema.StringAttribute{
 									Computed:    true,
 									Description: "Username for the database",
 								},
-							},
-						},
-						"firewall": schema.SingleNestedAttribute{
-							Computed: true,
-							Attributes: map[string]schema.Attribute{
-								"rules": schema.ListNestedAttribute{
+								"password": schema.StringAttribute{
+									Computed:    true,
+									Description: "Password for the database",
+								},
+								"name": schema.StringAttribute{
+									Computed:    true,
+									Description: "Name of the database",
+								},
+								"port": schema.Float64Attribute{
+									Computed:    true,
+									Description: "Port of the database",
+								},
+								"components": schema.ListAttribute{
+									ElementType: types.StringType,
+									Computed:    true,
+									Description: "Components of the database",
+								},
+								"scripts": schema.SingleNestedAttribute{
 									Computed: true,
-									NestedObject: schema.NestedAttributeObject{
-										Attributes: map[string]schema.Attribute{
-											"port": schema.NumberAttribute{
-												Computed:    true,
-												Description: "Port for the firewall rule",
-											},
-											"sources": schema.ListAttribute{
-												ElementType: types.StringType,
-												Computed:    true,
-												Description: "Sources for the firewall rule",
-											},
-											"type": schema.StringAttribute{
-												Computed:    true,
-												Description: "Type of the firewall rule",
-											},
+									Attributes: map[string]schema.Attribute{
+										"init": schema.StringAttribute{
+											Computed:    true,
+											Description: "Init script for the database",
 										},
 									},
 								},
 							},
 						},
+						// "firewall": schema.ListNestedAttribute{
+						// 	Computed: true,
+						// 	NestedObject: schema.NestedAttributeObject{
+						// 		Attributes: map[string]schema.Attribute{
+						// 			"type": schema.StringAttribute{
+						// 				Computed:    true,
+						// 				Description: "Type of the firewall rule",
+						// 			},
+						// 			"port": schema.Int64Attribute{
+						// 				Computed:    true,
+						// 				Description: "Port for the firewall rule",
+						// 			},
+						// 			"sources": schema.ListAttribute{
+						// 				ElementType: types.StringType,
+						// 				Computed:    true,
+						// 				Description: "Sources for the firewall rule",
+						// 			},
+						// 		},
+						// 	},
+						// },
 						"node_groups": schema.SingleNestedAttribute{
 							Computed: true,
 							Attributes: map[string]schema.Attribute{
-								"aws": schema.ListAttribute{
-									ElementType: types.StringType,
-									Computed:    true,
-									Description: "AWS node groups",
+								"aws": schema.ListNestedAttribute{
+									Computed: true,
+									NestedObject: schema.NestedAttributeObject{
+										Attributes: map[string]schema.Attribute{
+											"region": schema.StringAttribute{
+												Computed:    true,
+												Description: "Region of the AWS node group",
+											},
+											"availability_zones": schema.ListAttribute{
+												ElementType: types.StringType,
+												Computed:    true,
+												Description: "Availability zones of the AWS node group",
+											},
+											"cidr": schema.StringAttribute{
+												Computed:    true,
+												Description: "CIDR of the AWS node group",
+											},
+											"public_subnets": schema.ListAttribute{
+												ElementType: types.StringType,
+												Computed:    true,
+											},
+											"private_subnets": schema.ListAttribute{
+												ElementType: types.StringType,
+												Computed:    true,
+											},
+											"nodes": schema.ListNestedAttribute{
+												Computed: true,
+												NestedObject: schema.NestedAttributeObject{
+													Attributes: map[string]schema.Attribute{
+														"display_name": schema.StringAttribute{
+															Computed:    true,
+															Description: "Display name of the node",
+														},
+														"ip_address": schema.StringAttribute{
+															Computed:    true,
+															Description: "IP address of the node",
+														},
+														"is_active": schema.BoolAttribute{
+															Computed:    true,
+															Description: "Is the node active",
+														},
+													},
+												},
+											},
+											"node_location": schema.StringAttribute{
+												Computed:    true,
+												Description: "Node location of the AWS node group",
+											},
+											"volume_size": schema.Int64Attribute{
+												Computed:    true,
+												Description: "Volume size of the AWS node group",
+											},
+											"volume_iops": schema.Int64Attribute{
+												Computed:    true,
+												Description: "Volume IOPS of the AWS node group",
+											},
+											"volume_type": schema.StringAttribute{
+												Computed:    true,
+												Description: "Volume type of the AWS node group",
+											},
+											"instance_type": schema.StringAttribute{
+												Computed:    true,
+												Description: "Instance type of the AWS node group",
+											},
+										},
+									},
 								},
-								"azure": schema.ListAttribute{
-									ElementType: types.StringType,
-									Computed:    true,
-									Description: "Azure node groups",
+								"azure": schema.ListNestedAttribute{
+									Computed: true,
+									NestedObject: schema.NestedAttributeObject{
+										Attributes: map[string]schema.Attribute{
+											"region": schema.StringAttribute{
+												Computed:    true,
+												Description: "Region of the AWS node group",
+											},
+											"availability_zones": schema.ListAttribute{
+												ElementType: types.StringType,
+												Computed:    true,
+												Description: "Availability zones of the AWS node group",
+											},
+											"cidr": schema.StringAttribute{
+												Computed:    true,
+												Description: "CIDR of the AWS node group",
+											},
+											"public_subnets": schema.ListAttribute{
+												ElementType: types.StringType,
+												Computed:    true,
+											},
+											"private_subnets": schema.ListAttribute{
+												ElementType: types.StringType,
+												Computed:    true,
+											},
+											"nodes": schema.ListNestedAttribute{
+												Computed: true,
+												NestedObject: schema.NestedAttributeObject{
+													Attributes: map[string]schema.Attribute{
+														"display_name": schema.StringAttribute{
+															Computed:    true,
+															Description: "Display name of the node",
+														},
+														"ip_address": schema.StringAttribute{
+															Computed:    true,
+															Description: "IP address of the node",
+														},
+														"is_active": schema.BoolAttribute{
+															Computed:    true,
+															Description: "Is the node active",
+														},
+													},
+												},
+											},
+											"node_location": schema.StringAttribute{
+												Computed:    true,
+												Description: "Node location of the AWS node group",
+											},
+											"volume_size": schema.NumberAttribute{
+												Computed:    true,
+												Description: "Volume size of the AWS node group",
+											},
+											"volume_iops": schema.NumberAttribute{
+												Computed:    true,
+												Description: "Volume IOPS of the AWS node group",
+											},
+											"volume_type": schema.StringAttribute{
+												Computed:    true,
+												Description: "Volume type of the AWS node group",
+											},
+											"instance_type": schema.StringAttribute{
+												Computed:    true,
+												Description: "Instance type of the AWS node group",
+											},
+										},
+									},
 								},
-								"google": schema.ListAttribute{
-									ElementType: types.StringType,
-									Computed:    true,
-									Description: "Google node groups",
+								"google": schema.ListNestedAttribute{
+									Computed: true,
+									NestedObject: schema.NestedAttributeObject{
+										Attributes: map[string]schema.Attribute{
+											"region": schema.StringAttribute{
+												Computed:    true,
+												Description: "Region of the AWS node group",
+											},
+											"availability_zones": schema.ListAttribute{
+												ElementType: types.StringType,
+												Computed:    true,
+												Description: "Availability zones of the AWS node group",
+											},
+											"cidr": schema.StringAttribute{
+												Computed:    true,
+												Description: "CIDR of the AWS node group",
+											},
+											"public_subnets": schema.ListAttribute{
+												ElementType: types.StringType,
+												Computed:    true,
+											},
+											"private_subnets": schema.ListAttribute{
+												ElementType: types.StringType,
+												Computed:    true,
+											},
+											"nodes": schema.ListNestedAttribute{
+												Computed: true,
+												NestedObject: schema.NestedAttributeObject{
+													Attributes: map[string]schema.Attribute{
+														"display_name": schema.StringAttribute{
+															Computed:    true,
+															Description: "Display name of the node",
+														},
+														"ip_address": schema.StringAttribute{
+															Computed:    true,
+															Description: "IP address of the node",
+														},
+														"is_active": schema.BoolAttribute{
+															Computed:    true,
+															Description: "Is the node active",
+														},
+													},
+												},
+											},
+											"node_location": schema.StringAttribute{
+												Computed:    true,
+												Description: "Node location of the AWS node group",
+											},
+											"volume_size": schema.NumberAttribute{
+												Computed:    true,
+												Description: "Volume size of the AWS node group",
+											},
+											"volume_iops": schema.NumberAttribute{
+												Computed:    true,
+												Description: "Volume IOPS of the AWS node group",
+											},
+											"volume_type": schema.StringAttribute{
+												Computed:    true,
+												Description: "Volume type of the AWS node group",
+											},
+											"instance_type": schema.StringAttribute{
+												Computed:    true,
+												Description: "Instance type of the AWS node group",
+											},
+										},
+									},
 								},
 							},
 						},
@@ -214,6 +448,15 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 
 	for _, cluster := range clusters {
 		var clusterDetails ClusterDetails
+		var clusterComponents []types.String
+		tagElements := make(map[string]attr.Value)
+		for k, v := range cluster.Aws.Tags {
+			tagElements[k] = types.StringValue(v)
+		}
+
+		for _, component := range cluster.Database.Components {
+			clusterComponents = append(clusterComponents, types.StringValue(component))
+		}
 
 		clusterDetails.ID = types.StringValue(cluster.ID)
 		clusterDetails.Name = types.StringValue(cluster.Name)
@@ -222,32 +465,60 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 		clusterDetails.Status = types.StringValue(cluster.Status)
 
 		// Populate AWS details
-		clusterDetails.Aws.RoleArn = types.StringValue(cluster.Aws.RoleArn)
+		clusterDetails.Aws.RoleARN = types.StringValue(cluster.Aws.RoleArn)
+		clusterDetails.Aws.KeyPair = types.StringValue(cluster.Aws.KeyPair)
+		clusterDetails.Aws.Tags, _ = types.MapValue(types.StringType, tagElements)
 
 		// Populate Database details
-		clusterDetails.Database.Name = types.StringValue(cluster.Database.Name)
-		clusterDetails.Database.PgVersion = types.StringValue(cluster.Database.PgVersion)
-		clusterDetails.Database.Scripts = cluster.Database.Scripts
+		clusterDetails.Database.PGVersion = types.StringValue(cluster.Database.PgVersion)
 		clusterDetails.Database.Username = types.StringValue(cluster.Database.Username)
+		clusterDetails.Database.Password = types.StringValue(cluster.Database.Password)
+		clusterDetails.Database.Name = types.StringValue(cluster.Database.Name)
+		clusterDetails.Database.Port = types.Float64Value(cluster.Database.Port)
+		clusterDetails.Database.Components = clusterComponents
+		clusterDetails.Database.Scripts.Init = types.StringValue(cluster.Database.Scripts.Init)
 
 		// Populate Firewall details
-		for _, rule := range cluster.Firewall.Rules {
-			var firewallRuleSources []types.String
-
-			for _, rule := range rule.Sources {
-				firewallRuleSources = append(firewallRuleSources, types.StringValue(rule))
-			}
-			var firewallRule ClusterDetailsFirewallRulesItems0
-			firewallRule.Port = types.Int64Value(rule.Port)
-			firewallRule.Sources = firewallRuleSources
-			firewallRule.Type = types.StringValue(rule.Type)
-			clusterDetails.Firewall.Rules = append(clusterDetails.Firewall.Rules, firewallRule)
-		}
+		// for _, rule := range cluster.Firewall.Rules {
+		// 	var firewallRule FirewallRule
+		// 	for _, source := range rule.Sources {
+		// 		firewallRule.Sources = append(firewallRule.Sources, types.StringValue(source))
+		// 	}
+		// 	firewallRule.Type = types.StringValue(rule.Type)
+		// 	firewallRule.Port = types.Int64Value(rule.Port)
+		// 	clusterDetails.Firewall = append(clusterDetails.Firewall, firewallRule)
+		// }
 
 		// Populate NodeGroups details
-		clusterDetails.NodeGroups.Aws = cluster.NodeGroups.Aws
-		clusterDetails.NodeGroups.Azure = cluster.NodeGroups.Azure
-		clusterDetails.NodeGroups.Google = cluster.NodeGroups.Google
+		clusterDetails.NodeGroups.AWS = make([]NodeGroup, len(cluster.NodeGroups.Aws))
+		for i, ng := range cluster.NodeGroups.Aws {
+			var nodeGroup NodeGroup
+			for _,availabilityZone := range ng.AvailabilityZones {
+				nodeGroup.AvailabilityZones = append(nodeGroup.AvailabilityZones, types.StringValue(availabilityZone))
+			}
+			for _, privateSubnet := range ng.PrivateSubnets {
+				nodeGroup.PrivateSubnets = append(nodeGroup.PrivateSubnets, types.StringValue(privateSubnet))
+			}
+			for _, publicSubnet := range ng.PublicSubnets {
+				nodeGroup.PublicSubnets = append(nodeGroup.PublicSubnets, types.StringValue(publicSubnet))
+			}
+			nodeGroup.Region = types.StringValue(ng.Region)
+			nodeGroup.Cidr = types.StringValue(ng.Cidr)
+			nodeGroup.Nodes = make([]ClusterNode, len(ng.Nodes))
+			for j, node := range ng.Nodes {
+				var nodeDetails ClusterNode
+				nodeDetails.DisplayName = types.StringValue(node.DisplayName)
+				nodeDetails.IPAddress = types.StringValue(node.IPAddress)
+				nodeDetails.IsActive = types.BoolValue(node.IsActive)
+				nodeGroup.Nodes[j] = nodeDetails
+			}
+			nodeGroup.NodeLocation = types.StringValue(ng.NodeLocation)
+			nodeGroup.VolumeSize = types.Int64Value(ng.VolumeSize)
+			nodeGroup.VolumeIOPS = types.Int64Value(ng.VolumeIops)
+			nodeGroup.VolumeType = types.StringValue(ng.VolumeType)
+			nodeGroup.InstanceType = types.StringValue(ng.InstanceType)
+			clusterDetails.NodeGroups.AWS[i] = nodeGroup
+		}
 
 		state.Clusters = append(state.Clusters, clusterDetails)
 	}
