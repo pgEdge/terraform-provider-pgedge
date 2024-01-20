@@ -466,6 +466,54 @@ definitions:
             type: string
       name:
         type: string
+
+  NodeGroup:
+    type: object
+    properties:
+      availability_zones:
+        type: array
+        items:
+          type: string
+      cidr:
+        type: string
+      instance_type:
+        type: string
+      node_location:
+        type: string
+      nodes:
+        type: array
+        items:
+          type: object
+          properties:
+            display_name:
+              type: string
+            ip_address:
+              type: string
+            is_active:
+              type: boolean
+      public_subnets:
+        type: array
+        items:
+          type: string
+      private_subnets:
+        type: array
+        items:
+          type: string
+      region:
+        type: string
+      volume_size:
+        type: integer
+      volume_iops:
+        type: integer
+      volume_type:
+        type: string
+
+  DatabaseScripts:
+    type: object
+    properties:
+      init:
+        type: string
+          
   ClusterCreationRequest:
     type: object
     properties:
@@ -477,49 +525,15 @@ definitions:
           aws:
             type: array
             items:
-              type: object
-              # properties:
-                # availability_zones:
-                #   type: array
-                #   items:
-                #     type: string
-                # cidr:
-                #   type: string
-                # instance_type:
-                #   type: string
-                # node_location:
-                #   type: string
-                # nodes:
-                #   type: array
-                #   items:
-                #     type: object
-                #     properties:
-                #       display_name:
-                #         type: string
-                #       is_active:
-                #         type: boolean
-                # public_subnets:
-                #   type: array
-                #   items:
-                #     type: string
-                # region:
-                #   type: string
-                # volume_size:
-                #   type: integer
-                # volume_type:
-                #   type: string
+              $ref: "#/definitions/NodeGroup"
           azure:
             type: array
             items:
-              type: object
-              # properties:
-                # Define Azure-specific properties here
+              $ref: "#/definitions/NodeGroup"
           google:
             type: array
             items:
-              type: object
-              # properties:
-                # Define Google-specific properties here
+              $ref: "#/definitions/NodeGroup"
       firewall:
         type: object
         properties:
@@ -589,15 +603,15 @@ definitions:
           aws:
             type: array
             items:
-              type: object
+              $ref: "#/definitions/NodeGroup"
           azure:
             type: array
             items:
-              type: object
+              $ref: "#/definitions/NodeGroup"
           google:
             type: array
             items:
-              type: object
+              $ref: "#/definitions/NodeGroup"
       status:
         type: string
   ClusterDetails:
@@ -621,7 +635,7 @@ definitions:
           pg_version:
             type: string
           scripts:
-            type: object
+            $ref: "#/definitions/DatabaseScripts"
           username:
             type: string
       firewall:
@@ -650,14 +664,14 @@ definitions:
           aws:
             type: array
             items:
-              type: object
+              $ref: "#/definitions/NodeGroup"
           azure:
             type: array
             items:
-              type: object
+              $ref: "#/definitions/NodeGroup"
           google:
             type: array
             items:
-              type: object
+              $ref: "#/definitions/NodeGroup"
       status:
         type: string

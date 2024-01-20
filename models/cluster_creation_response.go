@@ -533,22 +533,209 @@ func (m *ClusterCreationResponseFirewallRulesItems0) UnmarshalBinary(b []byte) e
 type ClusterCreationResponseNodeGroups struct {
 
 	// aws
-	Aws []interface{} `json:"aws"`
+	Aws []*NodeGroup `json:"aws"`
 
 	// azure
-	Azure []interface{} `json:"azure"`
+	Azure []*NodeGroup `json:"azure"`
 
 	// google
-	Google []interface{} `json:"google"`
+	Google []*NodeGroup `json:"google"`
 }
 
 // Validate validates this cluster creation response node groups
 func (m *ClusterCreationResponseNodeGroups) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.validateAws(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateAzure(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateGoogle(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
 	return nil
 }
 
-// ContextValidate validates this cluster creation response node groups based on context it is used
+func (m *ClusterCreationResponseNodeGroups) validateAws(formats strfmt.Registry) error {
+	if swag.IsZero(m.Aws) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Aws); i++ {
+		if swag.IsZero(m.Aws[i]) { // not required
+			continue
+		}
+
+		if m.Aws[i] != nil {
+			if err := m.Aws[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("node_groups" + "." + "aws" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("node_groups" + "." + "aws" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *ClusterCreationResponseNodeGroups) validateAzure(formats strfmt.Registry) error {
+	if swag.IsZero(m.Azure) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Azure); i++ {
+		if swag.IsZero(m.Azure[i]) { // not required
+			continue
+		}
+
+		if m.Azure[i] != nil {
+			if err := m.Azure[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("node_groups" + "." + "azure" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("node_groups" + "." + "azure" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *ClusterCreationResponseNodeGroups) validateGoogle(formats strfmt.Registry) error {
+	if swag.IsZero(m.Google) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Google); i++ {
+		if swag.IsZero(m.Google[i]) { // not required
+			continue
+		}
+
+		if m.Google[i] != nil {
+			if err := m.Google[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("node_groups" + "." + "google" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("node_groups" + "." + "google" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+// ContextValidate validate this cluster creation response node groups based on the context it is used
 func (m *ClusterCreationResponseNodeGroups) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.contextValidateAws(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateAzure(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateGoogle(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *ClusterCreationResponseNodeGroups) contextValidateAws(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Aws); i++ {
+
+		if m.Aws[i] != nil {
+
+			if swag.IsZero(m.Aws[i]) { // not required
+				return nil
+			}
+
+			if err := m.Aws[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("node_groups" + "." + "aws" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("node_groups" + "." + "aws" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *ClusterCreationResponseNodeGroups) contextValidateAzure(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Azure); i++ {
+
+		if m.Azure[i] != nil {
+
+			if swag.IsZero(m.Azure[i]) { // not required
+				return nil
+			}
+
+			if err := m.Azure[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("node_groups" + "." + "azure" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("node_groups" + "." + "azure" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *ClusterCreationResponseNodeGroups) contextValidateGoogle(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Google); i++ {
+
+		if m.Google[i] != nil {
+
+			if swag.IsZero(m.Google[i]) { // not required
+				return nil
+			}
+
+			if err := m.Google[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("node_groups" + "." + "google" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("node_groups" + "." + "google" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
 	return nil
 }
 
