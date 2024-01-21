@@ -181,6 +181,7 @@ func (p *PgEdgeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 func (p *PgEdgeProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
 		NewDatabaseResource,
+		NewClusterResource,
 	}
 }
 

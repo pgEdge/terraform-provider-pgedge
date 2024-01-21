@@ -16,15 +16,14 @@ provider "pgedge" {
 data "pgedge_clusters" "tech" {
 }
 
-# resource "pgedge_cluster" "tech" {
-#   cluster = {
-#     name       = "newDatabase101",
-#     cluster_id = "a961031f-5865-43ce-bef1-24461ac16f1a"
-#     options    = ["install:northwind"]
-#   } //, options = ["install:northwind"]
-# }
+resource "pgedge_cluster" "tech" {
+  cluster = {
+    name       = "test10",
+    cloud_account_id = "5984a9ec-7786-4ad9-9739-bbdf386eafec"
+  }
+}
 
 
-# output "tech_clusters" {
-#   value = data.pgedge_clusters.tech
-# }
+output "tech_clusters" {
+  value = data.pgedge_clusters.tech
+}
