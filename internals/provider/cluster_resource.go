@@ -57,10 +57,10 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"cluster": schema.SingleNestedAttribute{
-				Optional: true,
+				Required: true,
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
-							Optional:    true,
+							Computed:    true,
 							Description: "ID of the cluster",
 						},
 						"name": schema.StringAttribute{
@@ -68,15 +68,15 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 							Description: "Name of the cluster",
 						},
 						"cloud_account_id": schema.StringAttribute{
-							Optional:    true,
+							Required:    true,
 							Description: "Cloud account ID of the cluster",
 						},
 						"created_at": schema.StringAttribute{
-							Optional:    true,
+							Computed:    true,
 							Description: "Created at of the cluster",
 						},
 						"status": schema.StringAttribute{
-							Optional:    true,
+							Computed:    true,
 							Description: "Status of the cluster",
 						},
 						// "aws": schema.SingleNestedAttribute{
@@ -463,8 +463,51 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 
 	
+	cluster, err := r.client.GetCluster(ctx, strfmt.UUID(state.Cluster.ID.ValueString()))
+	if err != nil {
+		resp.Diagnostics.AddError(
+			"Error Reading pgEdge Cluster",
+			"Could not read Cluster, unexpected error: "+err.Error(),
+		)
+		return
+	}
 
+	var clusterComponents []types.String
+	for _, component := range cluster.Database.Components {
+		clusterComponents = append(clusterComponents, types.StringValue(component))
+	}
+	tagElements := make(map[string]attr.Value)
+	for k, v := range cluster.Aws.Tags {
+		tagElements[k] = types.StringValue(v)
+	}
+	// awsTags, _:= types.MapValue(types.StringType, tagElements)
 	
+	state.Cluster.ID = types.StringValue(cluster.ID)
+	state.Cluster.Name = types.StringValue(cluster.Name)
+	state.Cluster.CloudAccountID = types.StringValue(cluster.CloudAccountID)
+	state.Cluster.CreatedAt = types.StringValue(cluster.CreatedAt.String())
+	state.Cluster.Status = types.StringValue(cluster.Status)
+	// state.Cluster.Database = Database{
+	// 	PGVersion: types.StringValue(cluster.Database.PgVersion),
+	// 	Username: types.StringValue(cluster.Database.Username),
+	// 	Password: types.StringValue(cluster.Database.Password),
+	// 	Name: types.StringValue(cluster.Database.Name),
+	// 	Port: types.Float64Value(cluster.Database.Port),
+	// 	Components: clusterComponents,
+	// 	Scripts: DatabaseScripts{
+	// 		Init: types.StringValue(cluster.Database.Scripts.Init),
+	// 	},
+	// }
+	// state.Cluster.Aws = AWS{
+	// 	RoleARN: types.StringValue(cluster.Aws.RoleArn),
+	// 	KeyPair: types.StringValue(cluster.Aws.KeyPair),
+	// 	Tags: awsTags,
+	// }
+	// state.Cluster.NodeGroups = NodeGroups{
+	// 	AWS: []NodeGroup{},
+	// 	Azure: []NodeGroup{},
+	// 	Google: []NodeGroup{},
+	// }
 
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
