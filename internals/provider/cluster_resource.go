@@ -51,334 +51,334 @@ func (r *clusterResource) Configure(_ context.Context, req resource.ConfigureReq
 
 func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Computed:    true,
-							Description: "ID of the cluster",
-						},
-						"name": schema.StringAttribute{
-							Required:    true,
-							Description: "Name of the cluster",
-						},
-						"cloud_account_id": schema.StringAttribute{
-							Required:    true,
-							Description: "Cloud account ID of the cluster",
-						},
-						"created_at": schema.StringAttribute{
-							Computed:    true,
-							Description: "Created at of the cluster",
-						},
-						"status": schema.StringAttribute{
-							Computed:    true,
-							Description: "Status of the cluster",
-						},
-						"aws": schema.SingleNestedAttribute{
-							Optional: true,
-							Attributes: map[string]schema.Attribute{
-								"role_arn": schema.StringAttribute{
-									Optional:    true,
-									Description: "Role ARN of the AWS cluster",
-								},
-								"key_pair": schema.StringAttribute{
-									Optional:    true,
-									Description: "Key pair of the AWS cluster",
-								},
-								"tags": schema.MapAttribute{
-									ElementType: types.StringType,
-									Optional:    true,
-									Description: "Tags of the AWS cluster",
-								},
-							},
-						},
-						// "database": schema.SingleNestedAttribute{
-						// 	Optional: true,
-						// 	Attributes: map[string]schema.Attribute{
-						// 		"pg_version": schema.StringAttribute{
-						// 			Optional:    true,
-						// 			Description: "PostgreSQL version of the database",
-						// 		},
-						// 		"username": schema.StringAttribute{
-						// 			Optional:    true,
-						// 			Description: "Username for the database",
-						// 		},
-						// 		"password": schema.StringAttribute{
-						// 			Optional:    true,
-						// 			Description: "Password for the database",
-						// 		},
-						// 		"name": schema.StringAttribute{
-						// 			Optional:    true,
-						// 			Description: "Name of the database",
-						// 		},
-						// 		"port": schema.Float64Attribute{
-						// 			Optional:    true,
-						// 			Description: "Port of the database",
-						// 		},
-						// 		"components": schema.ListAttribute{
-						// 			ElementType: types.StringType,
-						// 			Optional:    true,
-						// 			Description: "Components of the database",
-						// 		},
-						// 		"scripts": schema.SingleNestedAttribute{
-						// 			Optional: true,
-						// 			Attributes: map[string]schema.Attribute{
-						// 				"init": schema.StringAttribute{
-						// 					Optional:    true,
-						// 					Description: "Init script for the database",
-						// 				},
-						// 			},
-						// 		},
-						// 	},
-						// },
-						// "firewall": schema.ListNestedAttribute{
-						// 	Optional: true,
-						// 	NestedObject: schema.NestedAttributeObject{
-						// 		Attributes: map[string]schema.Attribute{
-						// 			"type": schema.StringAttribute{
-						// 				Optional:    true,
-						// 				Description: "Type of the firewall rule",
-						// 			},
-						// 			"port": schema.Int64Attribute{
-						// 				Optional:    true,
-						// 				Description: "Port for the firewall rule",
-						// 			},
-						// 			"sources": schema.ListAttribute{
-						// 				ElementType: types.StringType,
-						// 				Optional:    true,
-						// 				Description: "Sources for the firewall rule",
-						// 			},
-						// 		},
-						// 	},
-						// },
-						// "node_groups": schema.SingleNestedAttribute{
-						// 	Optional: true,
-						// 	Attributes: map[string]schema.Attribute{
-						// 		"aws": schema.ListNestedAttribute{
-						// 			Optional: true,
-						// 			NestedObject: schema.NestedAttributeObject{
-						// 				Attributes: map[string]schema.Attribute{
-						// 					"region": schema.StringAttribute{
-						// 						Optional:    true,
-						// 						Description: "Region of the AWS node group",
-						// 					},
-						// 					"availability_zones": schema.ListAttribute{
-						// 						ElementType: types.StringType,
-						// 						Optional:    true,
-						// 						Description: "Availability zones of the AWS node group",
-						// 					},
-						// 					"cidr": schema.StringAttribute{
-						// 						Optional:    true,
-						// 						Description: "CIDR of the AWS node group",
-						// 					},
-						// 					"public_subnets": schema.ListAttribute{
-						// 						ElementType: types.StringType,
-						// 						Optional:    true,
-						// 					},
-						// 					"private_subnets": schema.ListAttribute{
-						// 						ElementType: types.StringType,
-						// 						Optional:    true,
-						// 					},
-						// 					"nodes": schema.ListNestedAttribute{
-						// 						Optional: true,
-						// 						NestedObject: schema.NestedAttributeObject{
-						// 							Attributes: map[string]schema.Attribute{
-						// 								"display_name": schema.StringAttribute{
-						// 									Optional:    true,
-						// 									Description: "Display name of the node",
-						// 								},
-						// 								"ip_address": schema.StringAttribute{
-						// 									Optional:    true,
-						// 									Description: "IP address of the node",
-						// 								},
-						// 								"is_active": schema.BoolAttribute{
-						// 									Optional:    true,
-						// 									Description: "Is the node active",
-						// 								},
-						// 							},
-						// 						},
-						// 					},
-						// 					"node_location": schema.StringAttribute{
-						// 						Optional:    true,
-						// 						Description: "Node location of the AWS node group",
-						// 					},
-						// 					"volume_size": schema.Int64Attribute{
-						// 						Optional:    true,
-						// 						Description: "Volume size of the AWS node group",
-						// 					},
-						// 					"volume_iops": schema.Int64Attribute{
-						// 						Optional:    true,
-						// 						Description: "Volume IOPS of the AWS node group",
-						// 					},
-						// 					"volume_type": schema.StringAttribute{
-						// 						Optional:    true,
-						// 						Description: "Volume type of the AWS node group",
-						// 					},
-						// 					"instance_type": schema.StringAttribute{
-						// 						Optional:    true,
-						// 						Description: "Instance type of the AWS node group",
-						// 					},
-						// 				},
-						// 			},
-						// 		},
-						// 		"azure": schema.ListNestedAttribute{
-						// 			Optional: true,
-						// 			NestedObject: schema.NestedAttributeObject{
-						// 				Attributes: map[string]schema.Attribute{
-						// 					"region": schema.StringAttribute{
-						// 						Optional:    true,
-						// 						Description: "Region of the AWS node group",
-						// 					},
-						// 					"availability_zones": schema.ListAttribute{
-						// 						ElementType: types.StringType,
-						// 						Optional:    true,
-						// 						Description: "Availability zones of the AWS node group",
-						// 					},
-						// 					"cidr": schema.StringAttribute{
-						// 						Optional:    true,
-						// 						Description: "CIDR of the AWS node group",
-						// 					},
-						// 					"public_subnets": schema.ListAttribute{
-						// 						ElementType: types.StringType,
-						// 						Optional:    true,
-						// 					},
-						// 					"private_subnets": schema.ListAttribute{
-						// 						ElementType: types.StringType,
-						// 						Optional:    true,
-						// 					},
-						// 					"nodes": schema.ListNestedAttribute{
-						// 						Optional: true,
-						// 						NestedObject: schema.NestedAttributeObject{
-						// 							Attributes: map[string]schema.Attribute{
-						// 								"display_name": schema.StringAttribute{
-						// 									Optional:    true,
-						// 									Description: "Display name of the node",
-						// 								},
-						// 								"ip_address": schema.StringAttribute{
-						// 									Optional:    true,
-						// 									Description: "IP address of the node",
-						// 								},
-						// 								"is_active": schema.BoolAttribute{
-						// 									Optional:    true,
-						// 									Description: "Is the node active",
-						// 								},
-						// 							},
-						// 						},
-						// 					},
-						// 					"node_location": schema.StringAttribute{
-						// 						Optional:    true,
-						// 						Description: "Node location of the AWS node group",
-						// 					},
-						// 					"volume_size": schema.NumberAttribute{
-						// 						Optional:    true,
-						// 						Description: "Volume size of the AWS node group",
-						// 					},
-						// 					"volume_iops": schema.NumberAttribute{
-						// 						Optional:    true,
-						// 						Description: "Volume IOPS of the AWS node group",
-						// 					},
-						// 					"volume_type": schema.StringAttribute{
-						// 						Optional:    true,
-						// 						Description: "Volume type of the AWS node group",
-						// 					},
-						// 					"instance_type": schema.StringAttribute{
-						// 						Optional:    true,
-						// 						Description: "Instance type of the AWS node group",
-						// 					},
-						// 				},
-						// 			},
-						// 		},
-						// 		"google": schema.ListNestedAttribute{
-						// 			Optional: true,
-						// 			NestedObject: schema.NestedAttributeObject{
-						// 				Attributes: map[string]schema.Attribute{
-						// 					"region": schema.StringAttribute{
-						// 						Optional:    true,
-						// 						Description: "Region of the AWS node group",
-						// 					},
-						// 					"availability_zones": schema.ListAttribute{
-						// 						ElementType: types.StringType,
-						// 						Optional:    true,
-						// 						Description: "Availability zones of the AWS node group",
-						// 					},
-						// 					"cidr": schema.StringAttribute{
-						// 						Optional:    true,
-						// 						Description: "CIDR of the AWS node group",
-						// 					},
-						// 					"public_subnets": schema.ListAttribute{
-						// 						ElementType: types.StringType,
-						// 						Optional:    true,
-						// 					},
-						// 					"private_subnets": schema.ListAttribute{
-						// 						ElementType: types.StringType,
-						// 						Optional:    true,
-						// 					},
-						// 					"nodes": schema.ListNestedAttribute{
-						// 						Optional: true,
-						// 						NestedObject: schema.NestedAttributeObject{
-						// 							Attributes: map[string]schema.Attribute{
-						// 								"display_name": schema.StringAttribute{
-						// 									Optional:    true,
-						// 									Description: "Display name of the node",
-						// 								},
-						// 								"ip_address": schema.StringAttribute{
-						// 									Optional:    true,
-						// 									Description: "IP address of the node",
-						// 								},
-						// 								"is_active": schema.BoolAttribute{
-						// 									Optional:    true,
-						// 									Description: "Is the node active",
-						// 								},
-						// 							},
-						// 						},
-						// 					},
-						// 					"node_location": schema.StringAttribute{
-						// 						Optional:    true,
-						// 						Description: "Node location of the AWS node group",
-						// 					},
-						// 					"volume_size": schema.NumberAttribute{
-						// 						Optional:    true,
-						// 						Description: "Volume size of the AWS node group",
-						// 					},
-						// 					"volume_iops": schema.NumberAttribute{
-						// 						Optional:    true,
-						// 						Description: "Volume IOPS of the AWS node group",
-						// 					},
-						// 					"volume_type": schema.StringAttribute{
-						// 						Optional:    true,
-						// 						Description: "Volume type of the AWS node group",
-						// 					},
-						// 					"instance_type": schema.StringAttribute{
-						// 						Optional:    true,
-						// 						Description: "Instance type of the AWS node group",
-						// 					},
-						// 				},
-						// 			},
-						// 		},
-						// 	},
-						// },
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				Computed:    true,
+				Description: "ID of the cluster",
+			},
+			"name": schema.StringAttribute{
+				Required:    true,
+				Description: "Name of the cluster",
+			},
+			"cloud_account_id": schema.StringAttribute{
+				Required:    true,
+				Description: "Cloud account ID of the cluster",
+			},
+			"created_at": schema.StringAttribute{
+				Computed:    true,
+				Description: "Created at of the cluster",
+			},
+			"status": schema.StringAttribute{
+				Computed:    true,
+				Description: "Status of the cluster",
+			},
+			"aws": schema.SingleNestedAttribute{
+				Optional: true,
+				Attributes: map[string]schema.Attribute{
+					"role_arn": schema.StringAttribute{
+						Optional: true,
+
+						Description: "Role ARN of the AWS cluster",
 					},
+					"key_pair": schema.StringAttribute{
+						Optional: true,
+
+						Description: "Key pair of the AWS cluster",
+					},
+					"tags": schema.MapAttribute{
+						ElementType: types.StringType,
+						Optional:    true,
+
+						Description: "Tags of the AWS cluster",
+					},
+				},
+			},
+			// "database": schema.SingleNestedAttribute{
+			// 	Optional: true,
+			// 	Attributes: map[string]schema.Attribute{
+			// 		"pg_version": schema.StringAttribute{
+			// 			Optional:    true,
+			// 			Description: "PostgreSQL version of the database",
+			// 		},
+			// 		"username": schema.StringAttribute{
+			// 			Optional:    true,
+			// 			Description: "Username for the database",
+			// 		},
+			// 		"password": schema.StringAttribute{
+			// 			Optional:    true,
+			// 			Description: "Password for the database",
+			// 		},
+			// 		"name": schema.StringAttribute{
+			// 			Optional:    true,
+			// 			Description: "Name of the database",
+			// 		},
+			// 		"port": schema.Float64Attribute{
+			// 			Optional:    true,
+			// 			Description: "Port of the database",
+			// 		},
+			// 		"components": schema.ListAttribute{
+			// 			ElementType: types.StringType,
+			// 			Optional:    true,
+			// 			Description: "Components of the database",
+			// 		},
+			// 		"scripts": schema.SingleNestedAttribute{
+			// 			Optional: true,
+			// 			Attributes: map[string]schema.Attribute{
+			// 				"init": schema.StringAttribute{
+			// 					Optional:    true,
+			// 					Description: "Init script for the database",
+			// 				},
+			// 			},
+			// 		},
+			// 	},
+			// },
+			// "firewall": schema.ListNestedAttribute{
+			// 	Optional: true,
+			// 	NestedObject: schema.NestedAttributeObject{
+			// 		Attributes: map[string]schema.Attribute{
+			// 			"type": schema.StringAttribute{
+			// 				Optional:    true,
+			// 				Description: "Type of the firewall rule",
+			// 			},
+			// 			"port": schema.Int64Attribute{
+			// 				Optional:    true,
+			// 				Description: "Port for the firewall rule",
+			// 			},
+			// 			"sources": schema.ListAttribute{
+			// 				ElementType: types.StringType,
+			// 				Optional:    true,
+			// 				Description: "Sources for the firewall rule",
+			// 			},
+			// 		},
+			// 	},
+			// },
+			// "node_groups": schema.SingleNestedAttribute{
+			// 	Optional: true,
+			// 	Attributes: map[string]schema.Attribute{
+			// 		"aws": schema.ListNestedAttribute{
+			// 			Optional: true,
+			// 			NestedObject: schema.NestedAttributeObject{
+			// 				Attributes: map[string]schema.Attribute{
+			// 					"region": schema.StringAttribute{
+			// 						Optional:    true,
+			// 						Description: "Region of the AWS node group",
+			// 					},
+			// 					"availability_zones": schema.ListAttribute{
+			// 						ElementType: types.StringType,
+			// 						Optional:    true,
+			// 						Description: "Availability zones of the AWS node group",
+			// 					},
+			// 					"cidr": schema.StringAttribute{
+			// 						Optional:    true,
+			// 						Description: "CIDR of the AWS node group",
+			// 					},
+			// 					"public_subnets": schema.ListAttribute{
+			// 						ElementType: types.StringType,
+			// 						Optional:    true,
+			// 					},
+			// 					"private_subnets": schema.ListAttribute{
+			// 						ElementType: types.StringType,
+			// 						Optional:    true,
+			// 					},
+			// 					"nodes": schema.ListNestedAttribute{
+			// 						Optional: true,
+			// 						NestedObject: schema.NestedAttributeObject{
+			// 							Attributes: map[string]schema.Attribute{
+			// 								"display_name": schema.StringAttribute{
+			// 									Optional:    true,
+			// 									Description: "Display name of the node",
+			// 								},
+			// 								"ip_address": schema.StringAttribute{
+			// 									Optional:    true,
+			// 									Description: "IP address of the node",
+			// 								},
+			// 								"is_active": schema.BoolAttribute{
+			// 									Optional:    true,
+			// 									Description: "Is the node active",
+			// 								},
+			// 							},
+			// 						},
+			// 					},
+			// 					"node_location": schema.StringAttribute{
+			// 						Optional:    true,
+			// 						Description: "Node location of the AWS node group",
+			// 					},
+			// 					"volume_size": schema.Int64Attribute{
+			// 						Optional:    true,
+			// 						Description: "Volume size of the AWS node group",
+			// 					},
+			// 					"volume_iops": schema.Int64Attribute{
+			// 						Optional:    true,
+			// 						Description: "Volume IOPS of the AWS node group",
+			// 					},
+			// 					"volume_type": schema.StringAttribute{
+			// 						Optional:    true,
+			// 						Description: "Volume type of the AWS node group",
+			// 					},
+			// 					"instance_type": schema.StringAttribute{
+			// 						Optional:    true,
+			// 						Description: "Instance type of the AWS node group",
+			// 					},
+			// 				},
+			// 			},
+			// 		},
+			// 		"azure": schema.ListNestedAttribute{
+			// 			Optional: true,
+			// 			NestedObject: schema.NestedAttributeObject{
+			// 				Attributes: map[string]schema.Attribute{
+			// 					"region": schema.StringAttribute{
+			// 						Optional:    true,
+			// 						Description: "Region of the AWS node group",
+			// 					},
+			// 					"availability_zones": schema.ListAttribute{
+			// 						ElementType: types.StringType,
+			// 						Optional:    true,
+			// 						Description: "Availability zones of the AWS node group",
+			// 					},
+			// 					"cidr": schema.StringAttribute{
+			// 						Optional:    true,
+			// 						Description: "CIDR of the AWS node group",
+			// 					},
+			// 					"public_subnets": schema.ListAttribute{
+			// 						ElementType: types.StringType,
+			// 						Optional:    true,
+			// 					},
+			// 					"private_subnets": schema.ListAttribute{
+			// 						ElementType: types.StringType,
+			// 						Optional:    true,
+			// 					},
+			// 					"nodes": schema.ListNestedAttribute{
+			// 						Optional: true,
+			// 						NestedObject: schema.NestedAttributeObject{
+			// 							Attributes: map[string]schema.Attribute{
+			// 								"display_name": schema.StringAttribute{
+			// 									Optional:    true,
+			// 									Description: "Display name of the node",
+			// 								},
+			// 								"ip_address": schema.StringAttribute{
+			// 									Optional:    true,
+			// 									Description: "IP address of the node",
+			// 								},
+			// 								"is_active": schema.BoolAttribute{
+			// 									Optional:    true,
+			// 									Description: "Is the node active",
+			// 								},
+			// 							},
+			// 						},
+			// 					},
+			// 					"node_location": schema.StringAttribute{
+			// 						Optional:    true,
+			// 						Description: "Node location of the AWS node group",
+			// 					},
+			// 					"volume_size": schema.NumberAttribute{
+			// 						Optional:    true,
+			// 						Description: "Volume size of the AWS node group",
+			// 					},
+			// 					"volume_iops": schema.NumberAttribute{
+			// 						Optional:    true,
+			// 						Description: "Volume IOPS of the AWS node group",
+			// 					},
+			// 					"volume_type": schema.StringAttribute{
+			// 						Optional:    true,
+			// 						Description: "Volume type of the AWS node group",
+			// 					},
+			// 					"instance_type": schema.StringAttribute{
+			// 						Optional:    true,
+			// 						Description: "Instance type of the AWS node group",
+			// 					},
+			// 				},
+			// 			},
+			// 		},
+			// 		"google": schema.ListNestedAttribute{
+			// 			Optional: true,
+			// 			NestedObject: schema.NestedAttributeObject{
+			// 				Attributes: map[string]schema.Attribute{
+			// 					"region": schema.StringAttribute{
+			// 						Optional:    true,
+			// 						Description: "Region of the AWS node group",
+			// 					},
+			// 					"availability_zones": schema.ListAttribute{
+			// 						ElementType: types.StringType,
+			// 						Optional:    true,
+			// 						Description: "Availability zones of the AWS node group",
+			// 					},
+			// 					"cidr": schema.StringAttribute{
+			// 						Optional:    true,
+			// 						Description: "CIDR of the AWS node group",
+			// 					},
+			// 					"public_subnets": schema.ListAttribute{
+			// 						ElementType: types.StringType,
+			// 						Optional:    true,
+			// 					},
+			// 					"private_subnets": schema.ListAttribute{
+			// 						ElementType: types.StringType,
+			// 						Optional:    true,
+			// 					},
+			// 					"nodes": schema.ListNestedAttribute{
+			// 						Optional: true,
+			// 						NestedObject: schema.NestedAttributeObject{
+			// 							Attributes: map[string]schema.Attribute{
+			// 								"display_name": schema.StringAttribute{
+			// 									Optional:    true,
+			// 									Description: "Display name of the node",
+			// 								},
+			// 								"ip_address": schema.StringAttribute{
+			// 									Optional:    true,
+			// 									Description: "IP address of the node",
+			// 								},
+			// 								"is_active": schema.BoolAttribute{
+			// 									Optional:    true,
+			// 									Description: "Is the node active",
+			// 								},
+			// 							},
+			// 						},
+			// 					},
+			// 					"node_location": schema.StringAttribute{
+			// 						Optional:    true,
+			// 						Description: "Node location of the AWS node group",
+			// 					},
+			// 					"volume_size": schema.NumberAttribute{
+			// 						Optional:    true,
+			// 						Description: "Volume size of the AWS node group",
+			// 					},
+			// 					"volume_iops": schema.NumberAttribute{
+			// 						Optional:    true,
+			// 						Description: "Volume IOPS of the AWS node group",
+			// 					},
+			// 					"volume_type": schema.StringAttribute{
+			// 						Optional:    true,
+			// 						Description: "Volume type of the AWS node group",
+			// 					},
+			// 					"instance_type": schema.StringAttribute{
+			// 						Optional:    true,
+			// 						Description: "Instance type of the AWS node group",
+			// 					},
+			// 				},
+			// 			},
+			// 		},
+			// 	},
+			// },
+		},
 		Description: "Interface with the pgEdge service API for clusters.",
 	}
 }
 
 func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
-	fmt.Println("Read---------------------------------------------------")
-
 	var plan ClusterDetails
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	fmt.Println("Read1---------------------------------------------------")
 
-    clusterCreationRequest := &models.ClusterCreationRequest{
-        Name: plan.Name.ValueString(),
+	clusterCreationRequest := &models.ClusterCreationRequest{
+		Name:           plan.Name.ValueString(),
 		CloudAccountID: plan.CloudAccountID.ValueString(),
 		NodeGroups: &models.ClusterCreationRequestNodeGroups{
 			Aws: []*models.NodeGroup{
 				{
 					InstanceType: "t4g.small",
-					Region: "us-east-1",
+					Region:       "us-east-1",
 					Nodes: []*models.NodeGroupNodesItems0{
 						{
 							DisplayName: "Node1",
@@ -387,18 +387,17 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 					},
 				},
 			},
-			Azure: []*models.NodeGroup{},
+			Azure:  []*models.NodeGroup{},
 			Google: []*models.NodeGroup{},
 		},
 		// Firewall: ,
-    }
+	}
 
-
-    createdCluster, err := r.client.CreateCluster(ctx, clusterCreationRequest)
-    if err != nil {
-        resp.Diagnostics.AddError("Error creating pgEdge Cluster", "Could not create Cluster, unexpected error: "+err.Error())
-        return
-    }
+	createdCluster, err := r.client.CreateCluster(ctx, clusterCreationRequest)
+	if err != nil {
+		resp.Diagnostics.AddError("Error creating pgEdge Cluster", "Could not create Cluster, unexpected error: "+err.Error())
+		return
+	}
 
 	var clusterComponents []types.String
 	for _, component := range createdCluster.Database.Components {
@@ -408,7 +407,6 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	for k, v := range createdCluster.Aws.Tags {
 		tagElements[k] = types.StringValue(v)
 	}
-	awsTags, _:= types.MapValue(types.StringType, tagElements)
 
 	plan.ID = types.StringValue(createdCluster.ID)
 	plan.Name = types.StringValue(createdCluster.Name)
@@ -427,18 +425,31 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	// 	},
 	// }
 
-	plan.Aws = AWS{
-		RoleARN: types.StringValue(createdCluster.Aws.RoleArn),
-		KeyPair: types.StringValue(createdCluster.Aws.KeyPair),
-		Tags: awsTags,
+	awsElementTypes := map[string]attr.Type{
+		"role_arn": types.StringType,
+		"key_pair": types.StringType,
+		"tags": types.MapType{
+			ElemType: types.StringType,
+		},
 	}
+
+	tags, _ := types.MapValue(types.StringType, tagElements)
+
+	awsElements := map[string]attr.Value{
+		"role_arn": types.StringValue(createdCluster.Aws.RoleArn),
+		"key_pair": types.StringValue(createdCluster.Aws.KeyPair),
+		"tags":     tags,
+	}
+
+	awsObjectValue, _ := types.ObjectValue(awsElementTypes, awsElements)
+
+	plan.Aws = awsObjectValue
 	// plan.NodeGroups = NodeGroups{
 	// 	AWS: []NodeGroup{},
 	// 	Azure: []NodeGroup{},
 	// 	Google: []NodeGroup{},
 	// }
 
-		
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -454,7 +465,6 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	
 	cluster, err := r.client.GetCluster(ctx, strfmt.UUID(state.ID.ValueString()))
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -472,8 +482,8 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 	for k, v := range cluster.Aws.Tags {
 		tagElements[k] = types.StringValue(v)
 	}
-	awsTags, _:= types.MapValue(types.StringType, tagElements)
-	
+	// awsTags, _:= types.MapValue(types.StringType, tagElements)
+
 	state.ID = types.StringValue(cluster.ID)
 	state.Name = types.StringValue(cluster.Name)
 	state.CloudAccountID = types.StringValue(cluster.CloudAccountID)
@@ -490,11 +500,26 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 	// 		Init: types.StringValue(cluster.Database.Scripts.Init),
 	// 	},
 	// }
-	state.Aws = AWS{
-		RoleARN: types.StringValue(cluster.Aws.RoleArn),
-		KeyPair: types.StringValue(cluster.Aws.KeyPair),
-		Tags: awsTags,
+
+	awsElementTypes := map[string]attr.Type{
+		"role_arn": types.StringType,
+		"key_pair": types.StringType,
+		"tags": types.MapType{
+			ElemType: types.StringType,
+		},
 	}
+
+	tags, _ := types.MapValue(types.StringType, tagElements)
+
+	awsElements := map[string]attr.Value{
+		"role_arn": types.StringValue(cluster.Aws.RoleArn),
+		"key_pair": types.StringValue(cluster.Aws.KeyPair),
+		"tags":     tags,
+	}
+
+	awsObjectValue, _ := types.ObjectValue(awsElementTypes, awsElements)
+
+	state.Aws = awsObjectValue
 	// state.NodeGroups = NodeGroups{
 	// 	AWS: []NodeGroup{},
 	// 	Azure: []NodeGroup{},

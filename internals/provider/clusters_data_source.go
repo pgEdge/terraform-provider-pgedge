@@ -58,7 +58,7 @@ type ClusterDetails struct {
 	CreatedAt      types.String `tfsdk:"created_at"`
 	Status         types.String `tfsdk:"status"`
 
-	Aws        AWS            `tfsdk:"aws"`
+	Aws        types.Object            `tfsdk:"aws"`
 	// Database   Database       `tfsdk:"database"`
 	// Firewall   []FirewallRule `tfsdk:"firewall"`
 	// NodeGroups NodeGroups     `tfsdk:"node_groups"`
@@ -464,10 +464,25 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 		clusterDetails.CreatedAt = types.StringValue(cluster.CreatedAt.String())
 		clusterDetails.Status = types.StringValue(cluster.Status)
 
-		// Populate AWS details
-		clusterDetails.Aws.RoleARN = types.StringValue(cluster.Aws.RoleArn)
-		clusterDetails.Aws.KeyPair = types.StringValue(cluster.Aws.KeyPair)
-		clusterDetails.Aws.Tags, _ = types.MapValue(types.StringType, tagElements)
+		awsElementTypes := map[string]attr.Type{
+			"role_arn": types.StringType,
+			"key_pair": types.StringType,
+			"tags": types.MapType{
+				ElemType: types.StringType,
+			},
+		}
+
+		tags, _ := types.MapValue(types.StringType, tagElements)
+
+		awsElements := map[string]attr.Value{
+			"role_arn": types.StringValue(cluster.Aws.RoleArn),
+			"key_pair": types.StringValue(cluster.Aws.KeyPair),
+			"tags":     tags,
+		}
+
+		awsObjectValue, _ := types.ObjectValue(awsElementTypes, awsElements)
+
+		clusterDetails.Aws = awsObjectValue
 
 		// Populate Database details
 		// clusterDetails.Database.PGVersion = types.StringValue(cluster.Database.PgVersion)

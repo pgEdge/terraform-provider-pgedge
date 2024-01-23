@@ -17,8 +17,13 @@ data "pgedge_clusters" "tech" {
 }
 
 resource "pgedge_cluster" "tech" {
-    name       = "test13"
+    name       = "test15"
     cloud_account_id = "5984a9ec-7786-4ad9-9739-bbdf386eafec"
+     aws = {
+     key_pair = "asdasd"
+     role_arn = "asdasd"
+     tags     = {"test":"test"}
+       }
 }
 
 
