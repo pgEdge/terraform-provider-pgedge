@@ -58,7 +58,7 @@ type ClusterDetails struct {
 	CreatedAt      types.String `tfsdk:"created_at"`
 	Status         types.String `tfsdk:"status"`
 
-	// Aws        AWS            `tfsdk:"aws"`
+	Aws        AWS            `tfsdk:"aws"`
 	// Database   Database       `tfsdk:"database"`
 	// Firewall   []FirewallRule `tfsdk:"firewall"`
 	// NodeGroups NodeGroups     `tfsdk:"node_groups"`
@@ -143,24 +143,24 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 							Computed:    true,
 							Description: "Status of the cluster",
 						},
-						// "aws": schema.SingleNestedAttribute{
-						// 	Computed: true,
-						// 	Attributes: map[string]schema.Attribute{
-						// 		"role_arn": schema.StringAttribute{
-						// 			Computed:    true,
-						// 			Description: "Role ARN of the AWS cluster",
-						// 		},
-						// 		"key_pair": schema.StringAttribute{
-						// 			Computed:    true,
-						// 			Description: "Key pair of the AWS cluster",
-						// 		},
-						// 		"tags": schema.MapAttribute{
-						// 			ElementType: types.StringType,
-						// 			Computed:    true,
-						// 			Description: "Tags of the AWS cluster",
-						// 		},
-						// 	},
-						// },
+						"aws": schema.SingleNestedAttribute{
+							Computed: true,
+							Attributes: map[string]schema.Attribute{
+								"role_arn": schema.StringAttribute{
+									Computed:    true,
+									Description: "Role ARN of the AWS cluster",
+								},
+								"key_pair": schema.StringAttribute{
+									Computed:    true,
+									Description: "Key pair of the AWS cluster",
+								},
+								"tags": schema.MapAttribute{
+									ElementType: types.StringType,
+									Computed:    true,
+									Description: "Tags of the AWS cluster",
+								},
+							},
+						},
 						// "database": schema.SingleNestedAttribute{
 						// 	Computed: true,
 						// 	Attributes: map[string]schema.Attribute{
@@ -465,9 +465,9 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 		clusterDetails.Status = types.StringValue(cluster.Status)
 
 		// Populate AWS details
-		// clusterDetails.Aws.RoleARN = types.StringValue(cluster.Aws.RoleArn)
-		// clusterDetails.Aws.KeyPair = types.StringValue(cluster.Aws.KeyPair)
-		// clusterDetails.Aws.Tags, _ = types.MapValue(types.StringType, tagElements)
+		clusterDetails.Aws.RoleARN = types.StringValue(cluster.Aws.RoleArn)
+		clusterDetails.Aws.KeyPair = types.StringValue(cluster.Aws.KeyPair)
+		clusterDetails.Aws.Tags, _ = types.MapValue(types.StringType, tagElements)
 
 		// Populate Database details
 		// clusterDetails.Database.PGVersion = types.StringValue(cluster.Database.PgVersion)

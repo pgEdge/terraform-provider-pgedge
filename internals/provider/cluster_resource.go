@@ -26,10 +26,6 @@ type clusterResource struct {
 	client *pgEdge.Client
 }
 
-type clusterResourceModel struct {
-	Cluster ClusterDetails `tfsdk:"cluster"`
-}
-
 func (r *clusterResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
 	resp.TypeName = req.ProviderTypeName + "_cluster"
 }
@@ -55,9 +51,6 @@ func (r *clusterResource) Configure(_ context.Context, req resource.ConfigureReq
 
 func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"cluster": schema.SingleNestedAttribute{
-				Required: true,
 					Attributes: map[string]schema.Attribute{
 						"id": schema.StringAttribute{
 							Computed:    true,
@@ -79,24 +72,24 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 							Computed:    true,
 							Description: "Status of the cluster",
 						},
-						// "aws": schema.SingleNestedAttribute{
-						// 	Optional: true,
-						// 	Attributes: map[string]schema.Attribute{
-						// 		"role_arn": schema.StringAttribute{
-						// 			Optional:    true,
-						// 			Description: "Role ARN of the AWS cluster",
-						// 		},
-						// 		"key_pair": schema.StringAttribute{
-						// 			Optional:    true,
-						// 			Description: "Key pair of the AWS cluster",
-						// 		},
-						// 		"tags": schema.MapAttribute{
-						// 			ElementType: types.StringType,
-						// 			Optional:    true,
-						// 			Description: "Tags of the AWS cluster",
-						// 		},
-						// 	},
-						// },
+						"aws": schema.SingleNestedAttribute{
+							Optional: true,
+							Attributes: map[string]schema.Attribute{
+								"role_arn": schema.StringAttribute{
+									Optional:    true,
+									Description: "Role ARN of the AWS cluster",
+								},
+								"key_pair": schema.StringAttribute{
+									Optional:    true,
+									Description: "Key pair of the AWS cluster",
+								},
+								"tags": schema.MapAttribute{
+									ElementType: types.StringType,
+									Optional:    true,
+									Description: "Tags of the AWS cluster",
+								},
+							},
+						},
 						// "database": schema.SingleNestedAttribute{
 						// 	Optional: true,
 						// 	Attributes: map[string]schema.Attribute{
@@ -363,8 +356,6 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 						// 	},
 						// },
 					},
-			},
-		},
 		Description: "Interface with the pgEdge service API for clusters.",
 	}
 }
@@ -372,7 +363,7 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	fmt.Println("Read---------------------------------------------------")
 
-	var plan clusterResourceModel
+	var plan ClusterDetails
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -381,8 +372,8 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	fmt.Println("Read1---------------------------------------------------")
 
     clusterCreationRequest := &models.ClusterCreationRequest{
-        Name: plan.Cluster.Name.ValueString(),
-		CloudAccountID: plan.Cluster.CloudAccountID.ValueString(),
+        Name: plan.Name.ValueString(),
+		CloudAccountID: plan.CloudAccountID.ValueString(),
 		NodeGroups: &models.ClusterCreationRequestNodeGroups{
 			Aws: []*models.NodeGroup{
 				{
@@ -417,14 +408,14 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	for k, v := range createdCluster.Aws.Tags {
 		tagElements[k] = types.StringValue(v)
 	}
-	// awsTags, _:= types.MapValue(types.StringType, tagElements)
+	awsTags, _:= types.MapValue(types.StringType, tagElements)
 
-	plan.Cluster.ID = types.StringValue(createdCluster.ID)
-	plan.Cluster.Name = types.StringValue(createdCluster.Name)
-	plan.Cluster.CloudAccountID = types.StringValue(createdCluster.CloudAccountID)
-	plan.Cluster.CreatedAt = types.StringValue(createdCluster.CreatedAt.String())
-	plan.Cluster.Status = types.StringValue(createdCluster.Status)
-	// plan.Cluster.Database = Database{
+	plan.ID = types.StringValue(createdCluster.ID)
+	plan.Name = types.StringValue(createdCluster.Name)
+	plan.CloudAccountID = types.StringValue(createdCluster.CloudAccountID)
+	plan.CreatedAt = types.StringValue(createdCluster.CreatedAt.String())
+	plan.Status = types.StringValue(createdCluster.Status)
+	// plan.Database = Database{
 	// 	PGVersion: types.StringValue(createdCluster.Database.PgVersion),
 	// 	Username: types.StringValue(createdCluster.Database.Username),
 	// 	Password: types.StringValue(createdCluster.Database.Password),
@@ -435,12 +426,13 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	// 		Init: types.StringValue(createdCluster.Database.Scripts.Init),
 	// 	},
 	// }
-	// plan.Cluster.Aws = AWS{
-	// 	RoleARN: types.StringValue(createdCluster.Aws.RoleArn),
-	// 	KeyPair: types.StringValue(createdCluster.Aws.KeyPair),
-	// 	Tags: awsTags,
-	// }
-	// plan.Cluster.NodeGroups = NodeGroups{
+
+	plan.Aws = AWS{
+		RoleARN: types.StringValue(createdCluster.Aws.RoleArn),
+		KeyPair: types.StringValue(createdCluster.Aws.KeyPair),
+		Tags: awsTags,
+	}
+	// plan.NodeGroups = NodeGroups{
 	// 	AWS: []NodeGroup{},
 	// 	Azure: []NodeGroup{},
 	// 	Google: []NodeGroup{},
@@ -455,7 +447,7 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 }
 
 func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state clusterResourceModel
+	var state ClusterDetails
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -463,7 +455,7 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 
 	
-	cluster, err := r.client.GetCluster(ctx, strfmt.UUID(state.Cluster.ID.ValueString()))
+	cluster, err := r.client.GetCluster(ctx, strfmt.UUID(state.ID.ValueString()))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Reading pgEdge Cluster",
@@ -480,14 +472,14 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 	for k, v := range cluster.Aws.Tags {
 		tagElements[k] = types.StringValue(v)
 	}
-	// awsTags, _:= types.MapValue(types.StringType, tagElements)
+	awsTags, _:= types.MapValue(types.StringType, tagElements)
 	
-	state.Cluster.ID = types.StringValue(cluster.ID)
-	state.Cluster.Name = types.StringValue(cluster.Name)
-	state.Cluster.CloudAccountID = types.StringValue(cluster.CloudAccountID)
-	state.Cluster.CreatedAt = types.StringValue(cluster.CreatedAt.String())
-	state.Cluster.Status = types.StringValue(cluster.Status)
-	// state.Cluster.Database = Database{
+	state.ID = types.StringValue(cluster.ID)
+	state.Name = types.StringValue(cluster.Name)
+	state.CloudAccountID = types.StringValue(cluster.CloudAccountID)
+	state.CreatedAt = types.StringValue(cluster.CreatedAt.String())
+	state.Status = types.StringValue(cluster.Status)
+	// state.Database = Database{
 	// 	PGVersion: types.StringValue(cluster.Database.PgVersion),
 	// 	Username: types.StringValue(cluster.Database.Username),
 	// 	Password: types.StringValue(cluster.Database.Password),
@@ -498,12 +490,12 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 	// 		Init: types.StringValue(cluster.Database.Scripts.Init),
 	// 	},
 	// }
-	// state.Cluster.Aws = AWS{
-	// 	RoleARN: types.StringValue(cluster.Aws.RoleArn),
-	// 	KeyPair: types.StringValue(cluster.Aws.KeyPair),
-	// 	Tags: awsTags,
-	// }
-	// state.Cluster.NodeGroups = NodeGroups{
+	state.Aws = AWS{
+		RoleARN: types.StringValue(cluster.Aws.RoleArn),
+		KeyPair: types.StringValue(cluster.Aws.KeyPair),
+		Tags: awsTags,
+	}
+	// state.NodeGroups = NodeGroups{
 	// 	AWS: []NodeGroup{},
 	// 	Azure: []NodeGroup{},
 	// 	Google: []NodeGroup{},
@@ -520,14 +512,14 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 }
 
 func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var state clusterResourceModel
+	var state ClusterDetails
 	diags := req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	err := r.client.DeleteCluster(ctx, strfmt.UUID(state.Cluster.ID.ValueString()))
+	err := r.client.DeleteCluster(ctx, strfmt.UUID(state.ID.ValueString()))
 	if err != nil {
 		resp.Diagnostics.AddError(
 			"Error Deleting pgEdge Database",
