@@ -59,7 +59,7 @@ type ClusterDetails struct {
 	Status         types.String `tfsdk:"status"`
 
 	Aws        types.Object            `tfsdk:"aws"`
-	// Database   Database       `tfsdk:"database"`
+	Database   types.Object       `tfsdk:"database"`
 	// Firewall   []FirewallRule `tfsdk:"firewall"`
 	// NodeGroups NodeGroups     `tfsdk:"node_groups"`
 }
@@ -161,45 +161,45 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 								},
 							},
 						},
-						// "database": schema.SingleNestedAttribute{
-						// 	Computed: true,
-						// 	Attributes: map[string]schema.Attribute{
-						// 		"pg_version": schema.StringAttribute{
-						// 			Computed:    true,
-						// 			Description: "PostgreSQL version of the database",
-						// 		},
-						// 		"username": schema.StringAttribute{
-						// 			Computed:    true,
-						// 			Description: "Username for the database",
-						// 		},
-						// 		"password": schema.StringAttribute{
-						// 			Computed:    true,
-						// 			Description: "Password for the database",
-						// 		},
-						// 		"name": schema.StringAttribute{
-						// 			Computed:    true,
-						// 			Description: "Name of the database",
-						// 		},
-						// 		"port": schema.Float64Attribute{
-						// 			Computed:    true,
-						// 			Description: "Port of the database",
-						// 		},
-						// 		"components": schema.ListAttribute{
-						// 			ElementType: types.StringType,
-						// 			Computed:    true,
-						// 			Description: "Components of the database",
-						// 		},
-						// 		"scripts": schema.SingleNestedAttribute{
-						// 			Computed: true,
-						// 			Attributes: map[string]schema.Attribute{
-						// 				"init": schema.StringAttribute{
-						// 					Computed:    true,
-						// 					Description: "Init script for the database",
-						// 				},
-						// 			},
-						// 		},
-						// 	},
-						// },
+						"database": schema.SingleNestedAttribute{
+							Computed: true,
+							Attributes: map[string]schema.Attribute{
+								"pg_version": schema.StringAttribute{
+									Computed:    true,
+									Description: "PostgreSQL version of the database",
+								},
+								"username": schema.StringAttribute{
+									Computed:    true,
+									Description: "Username for the database",
+								},
+								"password": schema.StringAttribute{
+									Computed:    true,
+									Description: "Password for the database",
+								},
+								"name": schema.StringAttribute{
+									Computed:    true,
+									Description: "Name of the database",
+								},
+								"port": schema.Float64Attribute{
+									Computed:    true,
+									Description: "Port of the database",
+								},
+								"components": schema.ListAttribute{
+									ElementType: types.StringType,
+									Computed:    true,
+									Description: "Components of the database",
+								},
+								"scripts": schema.SingleNestedAttribute{
+									Computed: true,
+									Attributes: map[string]schema.Attribute{
+										"init": schema.StringAttribute{
+											Computed:    true,
+											Description: "Init script for the database",
+										},
+									},
+								},
+							},
+						},
 						// "firewall": schema.ListNestedAttribute{
 						// 	Computed: true,
 						// 	NestedObject: schema.NestedAttributeObject{
@@ -448,7 +448,7 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 
 	for _, cluster := range clusters {
 		var clusterDetails ClusterDetails
-		var clusterComponents []types.String
+		var clusterComponents []attr.Value
 		tagElements := make(map[string]attr.Value)
 		for k, v := range cluster.Aws.Tags {
 			tagElements[k] = types.StringValue(v)
@@ -483,6 +483,43 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 		awsObjectValue, _ := types.ObjectValue(awsElementTypes, awsElements)
 
 		clusterDetails.Aws = awsObjectValue
+
+		databaseElementTypes := map[string]attr.Type{
+			"pg_version": types.StringType,
+			"username":   types.StringType,
+			"password":   types.StringType,
+			"name":       types.StringType,
+			"port":       types.Float64Type,
+			"components": types.ListType{
+				ElemType: types.StringType,
+			},
+			"scripts":    types.ObjectType{
+				AttrTypes: map[string]attr.Type{
+					"init": types.StringType,
+				},
+			},
+		}
+	
+		databaseComponent, _ := types.ListValue(types.StringType, clusterComponents)
+		databaseScripts, _ := types.ObjectValue(map[string]attr.Type{
+			"init": types.StringType,
+		}, map[string]attr.Value{
+			"init": types.StringValue(cluster.Database.Scripts.Init),
+		})
+	
+		databaseElements := map[string]attr.Value{
+			"pg_version": types.StringValue(cluster.Database.PgVersion),
+			"username":   types.StringValue(cluster.Database.Username),
+			"password":   types.StringValue(cluster.Database.Password),
+			"name":       types.StringValue(cluster.Database.Name),
+			"port":       types.Float64Value(cluster.Database.Port),
+			"components": databaseComponent,
+			"scripts":    databaseScripts,
+		}
+	
+		databaseObjectValue, _ := types.ObjectValue(databaseElementTypes, databaseElements)
+	
+		clusterDetails.Database = databaseObjectValue
 
 		// Populate Database details
 		// clusterDetails.Database.PGVersion = types.StringValue(cluster.Database.PgVersion)

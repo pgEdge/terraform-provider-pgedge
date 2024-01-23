@@ -93,45 +93,45 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					},
 				},
 			},
-			// "database": schema.SingleNestedAttribute{
-			// 	Optional: true,
-			// 	Attributes: map[string]schema.Attribute{
-			// 		"pg_version": schema.StringAttribute{
-			// 			Optional:    true,
-			// 			Description: "PostgreSQL version of the database",
-			// 		},
-			// 		"username": schema.StringAttribute{
-			// 			Optional:    true,
-			// 			Description: "Username for the database",
-			// 		},
-			// 		"password": schema.StringAttribute{
-			// 			Optional:    true,
-			// 			Description: "Password for the database",
-			// 		},
-			// 		"name": schema.StringAttribute{
-			// 			Optional:    true,
-			// 			Description: "Name of the database",
-			// 		},
-			// 		"port": schema.Float64Attribute{
-			// 			Optional:    true,
-			// 			Description: "Port of the database",
-			// 		},
-			// 		"components": schema.ListAttribute{
-			// 			ElementType: types.StringType,
-			// 			Optional:    true,
-			// 			Description: "Components of the database",
-			// 		},
-			// 		"scripts": schema.SingleNestedAttribute{
-			// 			Optional: true,
-			// 			Attributes: map[string]schema.Attribute{
-			// 				"init": schema.StringAttribute{
-			// 					Optional:    true,
-			// 					Description: "Init script for the database",
-			// 				},
-			// 			},
-			// 		},
-			// 	},
-			// },
+			"database": schema.SingleNestedAttribute{
+				Optional: true,
+				Attributes: map[string]schema.Attribute{
+					"pg_version": schema.StringAttribute{
+						Optional:    true,
+						Description: "PostgreSQL version of the database",
+					},
+					"username": schema.StringAttribute{
+						Optional:    true,
+						Description: "Username for the database",
+					},
+					"password": schema.StringAttribute{
+						Optional:    true,
+						Description: "Password for the database",
+					},
+					"name": schema.StringAttribute{
+						Optional:    true,
+						Description: "Name of the database",
+					},
+					"port": schema.Float64Attribute{
+						Optional:    true,
+						Description: "Port of the database",
+					},
+					"components": schema.ListAttribute{
+						ElementType: types.StringType,
+						Optional:    true,
+						Description: "Components of the database",
+					},
+					"scripts": schema.SingleNestedAttribute{
+						Optional: true,
+						Attributes: map[string]schema.Attribute{
+							"init": schema.StringAttribute{
+								Optional:    true,
+								Description: "Init script for the database",
+							},
+						},
+					},
+				},
+			},
 			// "firewall": schema.ListNestedAttribute{
 			// 	Optional: true,
 			// 	NestedObject: schema.NestedAttributeObject{
@@ -399,7 +399,7 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	var clusterComponents []types.String
+	var clusterComponents []attr.Value
 	for _, component := range createdCluster.Database.Components {
 		clusterComponents = append(clusterComponents, types.StringValue(component))
 	}
@@ -413,6 +413,42 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	plan.CloudAccountID = types.StringValue(createdCluster.CloudAccountID)
 	plan.CreatedAt = types.StringValue(createdCluster.CreatedAt.String())
 	plan.Status = types.StringValue(createdCluster.Status)
+	databaseElementTypes := map[string]attr.Type{
+		"pg_version": types.StringType,
+		"username":   types.StringType,
+		"password":   types.StringType,
+		"name":       types.StringType,
+		"port":       types.Float64Type,
+		"components": types.ListType{
+			ElemType: types.StringType,
+		},
+		"scripts":    types.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"init": types.StringType,
+			},
+		},
+	}
+
+	databaseComponent, _ := types.ListValue(types.StringType, clusterComponents)
+	databaseScripts, _ := types.ObjectValue(map[string]attr.Type{
+		"init": types.StringType,
+	}, map[string]attr.Value{
+		"init": types.StringValue(createdCluster.Database.Scripts.Init),
+	})
+
+	databaseElements := map[string]attr.Value{
+		"pg_version": types.StringValue(createdCluster.Database.PgVersion),
+		"username":   types.StringValue(createdCluster.Database.Username),
+		"password":   types.StringValue(createdCluster.Database.Password),
+		"name":       types.StringValue(createdCluster.Database.Name),
+		"port":       types.Float64Value(createdCluster.Database.Port),
+		"components": databaseComponent,
+		"scripts":    databaseScripts,
+	}
+
+	databaseObjectValue, _ := types.ObjectValue(databaseElementTypes, databaseElements)
+
+	plan.Database = databaseObjectValue
 	// plan.Database = Database{
 	// 	PGVersion: types.StringValue(createdCluster.Database.PgVersion),
 	// 	Username: types.StringValue(createdCluster.Database.Username),
@@ -474,7 +510,7 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	var clusterComponents []types.String
+	var clusterComponents []attr.Value
 	for _, component := range cluster.Database.Components {
 		clusterComponents = append(clusterComponents, types.StringValue(component))
 	}
@@ -489,6 +525,44 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 	state.CloudAccountID = types.StringValue(cluster.CloudAccountID)
 	state.CreatedAt = types.StringValue(cluster.CreatedAt.String())
 	state.Status = types.StringValue(cluster.Status)
+
+	databaseElementTypes := map[string]attr.Type{
+		"pg_version": types.StringType,
+		"username":   types.StringType,
+		"password":   types.StringType,
+		"name":       types.StringType,
+		"port":       types.Float64Type,
+		"components": types.ListType{
+			ElemType: types.StringType,
+		},
+		"scripts":    types.ObjectType{
+			AttrTypes: map[string]attr.Type{
+				"init": types.StringType,
+			},
+		},
+	}
+
+	databaseComponent, _ := types.ListValue(types.StringType, clusterComponents)
+	databaseScripts, _ := types.ObjectValue(map[string]attr.Type{
+		"init": types.StringType,
+	}, map[string]attr.Value{
+		"init": types.StringValue(cluster.Database.Scripts.Init),
+	})
+
+	databaseElements := map[string]attr.Value{
+		"pg_version": types.StringValue(cluster.Database.PgVersion),
+		"username":   types.StringValue(cluster.Database.Username),
+		"password":   types.StringValue(cluster.Database.Password),
+		"name":       types.StringValue(cluster.Database.Name),
+		"port":       types.Float64Value(cluster.Database.Port),
+		"components": databaseComponent,
+		"scripts":    databaseScripts,
+	}
+
+	databaseObjectValue, _ := types.ObjectValue(databaseElementTypes, databaseElements)
+
+	state.Database = databaseObjectValue
+
 	// state.Database = Database{
 	// 	PGVersion: types.StringValue(cluster.Database.PgVersion),
 	// 	Username: types.StringValue(cluster.Database.Username),
