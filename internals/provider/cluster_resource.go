@@ -98,12 +98,10 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Attributes: map[string]schema.Attribute{
 					"aws": schema.ListNestedAttribute{
 						Optional: true,
-						Computed: true,
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"region": schema.StringAttribute{
 									Optional:    true,
-									Computed:    true,
 									Description: "Region of the AWS node group",
 								},
 								"availability_zones": schema.ListAttribute{
@@ -165,140 +163,140 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 							},
 						},
 					},
-					// "azure": schema.ListNestedAttribute{
-					// 	Optional: true,
-					// 	NestedObject: schema.NestedAttributeObject{
-					// 		Attributes: map[string]schema.Attribute{
-					// 			"region": schema.StringAttribute{
-					// 				Optional:    true,
-					// 				Description: "Region of the AWS node group",
-					// 			},
-					// 			"availability_zones": schema.ListAttribute{
-					// 				ElementType: types.StringType,
-					// 				Optional:    true,
-					// 				Description: "Availability zones of the AWS node group",
-					// 			},
-					// 			"cidr": schema.StringAttribute{
-					// 				Optional:    true,
-					// 				Description: "CIDR of the AWS node group",
-					// 			},
-					// 			"public_subnets": schema.ListAttribute{
-					// 				ElementType: types.StringType,
-					// 				Optional:    true,
-					// 			},
-					// 			"private_subnets": schema.ListAttribute{
-					// 				ElementType: types.StringType,
-					// 				Optional:    true,
-					// 			},
-					// 			"nodes": schema.ListNestedAttribute{
-					// 				Optional: true,
-					// 				NestedObject: schema.NestedAttributeObject{
-					// 					Attributes: map[string]schema.Attribute{
-					// 						"display_name": schema.StringAttribute{
-					// 							Optional:    true,
-					// 							Description: "Display name of the node",
-					// 						},
-					// 						"ip_address": schema.StringAttribute{
-					// 							Optional:    true,
-					// 							Description: "IP address of the node",
-					// 						},
-					// 						"is_active": schema.BoolAttribute{
-					// 							Optional:    true,
-					// 							Description: "Is the node active",
-					// 						},
-					// 					},
-					// 				},
-					// 			},
-					// 			"node_location": schema.StringAttribute{
-					// 				Optional:    true,
-					// 				Description: "Node location of the AWS node group",
-					// 			},
-					// 			"volume_size": schema.NumberAttribute{
-					// 				Optional:    true,
-					// 				Description: "Volume size of the AWS node group",
-					// 			},
-					// 			"volume_iops": schema.NumberAttribute{
-					// 				Optional:    true,
-					// 				Description: "Volume IOPS of the AWS node group",
-					// 			},
-					// 			"volume_type": schema.StringAttribute{
-					// 				Optional:    true,
-					// 				Description: "Volume type of the AWS node group",
-					// 			},
-					// 			"instance_type": schema.StringAttribute{
-					// 				Optional:    true,
-					// 				Description: "Instance type of the AWS node group",
-					// 			},
-					// 		},
-					// 	},
-					// },
-					// "google": schema.ListNestedAttribute{
-					// 	Optional: true,
-					// 	NestedObject: schema.NestedAttributeObject{
-					// 		Attributes: map[string]schema.Attribute{
-					// 			"region": schema.StringAttribute{
-					// 				Optional:    true,
-					// 				Description: "Region of the AWS node group",
-					// 			},
-					// 			"availability_zones": schema.ListAttribute{
-					// 				ElementType: types.StringType,
-					// 				Optional:    true,
-					// 				Description: "Availability zones of the AWS node group",
-					// 			},
-					// 			"cidr": schema.StringAttribute{
-					// 				Optional:    true,
-					// 				Description: "CIDR of the AWS node group",
-					// 			},
-					// 			"public_subnets": schema.ListAttribute{
-					// 				ElementType: types.StringType,
-					// 				Optional:    true,
-					// 			},
-					// 			"private_subnets": schema.ListAttribute{
-					// 				ElementType: types.StringType,
-					// 				Optional:    true,
-					// 			},
-					// 			"nodes": schema.ListNestedAttribute{
-					// 				Optional: true,
-					// 				NestedObject: schema.NestedAttributeObject{
-					// 					Attributes: map[string]schema.Attribute{
-					// 						"display_name": schema.StringAttribute{
-					// 							Optional:    true,
-					// 							Description: "Display name of the node",
-					// 						},
-					// 						"ip_address": schema.StringAttribute{
-					// 							Optional:    true,
-					// 							Description: "IP address of the node",
-					// 						},
-					// 						"is_active": schema.BoolAttribute{
-					// 							Optional:    true,
-					// 							Description: "Is the node active",
-					// 						},
-					// 					},
-					// 				},
-					// 			},
-					// 			"node_location": schema.StringAttribute{
-					// 				Optional:    true,
-					// 				Description: "Node location of the AWS node group",
-					// 			},
-					// 			"volume_size": schema.NumberAttribute{
-					// 				Optional:    true,
-					// 				Description: "Volume size of the AWS node group",
-					// 			},
-					// 			"volume_iops": schema.NumberAttribute{
-					// 				Optional:    true,
-					// 				Description: "Volume IOPS of the AWS node group",
-					// 			},
-					// 			"volume_type": schema.StringAttribute{
-					// 				Optional:    true,
-					// 				Description: "Volume type of the AWS node group",
-					// 			},
-					// 			"instance_type": schema.StringAttribute{
-					// 				Optional:    true,
-					// 				Description: "Instance type of the AWS node group",
-					// 			},
-					// 		},
-					// 	},
-					// },
+					"azure": schema.ListNestedAttribute{
+						Optional: true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"region": schema.StringAttribute{
+									Optional:    true,
+									Description: "Region of the AWS node group",
+								},
+								"availability_zones": schema.ListAttribute{
+									ElementType: types.StringType,
+									Optional:    true,
+									Description: "Availability zones of the AWS node group",
+								},
+								"cidr": schema.StringAttribute{
+									Optional:    true,
+									Description: "CIDR of the AWS node group",
+								},
+								"public_subnets": schema.ListAttribute{
+									ElementType: types.StringType,
+									Optional:    true,
+								},
+								"private_subnets": schema.ListAttribute{
+									ElementType: types.StringType,
+									Optional:    true,
+								},
+								"nodes": schema.ListNestedAttribute{
+									Optional: true,
+									NestedObject: schema.NestedAttributeObject{
+										Attributes: map[string]schema.Attribute{
+											"display_name": schema.StringAttribute{
+												Optional:    true,
+												Description: "Display name of the node",
+											},
+											"ip_address": schema.StringAttribute{
+												Optional:    true,
+												Description: "IP address of the node",
+											},
+											"is_active": schema.BoolAttribute{
+												Optional:    true,
+												Description: "Is the node active",
+											},
+										},
+									},
+								},
+								"node_location": schema.StringAttribute{
+									Optional:    true,
+									Description: "Node location of the AWS node group",
+								},
+								"volume_size": schema.Int64Attribute{
+									Optional:    true,
+									Description: "Volume size of the AWS node group",
+								},
+								"volume_iops": schema.Int64Attribute{
+									Optional:    true,
+									Description: "Volume IOPS of the AWS node group",
+								},
+								"volume_type": schema.StringAttribute{
+									Optional:    true,
+									Description: "Volume type of the AWS node group",
+								},
+								"instance_type": schema.StringAttribute{
+									Optional:    true,
+									Description: "Instance type of the AWS node group",
+								},
+							},
+						},
+					},
+					"google": schema.ListNestedAttribute{
+						Optional: true,
+						NestedObject: schema.NestedAttributeObject{
+							Attributes: map[string]schema.Attribute{
+								"region": schema.StringAttribute{
+									Optional:    true,
+									Description: "Region of the AWS node group",
+								},
+								"availability_zones": schema.ListAttribute{
+									ElementType: types.StringType,
+									Optional:    true,
+									Description: "Availability zones of the AWS node group",
+								},
+								"cidr": schema.StringAttribute{
+									Optional:    true,
+									Description: "CIDR of the AWS node group",
+								},
+								"public_subnets": schema.ListAttribute{
+									ElementType: types.StringType,
+									Optional:    true,
+								},
+								"private_subnets": schema.ListAttribute{
+									ElementType: types.StringType,
+									Optional:    true,
+								},
+								"nodes": schema.ListNestedAttribute{
+									Optional: true,
+									NestedObject: schema.NestedAttributeObject{
+										Attributes: map[string]schema.Attribute{
+											"display_name": schema.StringAttribute{
+												Optional:    true,
+												Description: "Display name of the node",
+											},
+											"ip_address": schema.StringAttribute{
+												Optional:    true,
+												Description: "IP address of the node",
+											},
+											"is_active": schema.BoolAttribute{
+												Optional:    true,
+												Description: "Is the node active",
+											},
+										},
+									},
+								},
+								"node_location": schema.StringAttribute{
+									Optional:    true,
+									Description: "Node location of the AWS node group",
+								},
+								"volume_size": schema.Int64Attribute{
+									Optional:    true,
+									Description: "Volume size of the AWS node group",
+								},
+								"volume_iops": schema.Int64Attribute{
+									Optional:    true,
+									Description: "Volume IOPS of the AWS node group",
+								},
+								"volume_type": schema.StringAttribute{
+									Optional:    true,
+									Description: "Volume type of the AWS node group",
+								},
+								"instance_type": schema.StringAttribute{
+									Optional:    true,
+									Description: "Instance type of the AWS node group",
+								},
+							},
+						},
+					},	
 				},
 			},
 		},
@@ -411,9 +409,20 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 				AttrTypes: nodeGroupTypes,
 			},
 		},
+		"azure": types.ListType{
+			ElemType: types.ObjectType{
+				AttrTypes: nodeGroupTypes,
+			},
+		},
+		"google": types.ListType{
+			ElemType: types.ObjectType{
+				AttrTypes: nodeGroupTypes,
+			},
+		},
 	}
 
 	var aws types.List
+	var awsItems []attr.Value
 	for _, nodeGroup := range createdCluster.NodeGroups.Aws {
 		var availabilityZones []attr.Value
 
@@ -470,15 +479,147 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			"instance_type":      types.StringValue(nodeGroup.InstanceType),
 		})
 
-		aws, _ = types.ListValue(types.ObjectType{
-			AttrTypes: nodeGroupTypes,
-		}, []attr.Value{
-			AwsItemsValues,
-		})
+		awsItems = append(awsItems, AwsItemsValues)
 	}
 
+	aws, _ = types.ListValue(types.ObjectType{
+		AttrTypes: nodeGroupTypes,
+	}, awsItems)
+
+	var azure types.List
+	var azureItems []attr.Value
+	for _, nodeGroup := range createdCluster.NodeGroups.Azure {
+		var availabilityZones []attr.Value
+
+		for _, zone := range nodeGroup.AvailabilityZones {
+			availabilityZones = append(availabilityZones, types.StringValue(zone))
+		}
+
+		allAvailabilityZones, _ := types.ListValue(types.StringType, availabilityZones)
+
+		var publicSubnets []attr.Value
+
+		for _, subnet := range nodeGroup.PublicSubnets {
+			publicSubnets = append(publicSubnets, types.StringValue(subnet))
+		}
+
+		allPublicSubnets, _ := types.ListValue(types.StringType, publicSubnets)
+
+		var privateSubnets []attr.Value
+
+		for _, subnet := range nodeGroup.PrivateSubnets {
+			privateSubnets = append(privateSubnets, types.StringValue(subnet))
+		}
+
+		allPrivateSubnets, _ := types.ListValue(types.StringType, privateSubnets)
+
+		var nodes []attr.Value
+
+		for _, node := range nodeGroup.Nodes {
+			nodeDetails := map[string]attr.Value{
+				"display_name": types.StringValue(node.DisplayName),
+				"ip_address":   types.StringValue(node.IPAddress),
+				"is_active":    types.BoolValue(node.IsActive),
+			}
+			nodeObjectValue, _ := types.ObjectValue(nodesNodeGroupType, nodeDetails)
+
+			nodes = append(nodes, nodeObjectValue)
+		}
+
+		allNodes, _ := types.ListValue(types.ObjectType{
+			AttrTypes: nodesNodeGroupType,
+		}, nodes)
+
+		AzureItemsValues, _ := types.ObjectValue(nodeGroupTypes, map[string]attr.Value{
+			"region":             types.StringValue(nodeGroup.Region),
+			"cidr":               types.StringValue(nodeGroup.Cidr),
+			"availability_zones": allAvailabilityZones,
+			"public_subnets":     allPublicSubnets,
+			"private_subnets":    allPrivateSubnets,
+			"nodes":              allNodes,
+			"node_location":      types.StringValue(nodeGroup.NodeLocation),
+			"volume_size":        types.Int64Value(nodeGroup.VolumeSize),
+			"volume_iops":        types.Int64Value(nodeGroup.VolumeIops),
+			"volume_type":        types.StringValue(nodeGroup.VolumeType),
+			"instance_type":      types.StringValue(nodeGroup.InstanceType),
+		})
+
+		azureItems = append(azureItems, AzureItemsValues)
+	}
+
+	azure, _ = types.ListValue(types.ObjectType{
+		AttrTypes: nodeGroupTypes,
+	}, azureItems)
+
+	var google types.List
+	var googleItems []attr.Value
+	for _, nodeGroup := range createdCluster.NodeGroups.Google {
+		var availabilityZones []attr.Value
+
+		for _, zone := range nodeGroup.AvailabilityZones {
+			availabilityZones = append(availabilityZones, types.StringValue(zone))
+		}
+
+		allAvailabilityZones, _ := types.ListValue(types.StringType, availabilityZones)
+
+		var publicSubnets []attr.Value
+
+		for _, subnet := range nodeGroup.PublicSubnets {
+			publicSubnets = append(publicSubnets, types.StringValue(subnet))
+		}
+
+		allPublicSubnets, _ := types.ListValue(types.StringType, publicSubnets)
+
+		var privateSubnets []attr.Value
+
+		for _, subnet := range nodeGroup.PrivateSubnets {
+			privateSubnets = append(privateSubnets, types.StringValue(subnet))
+		}
+
+		allPrivateSubnets, _ := types.ListValue(types.StringType, privateSubnets)
+
+		var nodes []attr.Value
+
+		for _, node := range nodeGroup.Nodes {
+			nodeDetails := map[string]attr.Value{
+				"display_name": types.StringValue(node.DisplayName),
+				"ip_address":   types.StringValue(node.IPAddress),
+				"is_active":    types.BoolValue(node.IsActive),
+			}
+			nodeObjectValue, _ := types.ObjectValue(nodesNodeGroupType, nodeDetails)
+
+			nodes = append(nodes, nodeObjectValue)
+		}
+
+		allNodes, _ := types.ListValue(types.ObjectType{
+			AttrTypes: nodesNodeGroupType,
+		}, nodes)
+
+		GoogleItemsValues, _ := types.ObjectValue(nodeGroupTypes, map[string]attr.Value{
+			"region":             types.StringValue(nodeGroup.Region),
+			"cidr":               types.StringValue(nodeGroup.Cidr),
+			"availability_zones": allAvailabilityZones,
+			"public_subnets":     allPublicSubnets,
+			"private_subnets":    allPrivateSubnets,
+			"nodes":              allNodes,
+			"node_location":      types.StringValue(nodeGroup.NodeLocation),
+			"volume_size":        types.Int64Value(nodeGroup.VolumeSize),
+			"volume_iops":        types.Int64Value(nodeGroup.VolumeIops),
+			"volume_type":        types.StringValue(nodeGroup.VolumeType),
+			"instance_type":      types.StringValue(nodeGroup.InstanceType),
+		})
+
+		googleItems = append(azureItems, GoogleItemsValues)
+	}
+
+	google, _ = types.ListValue(types.ObjectType{
+		AttrTypes: nodeGroupTypes,
+	}, googleItems)
+
 	NodeGroupsValues := map[string]attr.Value{
-		"aws": aws,
+		"aws":   aws,
+		"azure": azure,
+		"google": google,
 	}
 
 	nodeGroupObjectValue, _ := types.ObjectValue(nodeGroupsTypes, NodeGroupsValues)
@@ -587,9 +728,20 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 				AttrTypes: nodeGroupTypes,
 			},
 		},
+		"azure": types.ListType{
+			ElemType: types.ObjectType{
+				AttrTypes: nodeGroupTypes,
+			},
+		},
+		"google": types.ListType{
+			ElemType: types.ObjectType{
+				AttrTypes: nodeGroupTypes,
+			},
+		},
 	}
 
 	var aws types.List
+	var awsItems []attr.Value
 	for _, nodeGroup := range cluster.NodeGroups.Aws {
 		var availabilityZones []attr.Value
 
@@ -646,15 +798,147 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 			"instance_type":      types.StringValue(nodeGroup.InstanceType),
 		})
 
-		aws, _ = types.ListValue(types.ObjectType{
-			AttrTypes: nodeGroupTypes,
-		}, []attr.Value{
-			AwsItemsValues,
-		})
+		awsItems = append(awsItems, AwsItemsValues)
 	}
 
+	aws, _ = types.ListValue(types.ObjectType{
+		AttrTypes: nodeGroupTypes,
+	}, awsItems)
+
+	var azure types.List
+	var azureItems []attr.Value
+	for _, nodeGroup := range cluster.NodeGroups.Azure {
+		var availabilityZones []attr.Value
+
+		for _, zone := range nodeGroup.AvailabilityZones {
+			availabilityZones = append(availabilityZones, types.StringValue(zone))
+		}
+
+		allAvailabilityZones, _ := types.ListValue(types.StringType, availabilityZones)
+
+		var publicSubnets []attr.Value
+
+		for _, subnet := range nodeGroup.PublicSubnets {
+			publicSubnets = append(publicSubnets, types.StringValue(subnet))
+		}
+
+		allPublicSubnets, _ := types.ListValue(types.StringType, publicSubnets)
+
+		var privateSubnets []attr.Value
+
+		for _, subnet := range nodeGroup.PrivateSubnets {
+			privateSubnets = append(privateSubnets, types.StringValue(subnet))
+		}
+
+		allPrivateSubnets, _ := types.ListValue(types.StringType, privateSubnets)
+
+		var nodes []attr.Value
+
+		for _, node := range nodeGroup.Nodes {
+			nodeDetails := map[string]attr.Value{
+				"display_name": types.StringValue(node.DisplayName),
+				"ip_address":   types.StringValue(node.IPAddress),
+				"is_active":    types.BoolValue(node.IsActive),
+			}
+			nodeObjectValue, _ := types.ObjectValue(nodesNodeGroupType, nodeDetails)
+
+			nodes = append(nodes, nodeObjectValue)
+		}
+
+		allNodes, _ := types.ListValue(types.ObjectType{
+			AttrTypes: nodesNodeGroupType,
+		}, nodes)
+
+		AzureItemsValues, _ := types.ObjectValue(nodeGroupTypes, map[string]attr.Value{
+			"region":             types.StringValue(nodeGroup.Region),
+			"cidr":               types.StringValue(nodeGroup.Cidr),
+			"availability_zones": allAvailabilityZones,
+			"public_subnets":     allPublicSubnets,
+			"private_subnets":    allPrivateSubnets,
+			"nodes":              allNodes,
+			"node_location":      types.StringValue(nodeGroup.NodeLocation),
+			"volume_size":        types.Int64Value(nodeGroup.VolumeSize),
+			"volume_iops":        types.Int64Value(nodeGroup.VolumeIops),
+			"volume_type":        types.StringValue(nodeGroup.VolumeType),
+			"instance_type":      types.StringValue(nodeGroup.InstanceType),
+		})
+
+		azureItems = append(azureItems, AzureItemsValues)
+	}
+
+	azure, _ = types.ListValue(types.ObjectType{
+		AttrTypes: nodeGroupTypes,
+	}, azureItems)
+
+	var google types.List
+	var googleItems []attr.Value
+	for _, nodeGroup := range cluster.NodeGroups.Google {
+		var availabilityZones []attr.Value
+
+		for _, zone := range nodeGroup.AvailabilityZones {
+			availabilityZones = append(availabilityZones, types.StringValue(zone))
+		}
+
+		allAvailabilityZones, _ := types.ListValue(types.StringType, availabilityZones)
+
+		var publicSubnets []attr.Value
+
+		for _, subnet := range nodeGroup.PublicSubnets {
+			publicSubnets = append(publicSubnets, types.StringValue(subnet))
+		}
+
+		allPublicSubnets, _ := types.ListValue(types.StringType, publicSubnets)
+
+		var privateSubnets []attr.Value
+
+		for _, subnet := range nodeGroup.PrivateSubnets {
+			privateSubnets = append(privateSubnets, types.StringValue(subnet))
+		}
+
+		allPrivateSubnets, _ := types.ListValue(types.StringType, privateSubnets)
+
+		var nodes []attr.Value
+
+		for _, node := range nodeGroup.Nodes {
+			nodeDetails := map[string]attr.Value{
+				"display_name": types.StringValue(node.DisplayName),
+				"ip_address":   types.StringValue(node.IPAddress),
+				"is_active":    types.BoolValue(node.IsActive),
+			}
+			nodeObjectValue, _ := types.ObjectValue(nodesNodeGroupType, nodeDetails)
+
+			nodes = append(nodes, nodeObjectValue)
+		}
+
+		allNodes, _ := types.ListValue(types.ObjectType{
+			AttrTypes: nodesNodeGroupType,
+		}, nodes)
+
+		GoogleItemsValues, _ := types.ObjectValue(nodeGroupTypes, map[string]attr.Value{
+			"region":             types.StringValue(nodeGroup.Region),
+			"cidr":               types.StringValue(nodeGroup.Cidr),
+			"availability_zones": allAvailabilityZones,
+			"public_subnets":     allPublicSubnets,
+			"private_subnets":    allPrivateSubnets,
+			"nodes":              allNodes,
+			"node_location":      types.StringValue(nodeGroup.NodeLocation),
+			"volume_size":        types.Int64Value(nodeGroup.VolumeSize),
+			"volume_iops":        types.Int64Value(nodeGroup.VolumeIops),
+			"volume_type":        types.StringValue(nodeGroup.VolumeType),
+			"instance_type":      types.StringValue(nodeGroup.InstanceType),
+		})
+
+		googleItems = append(azureItems, GoogleItemsValues)
+	}
+
+	google, _ = types.ListValue(types.ObjectType{
+		AttrTypes: nodeGroupTypes,
+	}, googleItems)
+
 	NodeGroupsValues := map[string]attr.Value{
-		"aws": aws,
+		"aws":   aws,
+		"azure": azure,
+		"google": google,
 	}
 
 	nodeGroupsObjectValue, _ := types.ObjectValue(nodeGroupsTypes, NodeGroupsValues)
