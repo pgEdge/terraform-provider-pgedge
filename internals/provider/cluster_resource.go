@@ -106,62 +106,62 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 									Computed:    true,
 									Description: "Region of the AWS node group",
 								},
-								// "availability_zones": schema.ListAttribute{
-								// 	ElementType: types.StringType,
-								// 	Optional:    true,
-								// 	Description: "Availability zones of the AWS node group",
-								// },
-								// "cidr": schema.StringAttribute{
-								// 	Optional:    true,
-								// 	Description: "CIDR of the AWS node group",
-								// },
-								// "public_subnets": schema.ListAttribute{
-								// 	ElementType: types.StringType,
-								// 	Optional:    true,
-								// },
-								// "private_subnets": schema.ListAttribute{
-								// 	ElementType: types.StringType,
-								// 	Optional:    true,
-								// },
-								// "nodes": schema.ListNestedAttribute{
-								// 	Optional: true,
-								// 	NestedObject: schema.NestedAttributeObject{
-								// 		Attributes: map[string]schema.Attribute{
-								// 			"display_name": schema.StringAttribute{
-								// 				Optional:    true,
-								// 				Description: "Display name of the node",
-								// 			},
-								// 			"ip_address": schema.StringAttribute{
-								// 				Optional:    true,
-								// 				Description: "IP address of the node",
-								// 			},
-								// 			"is_active": schema.BoolAttribute{
-								// 				Optional:    true,
-								// 				Description: "Is the node active",
-								// 			},
-								// 		},
-								// 	},
-								// },
-								// "node_location": schema.StringAttribute{
-								// 	Optional:    true,
-								// 	Description: "Node location of the AWS node group",
-								// },
-								// "volume_size": schema.Int64Attribute{
-								// 	Optional:    true,
-								// 	Description: "Volume size of the AWS node group",
-								// },
-								// "volume_iops": schema.Int64Attribute{
-								// 	Optional:    true,
-								// 	Description: "Volume IOPS of the AWS node group",
-								// },
-								// "volume_type": schema.StringAttribute{
-								// 	Optional:    true,
-								// 	Description: "Volume type of the AWS node group",
-								// },
-								// "instance_type": schema.StringAttribute{
-								// 	Optional:    true,
-								// 	Description: "Instance type of the AWS node group",
-								// },
+								"availability_zones": schema.ListAttribute{
+									ElementType: types.StringType,
+									Optional:    true,
+									Description: "Availability zones of the AWS node group",
+								},
+								"cidr": schema.StringAttribute{
+									Optional:    true,
+									Description: "CIDR of the AWS node group",
+								},
+								"public_subnets": schema.ListAttribute{
+									ElementType: types.StringType,
+									Optional:    true,
+								},
+								"private_subnets": schema.ListAttribute{
+									ElementType: types.StringType,
+									Optional:    true,
+								},
+								"nodes": schema.ListNestedAttribute{
+									Optional: true,
+									NestedObject: schema.NestedAttributeObject{
+										Attributes: map[string]schema.Attribute{
+											"display_name": schema.StringAttribute{
+												Optional:    true,
+												Description: "Display name of the node",
+											},
+											"ip_address": schema.StringAttribute{
+												Optional:    true,
+												Description: "IP address of the node",
+											},
+											"is_active": schema.BoolAttribute{
+												Optional:    true,
+												Description: "Is the node active",
+											},
+										},
+									},
+								},
+								"node_location": schema.StringAttribute{
+									Optional:    true,
+									Description: "Node location of the AWS node group",
+								},
+								"volume_size": schema.Int64Attribute{
+									Optional:    true,
+									Description: "Volume size of the AWS node group",
+								},
+								"volume_iops": schema.Int64Attribute{
+									Optional:    true,
+									Description: "Volume IOPS of the AWS node group",
+								},
+								"volume_type": schema.StringAttribute{
+									Optional:    true,
+									Description: "Volume type of the AWS node group",
+								},
+								"instance_type": schema.StringAttribute{
+									Optional:    true,
+									Description: "Instance type of the AWS node group",
+								},
 							},
 						},
 					},
@@ -375,38 +375,113 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		plan.Firewall = append(plan.Firewall, firewallObjectValue)
 	}
 
+	nodesNodeGroupType := map[string]attr.Type{
+		"display_name": types.StringType,
+		"ip_address":   types.StringType,
+		"is_active":    types.BoolType,
+	}
+
 	nodeGroupTypes := map[string]attr.Type{
+		"region": types.StringType,
+		"cidr":   types.StringType,
+		"availability_zones": types.ListType{
+			ElemType: types.StringType,
+		},
+		"public_subnets": types.ListType{
+			ElemType: types.StringType,
+		},
+		"private_subnets": types.ListType{
+			ElemType: types.StringType,
+		},
+		"nodes": types.ListType{
+			ElemType: types.ObjectType{
+				AttrTypes: nodesNodeGroupType,
+			},
+		},
+		"node_location": types.StringType,
+		"volume_size":   types.Int64Type,
+		"volume_iops":   types.Int64Type,
+		"volume_type":   types.StringType,
+		"instance_type": types.StringType,
+	}
+
+	nodeGroupsTypes := map[string]attr.Type{
 		"aws": types.ListType{
 			ElemType: types.ObjectType{
-				AttrTypes: map[string]attr.Type{
-					"region": types.StringType,
-				},
+				AttrTypes: nodeGroupTypes,
 			},
 		},
 	}
 
 	var aws types.List
 	for _, nodeGroup := range createdCluster.NodeGroups.Aws {
-		AwsItemsValues, _ := types.ObjectValue(map[string]attr.Type{
-			"region": types.StringType,
-		}, map[string]attr.Value{
-			"region": types.StringValue(nodeGroup.Region),
+		var availabilityZones []attr.Value
+
+		for _, zone := range nodeGroup.AvailabilityZones {
+			availabilityZones = append(availabilityZones, types.StringValue(zone))
+		}
+
+		allAvailabilityZones, _ := types.ListValue(types.StringType, availabilityZones)
+
+		var publicSubnets []attr.Value
+
+		for _, subnet := range nodeGroup.PublicSubnets {
+			publicSubnets = append(publicSubnets, types.StringValue(subnet))
+		}
+
+		allPublicSubnets, _ := types.ListValue(types.StringType, publicSubnets)
+
+		var privateSubnets []attr.Value
+
+		for _, subnet := range nodeGroup.PrivateSubnets {
+			privateSubnets = append(privateSubnets, types.StringValue(subnet))
+		}
+
+		allPrivateSubnets, _ := types.ListValue(types.StringType, privateSubnets)
+
+		var nodes []attr.Value
+
+		for _, node := range nodeGroup.Nodes {
+			nodeDetails := map[string]attr.Value{
+				"display_name": types.StringValue(node.DisplayName),
+				"ip_address":   types.StringValue(node.IPAddress),
+				"is_active":    types.BoolValue(node.IsActive),
+			}
+			nodeObjectValue, _ := types.ObjectValue(nodesNodeGroupType, nodeDetails)
+
+			nodes = append(nodes, nodeObjectValue)
+		}
+
+		allNodes, _ := types.ListValue(types.ObjectType{
+			AttrTypes: nodesNodeGroupType,
+		}, nodes)
+
+		AwsItemsValues, _ := types.ObjectValue(nodeGroupTypes, map[string]attr.Value{
+			"region":             types.StringValue(nodeGroup.Region),
+			"cidr":               types.StringValue(nodeGroup.Cidr),
+			"availability_zones": allAvailabilityZones,
+			"public_subnets":     allPublicSubnets,
+			"private_subnets":    allPrivateSubnets,
+			"nodes":              allNodes,
+			"node_location":      types.StringValue(nodeGroup.NodeLocation),
+			"volume_size":        types.Int64Value(nodeGroup.VolumeSize),
+			"volume_iops":        types.Int64Value(nodeGroup.VolumeIops),
+			"volume_type":        types.StringValue(nodeGroup.VolumeType),
+			"instance_type":      types.StringValue(nodeGroup.InstanceType),
 		})
 
 		aws, _ = types.ListValue(types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"region": types.StringType,
-			},
+			AttrTypes: nodeGroupTypes,
 		}, []attr.Value{
 			AwsItemsValues,
 		})
 	}
 
-	NodeGroupValues := map[string]attr.Value{
+	NodeGroupsValues := map[string]attr.Value{
 		"aws": aws,
 	}
 
-	nodeGroupObjectValue, _ := types.ObjectValue(nodeGroupTypes, NodeGroupValues)
+	nodeGroupObjectValue, _ := types.ObjectValue(nodeGroupsTypes, NodeGroupsValues)
 
 	plan.NodeGroups = nodeGroupObjectValue
 
@@ -476,40 +551,115 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		state.Firewall = append(state.Firewall, firewallObjectValue)
 	}
 
+	nodesNodeGroupType := map[string]attr.Type{
+		"display_name": types.StringType,
+		"ip_address":   types.StringType,
+		"is_active":    types.BoolType,
+	}
+
 	nodeGroupTypes := map[string]attr.Type{
+		"region": types.StringType,
+		"cidr":   types.StringType,
+		"availability_zones": types.ListType{
+			ElemType: types.StringType,
+		},
+		"public_subnets": types.ListType{
+			ElemType: types.StringType,
+		},
+		"private_subnets": types.ListType{
+			ElemType: types.StringType,
+		},
+		"nodes": types.ListType{
+			ElemType: types.ObjectType{
+				AttrTypes: nodesNodeGroupType,
+			},
+		},
+		"node_location": types.StringType,
+		"volume_size":   types.Int64Type,
+		"volume_iops":   types.Int64Type,
+		"volume_type":   types.StringType,
+		"instance_type": types.StringType,
+	}
+
+	nodeGroupsTypes := map[string]attr.Type{
 		"aws": types.ListType{
 			ElemType: types.ObjectType{
-				AttrTypes: map[string]attr.Type{
-					"region": types.StringType,
-				},
+				AttrTypes: nodeGroupTypes,
 			},
 		},
 	}
 
 	var aws types.List
 	for _, nodeGroup := range cluster.NodeGroups.Aws {
-		AwsItemsValues, _ := types.ObjectValue(map[string]attr.Type{
-			"region": types.StringType,
-		}, map[string]attr.Value{
-			"region": types.StringValue(nodeGroup.Region),
+		var availabilityZones []attr.Value
+
+		for _, zone := range nodeGroup.AvailabilityZones {
+			availabilityZones = append(availabilityZones, types.StringValue(zone))
+		}
+
+		allAvailabilityZones, _ := types.ListValue(types.StringType, availabilityZones)
+
+		var publicSubnets []attr.Value
+
+		for _, subnet := range nodeGroup.PublicSubnets {
+			publicSubnets = append(publicSubnets, types.StringValue(subnet))
+		}
+
+		allPublicSubnets, _ := types.ListValue(types.StringType, publicSubnets)
+
+		var privateSubnets []attr.Value
+
+		for _, subnet := range nodeGroup.PrivateSubnets {
+			privateSubnets = append(privateSubnets, types.StringValue(subnet))
+		}
+
+		allPrivateSubnets, _ := types.ListValue(types.StringType, privateSubnets)
+
+		var nodes []attr.Value
+
+		for _, node := range nodeGroup.Nodes {
+			nodeDetails := map[string]attr.Value{
+				"display_name": types.StringValue(node.DisplayName),
+				"ip_address":   types.StringValue(node.IPAddress),
+				"is_active":    types.BoolValue(node.IsActive),
+			}
+			nodeObjectValue, _ := types.ObjectValue(nodesNodeGroupType, nodeDetails)
+
+			nodes = append(nodes, nodeObjectValue)
+		}
+
+		allNodes, _ := types.ListValue(types.ObjectType{
+			AttrTypes: nodesNodeGroupType,
+		}, nodes)
+
+		AwsItemsValues, _ := types.ObjectValue(nodeGroupTypes, map[string]attr.Value{
+			"region":             types.StringValue(nodeGroup.Region),
+			"cidr":               types.StringValue(nodeGroup.Cidr),
+			"availability_zones": allAvailabilityZones,
+			"public_subnets":     allPublicSubnets,
+			"private_subnets":    allPrivateSubnets,
+			"nodes":              allNodes,
+			"node_location":      types.StringValue(nodeGroup.NodeLocation),
+			"volume_size":        types.Int64Value(nodeGroup.VolumeSize),
+			"volume_iops":        types.Int64Value(nodeGroup.VolumeIops),
+			"volume_type":        types.StringValue(nodeGroup.VolumeType),
+			"instance_type":      types.StringValue(nodeGroup.InstanceType),
 		})
 
 		aws, _ = types.ListValue(types.ObjectType{
-			AttrTypes: map[string]attr.Type{
-				"region": types.StringType,
-			},
+			AttrTypes: nodeGroupTypes,
 		}, []attr.Value{
 			AwsItemsValues,
 		})
 	}
 
-	NodeGroupValues := map[string]attr.Value{
+	NodeGroupsValues := map[string]attr.Value{
 		"aws": aws,
 	}
 
-	nodeGroupObjectValue, _ := types.ObjectValue(nodeGroupTypes, NodeGroupValues)
+	nodeGroupsObjectValue, _ := types.ObjectValue(nodeGroupsTypes, NodeGroupsValues)
 
-	state.NodeGroups = nodeGroupObjectValue
+	state.NodeGroups = nodeGroupsObjectValue
 
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
