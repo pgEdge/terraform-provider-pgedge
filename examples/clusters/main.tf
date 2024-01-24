@@ -15,7 +15,7 @@ data "pgedge_clusters" "tech" {
 }
 
 resource "pgedge_cluster" "tech" {
-    name       = "test1"
+    name       = "test121"
     cloud_account_id = ""
 }
 
