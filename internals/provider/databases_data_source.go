@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 
@@ -58,8 +59,8 @@ type DatabaseDetails struct {
 	UpdatedAt types.String `tfsdk:"updated_at"`
 	Status    types.String `tfsdk:"status"`
 	ClusterID types.String `tfsdk:"cluster_id"`
-	// Nodes     []Node `tfsdk:"nodes"`
-	Options   []types.String  `tfsdk:"options"`
+	Nodes     types.List   `tfsdk:"nodes"`
+	Options   []types.String   `tfsdk:"options"`
 }
 
 type Node struct {
@@ -125,71 +126,71 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Optional:    true,
 							Description: "Options for creating the database",
 						},
-						// "nodes": schema.ListNestedAttribute{
-						// 	Optional: true,
-						// 	NestedObject: schema.NestedAttributeObject{
-						// 		Attributes: map[string]schema.Attribute{
-						// 			"name": schema.StringAttribute{
-						// 				Computed:    true,
-						// 				Description: "Name of the node",
-						// 			},
-						// 			"connection": schema.SingleNestedAttribute{
-						// 				Computed: true,
-						// 				Attributes: map[string]schema.Attribute{
-						// 					"database": schema.StringAttribute{
-						// 						Computed:    true,
-						// 						Description: "Database of the node",
-						// 					},
-						// 					"host": schema.StringAttribute{
-						// 						Computed:    true,
-						// 						Description: "Host of the node",
-						// 					},
-						// 					"password": schema.StringAttribute{
-						// 						Computed:    true,
-						// 						Description: "Password of the node",
-						// 					},
-						// 					"port": schema.NumberAttribute{
-						// 						Computed:    true,
-						// 						Description: "Port of the node",
-						// 					},
-						// 					"username": schema.StringAttribute{
-						// 						Computed:    true,
-						// 						Description: "Username of the node",
-						// 					},
-						// 				},
-						// 			},
-						// 			"location": schema.SingleNestedAttribute{
-						// 				Computed: true,
-						// 				Attributes: map[string]schema.Attribute{
-						// 					"code": schema.StringAttribute{
-						// 						Computed:    true,
-						// 						Description: "Code of the location",
-						// 					},
-						// 					"country": schema.StringAttribute{
-						// 						Computed:    true,
-						// 						Description: "Country of the location",
-						// 					},
-						// 					"latitude": schema.NumberAttribute{
-						// 						Computed:    true,
-						// 						Description: "Latitude of the location",
-						// 					},
-						// 					"longitude": schema.NumberAttribute{
-						// 						Computed:    true,
-						// 						Description: "Longitude of the location",
-						// 					},
-						// 					"name": schema.StringAttribute{
-						// 						Computed:    true,
-						// 						Description: "Name of the location",
-						// 					},
-						// 					"region": schema.StringAttribute{
-						// 						Computed:    true,
-						// 						Description: "Region of the location",
-						// 					},
-						// 				},
-						// 			},
-						// 		},
-						// 	},
-						// },
+						"nodes": schema.ListNestedAttribute{
+							Optional: true,
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"name": schema.StringAttribute{
+										Computed:    true,
+										Description: "Name of the node",
+									},
+									"connection": schema.SingleNestedAttribute{
+										Computed: true,
+										Attributes: map[string]schema.Attribute{
+											"database": schema.StringAttribute{
+												Computed:    true,
+												Description: "Database of the node",
+											},
+											"host": schema.StringAttribute{
+												Computed:    true,
+												Description: "Host of the node",
+											},
+											"password": schema.StringAttribute{
+												Computed:    true,
+												Description: "Password of the node",
+											},
+											"port": schema.Int64Attribute{
+												Computed:    true,
+												Description: "Port of the node",
+											},
+											"username": schema.StringAttribute{
+												Computed:    true,
+												Description: "Username of the node",
+											},
+										},
+									},
+									"location": schema.SingleNestedAttribute{
+										Computed: true,
+										Attributes: map[string]schema.Attribute{
+											"code": schema.StringAttribute{
+												Computed:    true,
+												Description: "Code of the location",
+											},
+											"country": schema.StringAttribute{
+												Computed:    true,
+												Description: "Country of the location",
+											},
+											"latitude": schema.Float64Attribute{
+												Computed:    true,
+												Description: "Latitude of the location",
+											},
+											"longitude": schema.Float64Attribute{
+												Computed:    true,
+												Description: "Longitude of the location",
+											},
+											"name": schema.StringAttribute{
+												Computed:    true,
+												Description: "Name of the location",
+											},
+											"region": schema.StringAttribute{
+												Computed:    true,
+												Description: "Region of the location",
+											},
+										},
+									},
+								},
+							},
+						},
 					},
 				},
 			},
@@ -210,9 +211,36 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		return
 	}
 
+	nodeConnectionType := map[string]attr.Type{
+		"database": types.StringType,
+		"host":     types.StringType,
+		"password": types.StringType,
+		"port":     types.Int64Type,
+		"username": types.StringType,
+	}
+
+	NodeLocationType := map[string]attr.Type{
+		"code":      types.StringType,
+		"country":   types.StringType,
+		"latitude":  types.Float64Type,
+		"longitude": types.Float64Type,
+		"name":      types.StringType,
+		"region":    types.StringType,
+	}
+
+	nodeType := map[string]attr.Type{
+		"name": types.StringType,
+		"connection": types.ObjectType{
+			AttrTypes: nodeConnectionType,
+		},
+		"location": types.ObjectType{
+			AttrTypes: NodeLocationType,
+		},
+	}
+
 	for _, db := range databases {
 		var database DatabaseDetails
-
+		var nodes []attr.Value
 		database.ID = types.StringValue(db.ID.String())
 		database.Name = types.StringValue(db.Name)
 		database.Domain = types.StringValue(db.Domain)
@@ -220,25 +248,38 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		database.UpdatedAt = types.StringValue(db.UpdatedAt.String())
 		database.Status = types.StringValue(db.Status)
 
-		// for _, node := range db.Nodes {
-		// 	var n Node
-		// 	n.Name = node.Name
+		for _, node := range db.Nodes {
+			nodeConnectionValue, _ := types.ObjectValue(nodeConnectionType, map[string]attr.Value{
+				"database": types.StringValue(node.Connection.Database),
+				"host":     types.StringValue(node.Connection.Host),
+				"password": types.StringValue(node.Connection.Password),
+				"port":     types.Int64Value(node.Connection.Port),
+				"username": types.StringValue(node.Connection.Username),
+			})
 
-		// 	n.Connection.Database = node.Connection.Database
-		// 	n.Connection.Host = node.Connection.Host
-		// 	n.Connection.Password = node.Connection.Password
-		// 	n.Connection.Port = node.Connection.Port
-		// 	n.Connection.Username = node.Connection.Username
+			nodeLocationValue, _ := types.ObjectValue(NodeLocationType, map[string]attr.Value{
+				"code":      types.StringValue(node.Location.Code),
+				"country":   types.StringValue(node.Location.Country),
+				"latitude":  types.Float64Value(node.Location.Latitude),
+				"longitude": types.Float64Value(node.Location.Longitude),
+				"name":      types.StringValue(node.Location.Name),
+				"region":    types.StringValue(node.Location.Region),
+			})
 
-		// 	n.Location.Code = node.Location.Code
-		// 	n.Location.Country = node.Location.Country
-		// 	n.Location.Latitude = node.Location.Latitude
-		// 	n.Location.Longitude = node.Location.Longitude
-		// 	n.Location.Name = node.Location.Name
-		// 	n.Location.Region = node.Location.Region
+			nodeValue := map[string]attr.Value{
+				"name": types.StringValue(node.Name),
+				"connection": nodeConnectionValue,
+				"location":   nodeLocationValue,
+			}
+			
 
-		// 	database.Nodes = append(database.Nodes, n)
-		// }
+			node, _ := types.ObjectValue(nodeType, nodeValue)
+			nodes = append(nodes, node)
+		}
+
+		database.Nodes, _ = types.ListValue(types.ObjectType{
+			AttrTypes: nodeType,
+		}, nodes)
 
 		state.Databases = append(state.Databases, database)
 	}
