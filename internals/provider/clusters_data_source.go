@@ -58,10 +58,10 @@ type ClusterDetails struct {
 	CreatedAt      types.String `tfsdk:"created_at"`
 	Status         types.String `tfsdk:"status"`
 
-	Aws        types.Object            `tfsdk:"aws"`
-	Database   types.Object       `tfsdk:"database"`
-	// Firewall   []FirewallRule `tfsdk:"firewall"`
-	// NodeGroups NodeGroups     `tfsdk:"node_groups"`
+	// Aws        types.Object   `tfsdk:"aws"`
+	// Database   types.Object   `tfsdk:"database"`
+	Firewall   []types.Object `tfsdk:"firewall"`
+	// NodeGroups types.Object   `tfsdk:"node_groups"`
 }
 
 type AWS struct {
@@ -87,7 +87,7 @@ type DatabaseScripts struct {
 type FirewallRule struct {
 	Type    types.String   `tfsdk:"type,omitempty"`
 	Port    types.Int64    `tfsdk:"port,omitempty"`
-	Sources []types.String `tfsdk:"sources"`
+	Sources types.List `tfsdk:"sources"`
 }
 
 type ClusterNode struct {
@@ -97,17 +97,17 @@ type ClusterNode struct {
 }
 
 type NodeGroup struct {
-	Region            types.String   `tfsdk:"region"`
-	AvailabilityZones []types.String `tfsdk:"availability_zones"`
-	Cidr              types.String   `tfsdk:"cidr"`
-	PublicSubnets     []types.String `tfsdk:"public_subnets"`
-	PrivateSubnets    []types.String `tfsdk:"private_subnets"`
-	Nodes             []ClusterNode  `tfsdk:"nodes"`
-	NodeLocation      types.String   `tfsdk:"node_location"`
-	VolumeSize        types.Int64   `tfsdk:"volume_size"`
-	VolumeIOPS        types.Int64   `tfsdk:"volume_iops"`
-	VolumeType        types.String   `tfsdk:"volume_type"`
-	InstanceType      types.String   `tfsdk:"instance_type"`
+	Region            types.String `tfsdk:"region"`
+	AvailabilityZones types.List   `tfsdk:"availability_zones"`
+	Cidr              types.String `tfsdk:"cidr"`
+	PublicSubnets     types.List   `tfsdk:"public_subnets"`
+	PrivateSubnets    types.List   `tfsdk:"private_subnets"`
+	Nodes             types.List   `tfsdk:"nodes"`
+	NodeLocation      types.String `tfsdk:"node_location"`
+	VolumeSize        types.Int64  `tfsdk:"volume_size"`
+	VolumeIOPS        types.Int64  `tfsdk:"volume_iops"`
+	VolumeType        types.String `tfsdk:"volume_type"`
+	InstanceType      types.String `tfsdk:"instance_type"`
 }
 
 type NodeGroups struct {
@@ -143,83 +143,26 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 							Computed:    true,
 							Description: "Status of the cluster",
 						},
-						"aws": schema.SingleNestedAttribute{
+						"firewall": schema.ListNestedAttribute{
 							Computed: true,
-							Attributes: map[string]schema.Attribute{
-								"role_arn": schema.StringAttribute{
-									Computed:    true,
-									Description: "Role ARN of the AWS cluster",
-								},
-								"key_pair": schema.StringAttribute{
-									Computed:    true,
-									Description: "Key pair of the AWS cluster",
-								},
-								"tags": schema.MapAttribute{
-									ElementType: types.StringType,
-									Computed:    true,
-									Description: "Tags of the AWS cluster",
-								},
-							},
-						},
-						"database": schema.SingleNestedAttribute{
-							Computed: true,
-							Attributes: map[string]schema.Attribute{
-								"pg_version": schema.StringAttribute{
-									Computed:    true,
-									Description: "PostgreSQL version of the database",
-								},
-								"username": schema.StringAttribute{
-									Computed:    true,
-									Description: "Username for the database",
-								},
-								"password": schema.StringAttribute{
-									Computed:    true,
-									Description: "Password for the database",
-								},
-								"name": schema.StringAttribute{
-									Computed:    true,
-									Description: "Name of the database",
-								},
-								"port": schema.Float64Attribute{
-									Computed:    true,
-									Description: "Port of the database",
-								},
-								"components": schema.ListAttribute{
-									ElementType: types.StringType,
-									Computed:    true,
-									Description: "Components of the database",
-								},
-								"scripts": schema.SingleNestedAttribute{
-									Computed: true,
-									Attributes: map[string]schema.Attribute{
-										"init": schema.StringAttribute{
-											Computed:    true,
-											Description: "Init script for the database",
-										},
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: map[string]schema.Attribute{
+									"type": schema.StringAttribute{
+										Computed:    true,
+										Description: "Type of the firewall rule",
+									},
+									"port": schema.Int64Attribute{
+										Computed:    true,
+										Description: "Port for the firewall rule",
+									},
+									"sources": schema.ListAttribute{
+										ElementType: types.StringType,
+										Computed:    true,
+										Description: "Sources for the firewall rule",
 									},
 								},
 							},
 						},
-						// "firewall": schema.ListNestedAttribute{
-						// 	Computed: true,
-						// 	NestedObject: schema.NestedAttributeObject{
-						// 		Attributes: map[string]schema.Attribute{
-						// 			"type": schema.StringAttribute{
-						// 				Computed:    true,
-						// 				Description: "Type of the firewall rule",
-						// 			},
-						// 			"port": schema.Int64Attribute{
-						// 				Computed:    true,
-						// 				Description: "Port for the firewall rule",
-						// 			},
-						// 			"sources": schema.ListAttribute{
-						// 				ElementType: types.StringType,
-						// 				Computed:    true,
-						// 				Description: "Sources for the firewall rule",
-						// 			},
-						// 		},
-						// 	},
-						// },
 						// "node_groups": schema.SingleNestedAttribute{
 						// 	Computed: true,
 						// 	Attributes: map[string]schema.Attribute{
@@ -464,113 +407,207 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 		clusterDetails.CreatedAt = types.StringValue(cluster.CreatedAt.String())
 		clusterDetails.Status = types.StringValue(cluster.Status)
 
-		awsElementTypes := map[string]attr.Type{
-			"role_arn": types.StringType,
-			"key_pair": types.StringType,
-			"tags": types.MapType{
+		firewallElementTypes := map[string]attr.Type{
+			"type": types.StringType,
+			"port": types.Int64Type,
+			"sources": types.ListType{
 				ElemType: types.StringType,
 			},
 		}
 
-		tags, _ := types.MapValue(types.StringType, tagElements)
+		for _, rule := range cluster.Firewall.Rules {
+			var firewallRule FirewallRule
+			var firewallSources []attr.Value
 
-		awsElements := map[string]attr.Value{
-			"role_arn": types.StringValue(cluster.Aws.RoleArn),
-			"key_pair": types.StringValue(cluster.Aws.KeyPair),
-			"tags":     tags,
+			for _, source := range rule.Sources {
+				firewallSources = append(firewallSources, types.StringValue(source))
+			}
+
+			firewallRule.Type = types.StringValue(rule.Type)
+			firewallRule.Port = types.Int64Value(rule.Port)
+			firewallRule.Sources, _ = types.ListValue(types.StringType, firewallSources)
+
+			firewallElements := map[string]attr.Value{
+				"type": types.StringValue(rule.Type),
+				"port": types.Int64Value(rule.Port),
+				"sources": firewallRule.Sources,
+			}
+
+			firewallObjectValue, _ := types.ObjectValue(firewallElementTypes, firewallElements)
+
+			clusterDetails.Firewall = append(clusterDetails.Firewall, firewallObjectValue)
 		}
 
-		awsObjectValue, _ := types.ObjectValue(awsElementTypes, awsElements)
+		// nodeGroupElementTypes := map[string]attr.Type{
+		// 	"aws": types.ListType{
+		// 		ElemType: types.ObjectType{
+		// 			AttrTypes: map[string]attr.Type{
+		// 				"region": types.StringType,
+		// 				"availability_zones": types.ListType{
+		// 					ElemType: types.StringType,
+		// 				},
+		// 				"cidr": types.StringType,
+		// 				"public_subnets": types.ListType{
+		// 					ElemType: types.StringType,
+		// 				},
+		// 				"private_subnets": types.ListType{
+		// 					ElemType: types.StringType,
+		// 				},
+		// 				"nodes": types.ListType{
+		// 					ElemType: types.ObjectType{
+		// 						AttrTypes: map[string]attr.Type{
+		// 							"display_name": types.StringType,
+		// 							"ip_address":   types.StringType,
+		// 							"is_active":    types.BoolType,
+		// 						},
+		// 					},
+		// 				},
+		// 				"node_location": types.StringType,
+		// 				"volume_size":   types.Int64Type,
+		// 				"volume_iops":   types.Int64Type,
+		// 				"volume_type":   types.StringType,
+		// 				"instance_type": types.StringType,
+		// 			},
+		// 		},
+		// 	},
 
-		clusterDetails.Aws = awsObjectValue
+		// 	"azure": types.ListType{
+		// 		ElemType: types.ObjectType{
+		// 			AttrTypes: map[string]attr.Type{
+		// 				"region": types.StringType,
+		// 				"availability_zones": types.ListType{
+		// 					ElemType: types.StringType,
+		// 				},
+		// 				"cidr": types.StringType,
+		// 				"public_subnets": types.ListType{
+		// 					ElemType: types.StringType,
+		// 				},
+		// 				"private_subnets": types.ListType{
+		// 					ElemType: types.StringType,
+		// 				},
+		// 				"nodes": types.ListType{
+		// 					ElemType: types.ObjectType{
+		// 						AttrTypes: map[string]attr.Type{
+		// 							"display_name": types.StringType,
+		// 							"ip_address":   types.StringType,
+		// 							"is_active":    types.BoolType,
+		// 						},
+		// 					},
+		// 				},
+		// 				"node_location": types.StringType,
+		// 				"volume_size":   types.Int64Type,
+		// 				"volume_iops":   types.Int64Type,
+		// 				"volume_type":   types.StringType,
+		// 				"instance_type": types.StringType,
+		// 			},
+		// 		},
+		// 	},
 
-		databaseElementTypes := map[string]attr.Type{
-			"pg_version": types.StringType,
-			"username":   types.StringType,
-			"password":   types.StringType,
-			"name":       types.StringType,
-			"port":       types.Float64Type,
-			"components": types.ListType{
-				ElemType: types.StringType,
-			},
-			"scripts":    types.ObjectType{
-				AttrTypes: map[string]attr.Type{
-					"init": types.StringType,
-				},
-			},
-		}
-	
-		databaseComponent, _ := types.ListValue(types.StringType, clusterComponents)
-		databaseScripts, _ := types.ObjectValue(map[string]attr.Type{
-			"init": types.StringType,
-		}, map[string]attr.Value{
-			"init": types.StringValue(cluster.Database.Scripts.Init),
-		})
-	
-		databaseElements := map[string]attr.Value{
-			"pg_version": types.StringValue(cluster.Database.PgVersion),
-			"username":   types.StringValue(cluster.Database.Username),
-			"password":   types.StringValue(cluster.Database.Password),
-			"name":       types.StringValue(cluster.Database.Name),
-			"port":       types.Float64Value(cluster.Database.Port),
-			"components": databaseComponent,
-			"scripts":    databaseScripts,
-		}
-	
-		databaseObjectValue, _ := types.ObjectValue(databaseElementTypes, databaseElements)
-	
-		clusterDetails.Database = databaseObjectValue
-
-		// Populate Database details
-		// clusterDetails.Database.PGVersion = types.StringValue(cluster.Database.PgVersion)
-		// clusterDetails.Database.Username = types.StringValue(cluster.Database.Username)
-		// clusterDetails.Database.Password = types.StringValue(cluster.Database.Password)
-		// clusterDetails.Database.Name = types.StringValue(cluster.Database.Name)
-		// clusterDetails.Database.Port = types.Float64Value(cluster.Database.Port)
-		// clusterDetails.Database.Components = clusterComponents
-		// clusterDetails.Database.Scripts.Init = types.StringValue(cluster.Database.Scripts.Init)
-
-		// Populate Firewall details
-		// for _, rule := range cluster.Firewall.Rules {
-		// 	var firewallRule FirewallRule
-		// 	for _, source := range rule.Sources {
-		// 		firewallRule.Sources = append(firewallRule.Sources, types.StringValue(source))
-		// 	}
-		// 	firewallRule.Type = types.StringValue(rule.Type)
-		// 	firewallRule.Port = types.Int64Value(rule.Port)
-		// 	clusterDetails.Firewall = append(clusterDetails.Firewall, firewallRule)
+		// 	"google": types.ListType{
+		// 		ElemType: types.ObjectType{
+		// 			AttrTypes: map[string]attr.Type{
+		// 				"region": types.StringType,
+		// 				"availability_zones": types.ListType{
+		// 					ElemType: types.StringType,
+		// 				},
+		// 				"cidr": types.StringType,
+		// 				"public_subnets": types.ListType{
+		// 					ElemType: types.StringType,
+		// 				},
+		// 				"private_subnets": types.ListType{
+		// 					ElemType: types.StringType,
+		// 				},
+		// 				"nodes": types.ListType{
+		// 					ElemType: types.ObjectType{
+		// 						AttrTypes: map[string]attr.Type{
+		// 							"display_name": types.StringType,
+		// 							"ip_address":   types.StringType,
+		// 							"is_active":    types.BoolType,
+		// 						},
+		// 					},
+		// 				},
+		// 				"node_location": types.StringType,
+		// 				"volume_size":   types.Int64Type,
+		// 				"volume_iops":   types.Int64Type,
+		// 				"volume_type":   types.StringType,
+		// 				"instance_type": types.StringType,
+		// 			},
+		// 		},
+		// 	},
 		// }
 
-		// Populate NodeGroups details
-		// clusterDetails.NodeGroups.AWS = make([]NodeGroup, len(cluster.NodeGroups.Aws))
-		for _, ng := range cluster.NodeGroups.Aws {
-			var nodeGroup NodeGroup
-			for _,availabilityZone := range ng.AvailabilityZones {
-				nodeGroup.AvailabilityZones = append(nodeGroup.AvailabilityZones, types.StringValue(availabilityZone))
-			}
-			for _, privateSubnet := range ng.PrivateSubnets {
-				nodeGroup.PrivateSubnets = append(nodeGroup.PrivateSubnets, types.StringValue(privateSubnet))
-			}
-			for _, publicSubnet := range ng.PublicSubnets {
-				nodeGroup.PublicSubnets = append(nodeGroup.PublicSubnets, types.StringValue(publicSubnet))
-			}
-			nodeGroup.Region = types.StringValue(ng.Region)
-			nodeGroup.Cidr = types.StringValue(ng.Cidr)
-			nodeGroup.Nodes = make([]ClusterNode, len(ng.Nodes))
-			for j, node := range ng.Nodes {
-				var nodeDetails ClusterNode
-				nodeDetails.DisplayName = types.StringValue(node.DisplayName)
-				nodeDetails.IPAddress = types.StringValue(node.IPAddress)
-				nodeDetails.IsActive = types.BoolValue(node.IsActive)
-				nodeGroup.Nodes[j] = nodeDetails
-			}
-			nodeGroup.NodeLocation = types.StringValue(ng.NodeLocation)
-			nodeGroup.VolumeSize = types.Int64Value(ng.VolumeSize)
-			nodeGroup.VolumeIOPS = types.Int64Value(ng.VolumeIops)
-			nodeGroup.VolumeType = types.StringValue(ng.VolumeType)
-			nodeGroup.InstanceType = types.StringValue(ng.InstanceType)
-			// clusterDetails.NodeGroups.AWS[i] = nodeGroup
-		}
+		// for _, nodeGroup := range cluster.NodeGroups.Aws {
+		// 	var nodeDetails []attr.Value
+
+		// 	for _, node := range nodeGroup.Nodes {
+		// 		var nodeDetail ClusterNode
+
+		// 		nodeDetail.DisplayName = types.StringValue(node.DisplayName)
+		// 		nodeDetail.IPAddress = types.StringValue(node.IPAddress)
+		// 		nodeDetail.IsActive = types.BoolValue(node.IsActive)
+
+		// 		nodeElements := map[string]attr.Value{
+		// 			"display_name": types.StringValue(node.DisplayName),
+		// 			"ip_address":   types.StringValue(node.IPAddress),
+		// 			"is_active":    types.BoolValue(node.IsActive),
+		// 		}
+
+		// 		nodeObjectValue, _ := types.ObjectValue(map[string]attr.Type{
+		// 			"display_name": types.StringType,
+		// 			"ip_address":   types.StringType,
+		// 			"is_active":    types.BoolType,
+		// 		}, nodeElements)
+
+		// 		nodeDetails = append(nodeDetails, nodeObjectValue)
+		// 	}
+
+		// 	var availabilityZones []attr.Value
+		// 	for _, availability_zones := range nodeGroup.AvailabilityZones {
+		// 		availabilityZones = append(availabilityZones, types.StringValue(availability_zones))
+		// 	}
+
+		// 	availabilityZonesList, _ := types.ListValue(types.StringType, availabilityZones)
+
+		// 	var publicSubnets []attr.Value
+		// 	for _, public_subnets := range nodeGroup.PublicSubnets {
+		// 		publicSubnets = append(publicSubnets, types.StringValue(public_subnets))
+		// 	}
+
+		// 	publicSubnetsList, _ := types.ListValue(types.StringType, publicSubnets)
+
+		// 	var privateSubnets []attr.Value
+		// 	for _, private_subnets := range nodeGroup.PrivateSubnets {
+		// 		privateSubnets = append(privateSubnets, types.StringValue(private_subnets))
+		// 	}
+
+		// 	privateSubnetsList, _ := types.ListValue(types.StringType, privateSubnets)
+
+		// 	nodes, _ := types.ListValue(types.ObjectType{
+		// 		AttrTypes: map[string]attr.Type{
+		// 			"display_name": types.StringType,
+		// 			"ip_address":   types.StringType,
+		// 			"is_active":    types.BoolType,
+		// 		},
+		// 	}, nodeDetails)
+
+		// 	nodeGroupElements := map[string]attr.Value{
+		// 		"region":            types.StringValue(nodeGroup.Region),
+		// 		"availability_zones": availabilityZonesList,
+		// 		"cidr":              types.StringValue(nodeGroup.Cidr),
+		// 		"public_subnets":    publicSubnetsList,
+		// 		"private_subnets":   privateSubnetsList,
+		// 		"nodes":            nodes,
+		// 		"node_location": types.StringValue(nodeGroup.NodeLocation),
+		// 		"volume_size":   types.Int64Value(nodeGroup.VolumeSize),
+		// 		"volume_iops":   types.Int64Value(nodeGroup.VolumeIops),
+		// 		"volume_type":   types.StringValue(nodeGroup.VolumeType),
+		// 		"instance_type": types.StringValue(nodeGroup.InstanceType),
+		// 	}
+
+		// 	nodeGroupObjectValue, _ := types.ObjectValue(nodeGroupElementTypes, nodeGroupElements)
+
+		// 	clusterDetails.NodeGroups = nodeGroupObjectValue
+		// }
 
 		state.Clusters = append(state.Clusters, clusterDetails)
 	}
