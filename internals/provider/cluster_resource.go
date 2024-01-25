@@ -165,6 +165,7 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					},
 					"azure": schema.ListNestedAttribute{
 						Optional: true,
+						Computed: true,
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"region": schema.StringAttribute{
@@ -232,6 +233,7 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					},
 					"google": schema.ListNestedAttribute{
 						Optional: true,
+						Computed: true,
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"region": schema.StringAttribute{
@@ -366,14 +368,27 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			firewallSources = append(firewallSources, types.StringValue(source))
 		}
 
-		firewallSourceList, _ := types.ListValue(types.StringType, firewallSources)
+		firewallSourceList, diags := types.ListValue(types.StringType, firewallSources)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
 		firewallElements := map[string]attr.Value{
 			"type":    firewallType,
 			"port":    firewallPort,
 			"sources": firewallSourceList,
 		}
-		firewallObjectValue, _ := types.ObjectValue(firewallElementsType, firewallElements)
+		firewallObjectValue, diags := types.ObjectValue(firewallElementsType, firewallElements)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
 		plan.Firewall = append(plan.Firewall, firewallObjectValue)
 	}
 
@@ -386,7 +401,13 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			availabilityZones = append(availabilityZones, types.StringValue(zone))
 		}
 
-		allAvailabilityZones, _ := types.ListValue(types.StringType, availabilityZones)
+		allAvailabilityZones, diags := types.ListValue(types.StringType, availabilityZones)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
 		var publicSubnets []attr.Value
 
@@ -394,7 +415,13 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			publicSubnets = append(publicSubnets, types.StringValue(subnet))
 		}
 
-		allPublicSubnets, _ := types.ListValue(types.StringType, publicSubnets)
+		allPublicSubnets, diags := types.ListValue(types.StringType, publicSubnets)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
 		var privateSubnets []attr.Value
 
@@ -402,7 +429,13 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			privateSubnets = append(privateSubnets, types.StringValue(subnet))
 		}
 
-		allPrivateSubnets, _ := types.ListValue(types.StringType, privateSubnets)
+		allPrivateSubnets, diags := types.ListValue(types.StringType, privateSubnets)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
 		var nodes []attr.Value
 
@@ -412,14 +445,26 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 				"ip_address":   types.StringValue(node.IPAddress),
 				"is_active":    types.BoolValue(node.IsActive),
 			}
-			nodeObjectValue, _ := types.ObjectValue(NodesNodeGroupType, nodeDetails)
+			nodeObjectValue, diags := types.ObjectValue(NodesNodeGroupType, nodeDetails)
+
+			resp.Diagnostics.Append(diags...)
+
+			if resp.Diagnostics.HasError() {
+				return
+			}
 
 			nodes = append(nodes, nodeObjectValue)
 		}
 
-		allNodes, _ := types.ListValue(types.ObjectType{
+		allNodes, diags := types.ListValue(types.ObjectType{
 			AttrTypes: NodesNodeGroupType,
 		}, nodes)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
 		AwsItemsValues, _ := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
 			"region":             types.StringValue(nodeGroup.Region),
@@ -438,9 +483,15 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		awsItems = append(awsItems, AwsItemsValues)
 	}
 
-	aws, _ = types.ListValue(types.ObjectType{
+	aws, diags = types.ListValue(types.ObjectType{
 		AttrTypes: NodeGroupTypes,
 	}, awsItems)
+
+	resp.Diagnostics.Append(diags...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	var azure types.List
 	var azureItems []attr.Value
@@ -451,7 +502,13 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			availabilityZones = append(availabilityZones, types.StringValue(zone))
 		}
 
-		allAvailabilityZones, _ := types.ListValue(types.StringType, availabilityZones)
+		allAvailabilityZones, diags := types.ListValue(types.StringType, availabilityZones)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
 		var publicSubnets []attr.Value
 
@@ -459,7 +516,12 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			publicSubnets = append(publicSubnets, types.StringValue(subnet))
 		}
 
-		allPublicSubnets, _ := types.ListValue(types.StringType, publicSubnets)
+		allPublicSubnets, diags := types.ListValue(types.StringType, publicSubnets)
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
 		var privateSubnets []attr.Value
 
@@ -467,7 +529,13 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			privateSubnets = append(privateSubnets, types.StringValue(subnet))
 		}
 
-		allPrivateSubnets, _ := types.ListValue(types.StringType, privateSubnets)
+		allPrivateSubnets, diags := types.ListValue(types.StringType, privateSubnets)
+
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
 
 		var nodes []attr.Value
 
@@ -477,16 +545,26 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 				"ip_address":   types.StringValue(node.IPAddress),
 				"is_active":    types.BoolValue(node.IsActive),
 			}
-			nodeObjectValue, _ := types.ObjectValue(NodesNodeGroupType, nodeDetails)
+			nodeObjectValue, diags := types.ObjectValue(NodesNodeGroupType, nodeDetails)
+			resp.Diagnostics.Append(diags...)
 
+			if resp.Diagnostics.HasError() {
+				return
+			}
 			nodes = append(nodes, nodeObjectValue)
 		}
 
-		allNodes, _ := types.ListValue(types.ObjectType{
+		allNodes, diags := types.ListValue(types.ObjectType{
 			AttrTypes: NodesNodeGroupType,
 		}, nodes)
 
-		AzureItemsValues, _ := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
+		AzureItemsValues, diags := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
 			"region":             types.StringValue(nodeGroup.Region),
 			"cidr":               types.StringValue(nodeGroup.Cidr),
 			"availability_zones": allAvailabilityZones,
@@ -500,13 +578,23 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			"instance_type":      types.StringValue(nodeGroup.InstanceType),
 		})
 
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
 		azureItems = append(azureItems, AzureItemsValues)
 	}
 
-	azure, _ = types.ListValue(types.ObjectType{
+	azure, diags = types.ListValue(types.ObjectType{
 		AttrTypes: NodeGroupTypes,
 	}, azureItems)
+	resp.Diagnostics.Append(diags...)
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	var google types.List
 	var googleItems []attr.Value
 	for _, nodeGroup := range createdCluster.NodeGroups.Google {
@@ -516,24 +604,36 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			availabilityZones = append(availabilityZones, types.StringValue(zone))
 		}
 
-		allAvailabilityZones, _ := types.ListValue(types.StringType, availabilityZones)
+		allAvailabilityZones, diags := types.ListValue(types.StringType, availabilityZones)
+		resp.Diagnostics.Append(diags...)
 
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		var publicSubnets []attr.Value
 
 		for _, subnet := range nodeGroup.PublicSubnets {
 			publicSubnets = append(publicSubnets, types.StringValue(subnet))
 		}
 
-		allPublicSubnets, _ := types.ListValue(types.StringType, publicSubnets)
+		allPublicSubnets, diags := types.ListValue(types.StringType, publicSubnets)
+		resp.Diagnostics.Append(diags...)
 
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		var privateSubnets []attr.Value
 
 		for _, subnet := range nodeGroup.PrivateSubnets {
 			privateSubnets = append(privateSubnets, types.StringValue(subnet))
 		}
 
-		allPrivateSubnets, _ := types.ListValue(types.StringType, privateSubnets)
+		allPrivateSubnets, diags := types.ListValue(types.StringType, privateSubnets)
+		resp.Diagnostics.Append(diags...)
 
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		var nodes []attr.Value
 
 		for _, node := range nodeGroup.Nodes {
@@ -542,16 +642,24 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 				"ip_address":   types.StringValue(node.IPAddress),
 				"is_active":    types.BoolValue(node.IsActive),
 			}
-			nodeObjectValue, _ := types.ObjectValue(NodesNodeGroupType, nodeDetails)
+			nodeObjectValue, diags := types.ObjectValue(NodesNodeGroupType, nodeDetails)
+			resp.Diagnostics.Append(diags...)
 
+			if resp.Diagnostics.HasError() {
+				return
+			}
 			nodes = append(nodes, nodeObjectValue)
 		}
 
-		allNodes, _ := types.ListValue(types.ObjectType{
+		allNodes, diags := types.ListValue(types.ObjectType{
 			AttrTypes: NodesNodeGroupType,
 		}, nodes)
+		resp.Diagnostics.Append(diags...)
 
-		GoogleItemsValues, _ := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		GoogleItemsValues, diags := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
 			"region":             types.StringValue(nodeGroup.Region),
 			"cidr":               types.StringValue(nodeGroup.Cidr),
 			"availability_zones": allAvailabilityZones,
@@ -564,22 +672,34 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			"volume_type":        types.StringValue(nodeGroup.VolumeType),
 			"instance_type":      types.StringValue(nodeGroup.InstanceType),
 		})
+		resp.Diagnostics.Append(diags...)
 
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		googleItems = append(azureItems, GoogleItemsValues)
 	}
 
-	google, _ = types.ListValue(types.ObjectType{
+	google, diags = types.ListValue(types.ObjectType{
 		AttrTypes: NodeGroupTypes,
 	}, googleItems)
+	resp.Diagnostics.Append(diags...)
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	NodeGroupsValues := map[string]attr.Value{
 		"aws":    aws,
 		"azure":  azure,
 		"google": google,
 	}
 
-	nodeGroupObjectValue, _ := types.ObjectValue(NodeGroupsTypes, NodeGroupsValues)
+	nodeGroupObjectValue, diags := types.ObjectValue(NodeGroupsTypes, NodeGroupsValues)
+	resp.Diagnostics.Append(diags...)
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	plan.NodeGroups = nodeGroupObjectValue
 
 	diags = resp.State.Set(ctx, plan)
@@ -637,14 +757,23 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 			firewallSources = append(firewallSources, types.StringValue(source))
 		}
 
-		firewallSourcesList, _ := types.ListValue(types.StringType, firewallSources)
+		firewallSourcesList, diags := types.ListValue(types.StringType, firewallSources)
+		resp.Diagnostics.Append(diags...)
 
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		firewallElements := map[string]attr.Value{
 			"type":    firewallType,
 			"port":    firewallPort,
 			"sources": firewallSourcesList,
 		}
-		firewallObjectValue, _ := types.ObjectValue(firewallElementsType, firewallElements)
+		firewallObjectValue, diags := types.ObjectValue(firewallElementsType, firewallElements)
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		state.Firewall = append(state.Firewall, firewallObjectValue)
 	}
 
@@ -657,24 +786,36 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 			availabilityZones = append(availabilityZones, types.StringValue(zone))
 		}
 
-		allAvailabilityZones, _ := types.ListValue(types.StringType, availabilityZones)
+		allAvailabilityZones, diags := types.ListValue(types.StringType, availabilityZones)
+		resp.Diagnostics.Append(diags...)
 
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		var publicSubnets []attr.Value
 
 		for _, subnet := range nodeGroup.PublicSubnets {
 			publicSubnets = append(publicSubnets, types.StringValue(subnet))
 		}
 
-		allPublicSubnets, _ := types.ListValue(types.StringType, publicSubnets)
+		allPublicSubnets, diags := types.ListValue(types.StringType, publicSubnets)
+		resp.Diagnostics.Append(diags...)
 
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		var privateSubnets []attr.Value
 
 		for _, subnet := range nodeGroup.PrivateSubnets {
 			privateSubnets = append(privateSubnets, types.StringValue(subnet))
 		}
 
-		allPrivateSubnets, _ := types.ListValue(types.StringType, privateSubnets)
+		allPrivateSubnets, diags := types.ListValue(types.StringType, privateSubnets)
+		resp.Diagnostics.Append(diags...)
 
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		var nodes []attr.Value
 
 		for _, node := range nodeGroup.Nodes {
@@ -683,16 +824,24 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 				"ip_address":   types.StringValue(node.IPAddress),
 				"is_active":    types.BoolValue(node.IsActive),
 			}
-			nodeObjectValue, _ := types.ObjectValue(NodesNodeGroupType, nodeDetails)
+			nodeObjectValue, diags := types.ObjectValue(NodesNodeGroupType, nodeDetails)
+			resp.Diagnostics.Append(diags...)
 
+			if resp.Diagnostics.HasError() {
+				return
+			}
 			nodes = append(nodes, nodeObjectValue)
 		}
 
-		allNodes, _ := types.ListValue(types.ObjectType{
+		allNodes, diags := types.ListValue(types.ObjectType{
 			AttrTypes: NodesNodeGroupType,
 		}, nodes)
+		resp.Diagnostics.Append(diags...)
 
-		AwsItemsValues, _ := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		AwsItemsValues, diags := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
 			"region":             types.StringValue(nodeGroup.Region),
 			"cidr":               types.StringValue(nodeGroup.Cidr),
 			"availability_zones": allAvailabilityZones,
@@ -705,14 +854,22 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 			"volume_type":        types.StringValue(nodeGroup.VolumeType),
 			"instance_type":      types.StringValue(nodeGroup.InstanceType),
 		})
+		resp.Diagnostics.Append(diags...)
 
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		awsItems = append(awsItems, AwsItemsValues)
 	}
 
-	aws, _ = types.ListValue(types.ObjectType{
+	aws, diags = types.ListValue(types.ObjectType{
 		AttrTypes: NodeGroupTypes,
 	}, awsItems)
+	resp.Diagnostics.Append(diags...)
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	var azure types.List
 	var azureItems []attr.Value
 	for _, nodeGroup := range cluster.NodeGroups.Azure {
@@ -722,24 +879,36 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 			availabilityZones = append(availabilityZones, types.StringValue(zone))
 		}
 
-		allAvailabilityZones, _ := types.ListValue(types.StringType, availabilityZones)
+		allAvailabilityZones, diags := types.ListValue(types.StringType, availabilityZones)
+		resp.Diagnostics.Append(diags...)
 
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		var publicSubnets []attr.Value
 
 		for _, subnet := range nodeGroup.PublicSubnets {
 			publicSubnets = append(publicSubnets, types.StringValue(subnet))
 		}
 
-		allPublicSubnets, _ := types.ListValue(types.StringType, publicSubnets)
+		allPublicSubnets, diags := types.ListValue(types.StringType, publicSubnets)
+		resp.Diagnostics.Append(diags...)
 
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		var privateSubnets []attr.Value
 
 		for _, subnet := range nodeGroup.PrivateSubnets {
 			privateSubnets = append(privateSubnets, types.StringValue(subnet))
 		}
 
-		allPrivateSubnets, _ := types.ListValue(types.StringType, privateSubnets)
+		allPrivateSubnets, diags := types.ListValue(types.StringType, privateSubnets)
+		resp.Diagnostics.Append(diags...)
 
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		var nodes []attr.Value
 
 		for _, node := range nodeGroup.Nodes {
@@ -748,16 +917,24 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 				"ip_address":   types.StringValue(node.IPAddress),
 				"is_active":    types.BoolValue(node.IsActive),
 			}
-			nodeObjectValue, _ := types.ObjectValue(NodesNodeGroupType, nodeDetails)
+			nodeObjectValue, diags := types.ObjectValue(NodesNodeGroupType, nodeDetails)
+			resp.Diagnostics.Append(diags...)
 
+			if resp.Diagnostics.HasError() {
+				return
+			}
 			nodes = append(nodes, nodeObjectValue)
 		}
 
-		allNodes, _ := types.ListValue(types.ObjectType{
+		allNodes, diags := types.ListValue(types.ObjectType{
 			AttrTypes: NodesNodeGroupType,
 		}, nodes)
+		resp.Diagnostics.Append(diags...)
 
-		AzureItemsValues, _ := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		AzureItemsValues, diags := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
 			"region":             types.StringValue(nodeGroup.Region),
 			"cidr":               types.StringValue(nodeGroup.Cidr),
 			"availability_zones": allAvailabilityZones,
@@ -771,12 +948,24 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 			"instance_type":      types.StringValue(nodeGroup.InstanceType),
 		})
 
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
 		azureItems = append(azureItems, AzureItemsValues)
 	}
 
-	azure, _ = types.ListValue(types.ObjectType{
+	azure, diags = types.ListValue(types.ObjectType{
 		AttrTypes: NodeGroupTypes,
 	}, azureItems)
+
+	resp.Diagnostics.Append(diags...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	var google types.List
 	var googleItems []attr.Value
@@ -787,24 +976,36 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 			availabilityZones = append(availabilityZones, types.StringValue(zone))
 		}
 
-		allAvailabilityZones, _ := types.ListValue(types.StringType, availabilityZones)
+		allAvailabilityZones, diags := types.ListValue(types.StringType, availabilityZones)
+		resp.Diagnostics.Append(diags...)
 
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		var publicSubnets []attr.Value
 
 		for _, subnet := range nodeGroup.PublicSubnets {
 			publicSubnets = append(publicSubnets, types.StringValue(subnet))
 		}
 
-		allPublicSubnets, _ := types.ListValue(types.StringType, publicSubnets)
+		allPublicSubnets, diags := types.ListValue(types.StringType, publicSubnets)
+		resp.Diagnostics.Append(diags...)
 
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		var privateSubnets []attr.Value
 
 		for _, subnet := range nodeGroup.PrivateSubnets {
 			privateSubnets = append(privateSubnets, types.StringValue(subnet))
 		}
 
-		allPrivateSubnets, _ := types.ListValue(types.StringType, privateSubnets)
+		allPrivateSubnets, diags := types.ListValue(types.StringType, privateSubnets)
+		resp.Diagnostics.Append(diags...)
 
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		var nodes []attr.Value
 
 		for _, node := range nodeGroup.Nodes {
@@ -813,16 +1014,24 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 				"ip_address":   types.StringValue(node.IPAddress),
 				"is_active":    types.BoolValue(node.IsActive),
 			}
-			nodeObjectValue, _ := types.ObjectValue(NodesNodeGroupType, nodeDetails)
+			nodeObjectValue, diags := types.ObjectValue(NodesNodeGroupType, nodeDetails)
+			resp.Diagnostics.Append(diags...)
 
+			if resp.Diagnostics.HasError() {
+				return
+			}
 			nodes = append(nodes, nodeObjectValue)
 		}
 
-		allNodes, _ := types.ListValue(types.ObjectType{
+		allNodes, diags := types.ListValue(types.ObjectType{
 			AttrTypes: NodesNodeGroupType,
 		}, nodes)
+		resp.Diagnostics.Append(diags...)
 
-		GoogleItemsValues, _ := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		GoogleItemsValues, diags := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
 			"region":             types.StringValue(nodeGroup.Region),
 			"cidr":               types.StringValue(nodeGroup.Cidr),
 			"availability_zones": allAvailabilityZones,
@@ -835,22 +1044,34 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 			"volume_type":        types.StringValue(nodeGroup.VolumeType),
 			"instance_type":      types.StringValue(nodeGroup.InstanceType),
 		})
+		resp.Diagnostics.Append(diags...)
 
+		if resp.Diagnostics.HasError() {
+			return
+		}
 		googleItems = append(azureItems, GoogleItemsValues)
 	}
 
-	google, _ = types.ListValue(types.ObjectType{
+	google, diags = types.ListValue(types.ObjectType{
 		AttrTypes: NodeGroupTypes,
 	}, googleItems)
+	resp.Diagnostics.Append(diags...)
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	NodeGroupsValues := map[string]attr.Value{
 		"aws":    aws,
 		"azure":  azure,
 		"google": google,
 	}
 
-	nodeGroupsObjectValue, _ := types.ObjectValue(NodeGroupsTypes, NodeGroupsValues)
+	nodeGroupsObjectValue, diags := types.ObjectValue(NodeGroupsTypes, NodeGroupsValues)
+	resp.Diagnostics.Append(diags...)
 
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	state.NodeGroups = nodeGroupsObjectValue
 
 	diags = resp.State.Set(ctx, &state)
