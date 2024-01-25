@@ -413,15 +413,6 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 
 	for _, cluster := range clusters {
 		var clusterDetails ClusterDetails
-		var clusterComponents []attr.Value
-		tagElements := make(map[string]attr.Value)
-		for k, v := range cluster.Aws.Tags {
-			tagElements[k] = types.StringValue(v)
-		}
-
-		for _, component := range cluster.Database.Components {
-			clusterComponents = append(clusterComponents, types.StringValue(component))
-		}
 
 		clusterDetails.ID = types.StringValue(cluster.ID)
 		clusterDetails.Name = types.StringValue(cluster.Name)
@@ -456,11 +447,6 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 			}
 
 			firewallObjectValue, _ := types.ObjectValue(firewallElementTypes, firewallElements)
-			fmt.Println("------------------------------------------------------")
-
-			fmt.Println(firewallObjectValue, "firewallObjectValue")
-			fmt.Println("------------------------------------------------------")
-
 			clusterDetails.Firewall = append(clusterDetails.Firewall, firewallObjectValue)
 		}
 
@@ -666,16 +652,11 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 		}
 
 		nodeGroupsObjectValue, _ := types.ObjectValue(NodeGroupsTypes, NodeGroupsValues)
-		fmt.Println("------------------------------------------------------")
-
-		fmt.Println(aws, "aws")
-		fmt.Println(azure, "azure")
 
 		clusterDetails.NodeGroups = nodeGroupsObjectValue
 
 		state.Clusters = append(state.Clusters, clusterDetails)
 	}
-	fmt.Println(state, "state")
 	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
