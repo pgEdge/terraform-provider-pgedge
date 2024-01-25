@@ -201,7 +201,11 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 
 func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var state DatabasesDataSourceModel
-
+	diags := resp.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	databases, err := d.client.GetDatabases(ctx)
 	if err != nil {
 		resp.Diagnostics.AddError(
@@ -284,7 +288,7 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		state.Databases = append(state.Databases, database)
 	}
 
-	diags := resp.State.Set(ctx, &state)
+	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

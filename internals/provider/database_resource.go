@@ -59,11 +59,13 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Description: "ID of the database",
 			},
 			"name": schema.StringAttribute{
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Name of the database",
 			},
 			"cluster_id": schema.StringAttribute{
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
 				Description: "Cluster Id of the database",
 			},
 			"domain": schema.StringAttribute{
@@ -85,6 +87,7 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"options": schema.ListAttribute{
 				ElementType: types.StringType,
 				Optional:    true,
+				Computed: true,
 				Description: "Options for creating the database",
 			},
 			"nodes": schema.ListNestedAttribute{

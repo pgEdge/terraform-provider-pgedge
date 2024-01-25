@@ -98,28 +98,34 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Attributes: map[string]schema.Attribute{
 					"aws": schema.ListNestedAttribute{
 						Optional: true,
+						Computed: true,
 						NestedObject: schema.NestedAttributeObject{
 							Attributes: map[string]schema.Attribute{
 								"region": schema.StringAttribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Region of the AWS node group",
 								},
 								"availability_zones": schema.ListAttribute{
 									ElementType: types.StringType,
 									Optional:    true,
+									Computed:    true,
 									Description: "Availability zones of the AWS node group",
 								},
 								"cidr": schema.StringAttribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "CIDR of the AWS node group",
 								},
 								"public_subnets": schema.ListAttribute{
 									ElementType: types.StringType,
 									Optional:    true,
+									Computed:    true,
 								},
 								"private_subnets": schema.ListAttribute{
 									ElementType: types.StringType,
 									Optional:    true,
+									Computed:    true,
 								},
 								"nodes": schema.ListNestedAttribute{
 									Optional: true,
@@ -127,14 +133,17 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 										Attributes: map[string]schema.Attribute{
 											"display_name": schema.StringAttribute{
 												Optional:    true,
+												Computed:    true,
 												Description: "Display name of the node",
 											},
 											"ip_address": schema.StringAttribute{
 												Optional:    true,
+												Computed:    true,
 												Description: "IP address of the node",
 											},
 											"is_active": schema.BoolAttribute{
 												Optional:    true,
+												Computed:    true,
 												Description: "Is the node active",
 											},
 										},
@@ -142,22 +151,27 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 								},
 								"node_location": schema.StringAttribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Node location of the AWS node group",
 								},
 								"volume_size": schema.Int64Attribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Volume size of the AWS node group",
 								},
 								"volume_iops": schema.Int64Attribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Volume IOPS of the AWS node group",
 								},
 								"volume_type": schema.StringAttribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Volume type of the AWS node group",
 								},
 								"instance_type": schema.StringAttribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Instance type of the AWS node group",
 								},
 							},
@@ -170,24 +184,29 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 							Attributes: map[string]schema.Attribute{
 								"region": schema.StringAttribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Region of the AWS node group",
 								},
 								"availability_zones": schema.ListAttribute{
 									ElementType: types.StringType,
 									Optional:    true,
+									Computed:    true,
 									Description: "Availability zones of the AWS node group",
 								},
 								"cidr": schema.StringAttribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "CIDR of the AWS node group",
 								},
 								"public_subnets": schema.ListAttribute{
 									ElementType: types.StringType,
 									Optional:    true,
+									Computed:    true,
 								},
 								"private_subnets": schema.ListAttribute{
 									ElementType: types.StringType,
 									Optional:    true,
+									Computed:    true,
 								},
 								"nodes": schema.ListNestedAttribute{
 									Optional: true,
@@ -195,14 +214,17 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 										Attributes: map[string]schema.Attribute{
 											"display_name": schema.StringAttribute{
 												Optional:    true,
+												Computed:    true,
 												Description: "Display name of the node",
 											},
 											"ip_address": schema.StringAttribute{
 												Optional:    true,
+												Computed:    true,
 												Description: "IP address of the node",
 											},
 											"is_active": schema.BoolAttribute{
 												Optional:    true,
+												Computed:    true,
 												Description: "Is the node active",
 											},
 										},
@@ -210,22 +232,27 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 								},
 								"node_location": schema.StringAttribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Node location of the AWS node group",
 								},
 								"volume_size": schema.Int64Attribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Volume size of the AWS node group",
 								},
 								"volume_iops": schema.Int64Attribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Volume IOPS of the AWS node group",
 								},
 								"volume_type": schema.StringAttribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Volume type of the AWS node group",
 								},
 								"instance_type": schema.StringAttribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Instance type of the AWS node group",
 								},
 							},
@@ -238,24 +265,29 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 							Attributes: map[string]schema.Attribute{
 								"region": schema.StringAttribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Region of the AWS node group",
 								},
 								"availability_zones": schema.ListAttribute{
 									ElementType: types.StringType,
 									Optional:    true,
+									Computed:    true,
 									Description: "Availability zones of the AWS node group",
 								},
 								"cidr": schema.StringAttribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "CIDR of the AWS node group",
 								},
 								"public_subnets": schema.ListAttribute{
 									ElementType: types.StringType,
 									Optional:    true,
+									Computed:    true,
 								},
 								"private_subnets": schema.ListAttribute{
 									ElementType: types.StringType,
 									Optional:    true,
+									Computed:    true,
 								},
 								"nodes": schema.ListNestedAttribute{
 									Optional: true,
@@ -263,14 +295,17 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 										Attributes: map[string]schema.Attribute{
 											"display_name": schema.StringAttribute{
 												Optional:    true,
+												Computed:    true,
 												Description: "Display name of the node",
 											},
 											"ip_address": schema.StringAttribute{
 												Optional:    true,
+												Computed:    true,
 												Description: "IP address of the node",
 											},
 											"is_active": schema.BoolAttribute{
 												Optional:    true,
+												Computed:    true,
 												Description: "Is the node active",
 											},
 										},
@@ -278,22 +313,27 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 								},
 								"node_location": schema.StringAttribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Node location of the AWS node group",
 								},
 								"volume_size": schema.Int64Attribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Volume size of the AWS node group",
 								},
 								"volume_iops": schema.Int64Attribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Volume IOPS of the AWS node group",
 								},
 								"volume_type": schema.StringAttribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Volume type of the AWS node group",
 								},
 								"instance_type": schema.StringAttribute{
 									Optional:    true,
+									Computed:    true,
 									Description: "Instance type of the AWS node group",
 								},
 							},

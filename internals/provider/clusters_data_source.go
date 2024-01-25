@@ -187,9 +187,12 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 						},
 						"node_groups": schema.SingleNestedAttribute{
 							Computed: true,
+							Optional: true,
 							Attributes: map[string]schema.Attribute{
 								"aws": schema.ListNestedAttribute{
 									Computed: true,
+									Optional: true,
+
 									NestedObject: schema.NestedAttributeObject{
 										Attributes: map[string]schema.Attribute{
 											"region": schema.StringAttribute{
@@ -257,6 +260,8 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 								},
 								"azure": schema.ListNestedAttribute{
 									Computed: true,
+									Optional: true,
+
 									NestedObject: schema.NestedAttributeObject{
 										Attributes: map[string]schema.Attribute{
 											"region": schema.StringAttribute{
@@ -324,6 +329,8 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 								},
 								"google": schema.ListNestedAttribute{
 									Computed: true,
+									Optional: true,
+
 									NestedObject: schema.NestedAttributeObject{
 										Attributes: map[string]schema.Attribute{
 											"region": schema.StringAttribute{
