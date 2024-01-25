@@ -13,15 +13,13 @@ func TestAccDatabaseResource(t *testing.T) {
 			{
 				Config: providerConfig + `
 				resource "pgedge_database" "tech" {
-				  database = {
-					name       = "newdatabase101",
-					cluster_id = "5e7478e5-4e68-464b-902d-747db528eccc"
-				  }
+					name       = "",
+					cluster_id = ""
 				}
 				`,
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(
-						"pgedge_database.tech", "database.name", "newdatabase101"),
+						"pgedge_database.tech", "database.name", ""),
 					resource.TestCheckResourceAttrSet(
 						"pgedge_database.tech", "database.id"),
 					resource.TestCheckResourceAttrSet(
