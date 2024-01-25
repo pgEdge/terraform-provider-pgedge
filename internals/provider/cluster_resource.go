@@ -296,7 +296,7 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 								},
 							},
 						},
-					},	
+					},
 				},
 			},
 		},
@@ -311,6 +311,8 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	var firewallRules []*models.ClusterCreationRequestFirewallRulesItems0
 
 	clusterCreationRequest := &models.ClusterCreationRequest{
 		Name:           plan.Name.ValueString(),
@@ -331,7 +333,9 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			Azure:  []*models.NodeGroup{},
 			Google: []*models.NodeGroup{},
 		},
-		// Firewall: ,
+		Firewall: &models.ClusterCreationRequestFirewall{
+			Rules: firewallRules,
+		},
 	}
 
 	createdCluster, err := r.client.CreateCluster(ctx, clusterCreationRequest)
@@ -373,54 +377,6 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		plan.Firewall = append(plan.Firewall, firewallObjectValue)
 	}
 
-	nodesNodeGroupType := map[string]attr.Type{
-		"display_name": types.StringType,
-		"ip_address":   types.StringType,
-		"is_active":    types.BoolType,
-	}
-
-	nodeGroupTypes := map[string]attr.Type{
-		"region": types.StringType,
-		"cidr":   types.StringType,
-		"availability_zones": types.ListType{
-			ElemType: types.StringType,
-		},
-		"public_subnets": types.ListType{
-			ElemType: types.StringType,
-		},
-		"private_subnets": types.ListType{
-			ElemType: types.StringType,
-		},
-		"nodes": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: nodesNodeGroupType,
-			},
-		},
-		"node_location": types.StringType,
-		"volume_size":   types.Int64Type,
-		"volume_iops":   types.Int64Type,
-		"volume_type":   types.StringType,
-		"instance_type": types.StringType,
-	}
-
-	nodeGroupsTypes := map[string]attr.Type{
-		"aws": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: nodeGroupTypes,
-			},
-		},
-		"azure": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: nodeGroupTypes,
-			},
-		},
-		"google": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: nodeGroupTypes,
-			},
-		},
-	}
-
 	var aws types.List
 	var awsItems []attr.Value
 	for _, nodeGroup := range createdCluster.NodeGroups.Aws {
@@ -456,16 +412,16 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 				"ip_address":   types.StringValue(node.IPAddress),
 				"is_active":    types.BoolValue(node.IsActive),
 			}
-			nodeObjectValue, _ := types.ObjectValue(nodesNodeGroupType, nodeDetails)
+			nodeObjectValue, _ := types.ObjectValue(NodesNodeGroupType, nodeDetails)
 
 			nodes = append(nodes, nodeObjectValue)
 		}
 
 		allNodes, _ := types.ListValue(types.ObjectType{
-			AttrTypes: nodesNodeGroupType,
+			AttrTypes: NodesNodeGroupType,
 		}, nodes)
 
-		AwsItemsValues, _ := types.ObjectValue(nodeGroupTypes, map[string]attr.Value{
+		AwsItemsValues, _ := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
 			"region":             types.StringValue(nodeGroup.Region),
 			"cidr":               types.StringValue(nodeGroup.Cidr),
 			"availability_zones": allAvailabilityZones,
@@ -483,7 +439,7 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	aws, _ = types.ListValue(types.ObjectType{
-		AttrTypes: nodeGroupTypes,
+		AttrTypes: NodeGroupTypes,
 	}, awsItems)
 
 	var azure types.List
@@ -521,16 +477,16 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 				"ip_address":   types.StringValue(node.IPAddress),
 				"is_active":    types.BoolValue(node.IsActive),
 			}
-			nodeObjectValue, _ := types.ObjectValue(nodesNodeGroupType, nodeDetails)
+			nodeObjectValue, _ := types.ObjectValue(NodesNodeGroupType, nodeDetails)
 
 			nodes = append(nodes, nodeObjectValue)
 		}
 
 		allNodes, _ := types.ListValue(types.ObjectType{
-			AttrTypes: nodesNodeGroupType,
+			AttrTypes: NodesNodeGroupType,
 		}, nodes)
 
-		AzureItemsValues, _ := types.ObjectValue(nodeGroupTypes, map[string]attr.Value{
+		AzureItemsValues, _ := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
 			"region":             types.StringValue(nodeGroup.Region),
 			"cidr":               types.StringValue(nodeGroup.Cidr),
 			"availability_zones": allAvailabilityZones,
@@ -548,7 +504,7 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	azure, _ = types.ListValue(types.ObjectType{
-		AttrTypes: nodeGroupTypes,
+		AttrTypes: NodeGroupTypes,
 	}, azureItems)
 
 	var google types.List
@@ -586,16 +542,16 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 				"ip_address":   types.StringValue(node.IPAddress),
 				"is_active":    types.BoolValue(node.IsActive),
 			}
-			nodeObjectValue, _ := types.ObjectValue(nodesNodeGroupType, nodeDetails)
+			nodeObjectValue, _ := types.ObjectValue(NodesNodeGroupType, nodeDetails)
 
 			nodes = append(nodes, nodeObjectValue)
 		}
 
 		allNodes, _ := types.ListValue(types.ObjectType{
-			AttrTypes: nodesNodeGroupType,
+			AttrTypes: NodesNodeGroupType,
 		}, nodes)
 
-		GoogleItemsValues, _ := types.ObjectValue(nodeGroupTypes, map[string]attr.Value{
+		GoogleItemsValues, _ := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
 			"region":             types.StringValue(nodeGroup.Region),
 			"cidr":               types.StringValue(nodeGroup.Cidr),
 			"availability_zones": allAvailabilityZones,
@@ -613,16 +569,16 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	google, _ = types.ListValue(types.ObjectType{
-		AttrTypes: nodeGroupTypes,
+		AttrTypes: NodeGroupTypes,
 	}, googleItems)
 
 	NodeGroupsValues := map[string]attr.Value{
-		"aws":   aws,
-		"azure": azure,
+		"aws":    aws,
+		"azure":  azure,
 		"google": google,
 	}
 
-	nodeGroupObjectValue, _ := types.ObjectValue(nodeGroupsTypes, NodeGroupsValues)
+	nodeGroupObjectValue, _ := types.ObjectValue(NodeGroupsTypes, NodeGroupsValues)
 
 	plan.NodeGroups = nodeGroupObjectValue
 
@@ -692,54 +648,6 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		state.Firewall = append(state.Firewall, firewallObjectValue)
 	}
 
-	nodesNodeGroupType := map[string]attr.Type{
-		"display_name": types.StringType,
-		"ip_address":   types.StringType,
-		"is_active":    types.BoolType,
-	}
-
-	nodeGroupTypes := map[string]attr.Type{
-		"region": types.StringType,
-		"cidr":   types.StringType,
-		"availability_zones": types.ListType{
-			ElemType: types.StringType,
-		},
-		"public_subnets": types.ListType{
-			ElemType: types.StringType,
-		},
-		"private_subnets": types.ListType{
-			ElemType: types.StringType,
-		},
-		"nodes": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: nodesNodeGroupType,
-			},
-		},
-		"node_location": types.StringType,
-		"volume_size":   types.Int64Type,
-		"volume_iops":   types.Int64Type,
-		"volume_type":   types.StringType,
-		"instance_type": types.StringType,
-	}
-
-	nodeGroupsTypes := map[string]attr.Type{
-		"aws": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: nodeGroupTypes,
-			},
-		},
-		"azure": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: nodeGroupTypes,
-			},
-		},
-		"google": types.ListType{
-			ElemType: types.ObjectType{
-				AttrTypes: nodeGroupTypes,
-			},
-		},
-	}
-
 	var aws types.List
 	var awsItems []attr.Value
 	for _, nodeGroup := range cluster.NodeGroups.Aws {
@@ -775,16 +683,16 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 				"ip_address":   types.StringValue(node.IPAddress),
 				"is_active":    types.BoolValue(node.IsActive),
 			}
-			nodeObjectValue, _ := types.ObjectValue(nodesNodeGroupType, nodeDetails)
+			nodeObjectValue, _ := types.ObjectValue(NodesNodeGroupType, nodeDetails)
 
 			nodes = append(nodes, nodeObjectValue)
 		}
 
 		allNodes, _ := types.ListValue(types.ObjectType{
-			AttrTypes: nodesNodeGroupType,
+			AttrTypes: NodesNodeGroupType,
 		}, nodes)
 
-		AwsItemsValues, _ := types.ObjectValue(nodeGroupTypes, map[string]attr.Value{
+		AwsItemsValues, _ := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
 			"region":             types.StringValue(nodeGroup.Region),
 			"cidr":               types.StringValue(nodeGroup.Cidr),
 			"availability_zones": allAvailabilityZones,
@@ -802,7 +710,7 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 
 	aws, _ = types.ListValue(types.ObjectType{
-		AttrTypes: nodeGroupTypes,
+		AttrTypes: NodeGroupTypes,
 	}, awsItems)
 
 	var azure types.List
@@ -840,16 +748,16 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 				"ip_address":   types.StringValue(node.IPAddress),
 				"is_active":    types.BoolValue(node.IsActive),
 			}
-			nodeObjectValue, _ := types.ObjectValue(nodesNodeGroupType, nodeDetails)
+			nodeObjectValue, _ := types.ObjectValue(NodesNodeGroupType, nodeDetails)
 
 			nodes = append(nodes, nodeObjectValue)
 		}
 
 		allNodes, _ := types.ListValue(types.ObjectType{
-			AttrTypes: nodesNodeGroupType,
+			AttrTypes: NodesNodeGroupType,
 		}, nodes)
 
-		AzureItemsValues, _ := types.ObjectValue(nodeGroupTypes, map[string]attr.Value{
+		AzureItemsValues, _ := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
 			"region":             types.StringValue(nodeGroup.Region),
 			"cidr":               types.StringValue(nodeGroup.Cidr),
 			"availability_zones": allAvailabilityZones,
@@ -867,7 +775,7 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 
 	azure, _ = types.ListValue(types.ObjectType{
-		AttrTypes: nodeGroupTypes,
+		AttrTypes: NodeGroupTypes,
 	}, azureItems)
 
 	var google types.List
@@ -905,16 +813,16 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 				"ip_address":   types.StringValue(node.IPAddress),
 				"is_active":    types.BoolValue(node.IsActive),
 			}
-			nodeObjectValue, _ := types.ObjectValue(nodesNodeGroupType, nodeDetails)
+			nodeObjectValue, _ := types.ObjectValue(NodesNodeGroupType, nodeDetails)
 
 			nodes = append(nodes, nodeObjectValue)
 		}
 
 		allNodes, _ := types.ListValue(types.ObjectType{
-			AttrTypes: nodesNodeGroupType,
+			AttrTypes: NodesNodeGroupType,
 		}, nodes)
 
-		GoogleItemsValues, _ := types.ObjectValue(nodeGroupTypes, map[string]attr.Value{
+		GoogleItemsValues, _ := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
 			"region":             types.StringValue(nodeGroup.Region),
 			"cidr":               types.StringValue(nodeGroup.Cidr),
 			"availability_zones": allAvailabilityZones,
@@ -932,16 +840,16 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 
 	google, _ = types.ListValue(types.ObjectType{
-		AttrTypes: nodeGroupTypes,
+		AttrTypes: NodeGroupTypes,
 	}, googleItems)
 
 	NodeGroupsValues := map[string]attr.Value{
-		"aws":   aws,
-		"azure": azure,
+		"aws":    aws,
+		"azure":  azure,
 		"google": google,
 	}
 
-	nodeGroupsObjectValue, _ := types.ObjectValue(nodeGroupsTypes, NodeGroupsValues)
+	nodeGroupsObjectValue, _ := types.ObjectValue(NodeGroupsTypes, NodeGroupsValues)
 
 	state.NodeGroups = nodeGroupsObjectValue
 
