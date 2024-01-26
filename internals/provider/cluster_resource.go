@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
 	"github.com/pgEdge/terraform-provider-pgedge/models"
 )
@@ -346,6 +347,75 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 	}
 }
 
+func nodeGroupsClusterReq(ctx context.Context, resp *resource.CreateResponse, nodeGroupReq []NodeGroup) (*resource.CreateResponse, []*models.NodeGroup) {
+
+	var (
+		nodeGroupReqs []*models.NodeGroup
+		nodes         []*models.NodeGroupNodesItems0
+		nodeReq       []Nodes
+
+		availability_zones []string
+		public_subnets     []string
+		private_subnets    []string
+	)
+	for _, nodeGroup := range nodeGroupReq {
+		diags := nodeGroup.Nodes.ElementsAs(ctx, &nodeReq, false)
+		resp.Diagnostics.Append(diags...)
+
+		for _, node := range nodeReq {
+			nodes = append(nodes, &models.NodeGroupNodesItems0{
+				DisplayName: node.DisplayName.ValueString(),
+				IPAddress:   node.IPAddress.ValueString(),
+				IsActive:    node.IsActive.ValueBool(),
+			})
+		}
+
+		nodeGroup.AvailabilityZones.ElementsAs(ctx, &availability_zones, false)
+		nodeGroup.PublicSubnets.ElementsAs(ctx, &public_subnets, false)
+		nodeGroup.PrivateSubnets.ElementsAs(ctx, &private_subnets, false)
+
+		nodeGroupReqs = append(nodeGroupReqs, &models.NodeGroup{
+			Region:            nodeGroup.Region.ValueString(),
+			Cidr:              nodeGroup.Cidr.ValueString(),
+			AvailabilityZones: availability_zones,
+			PublicSubnets:     public_subnets,
+			PrivateSubnets:    private_subnets,
+			Nodes:             nodes,
+			NodeLocation:      nodeGroup.NodeLocation.ValueString(),
+			VolumeSize:        nodeGroup.VolumeSize.ValueInt64(),
+			VolumeIops:        nodeGroup.VolumeIOPS.ValueInt64(),
+			VolumeType:        nodeGroup.VolumeType.ValueString(),
+			InstanceType:      nodeGroup.InstanceType.ValueString(),
+		})
+
+	}
+
+	return resp, nodeGroupReqs
+}
+
+func fireWallRulesClusterReq(ctx context.Context, resp *resource.CreateResponse, firewallRuleReq []basetypes.ObjectValue) (*resource.CreateResponse, []*models.ClusterCreationRequestFirewallRulesItems0) {
+	var (
+		firewallRules    []*models.ClusterCreationRequestFirewallRulesItems0
+		firewallRuleType FirewallRule
+		sources          []string
+	)
+
+	for _, firewallRule := range firewallRuleReq {
+
+		diags := firewallRule.As(ctx, &firewallRuleType, basetypes.ObjectAsOptions{})
+		resp.Diagnostics.Append(diags...)
+		diags = firewallRuleType.Sources.ElementsAs(ctx, &sources, false)
+		resp.Diagnostics.Append(diags...)
+		firewallRules = append(firewallRules, &models.ClusterCreationRequestFirewallRulesItems0{
+			Type:    firewallRuleType.Type.ValueString(),
+			Port:    firewallRuleType.Port.ValueInt64(),
+			Sources: sources,
+		})
+	}
+
+	return resp, firewallRules
+}
+
 func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan ClusterDetails
 	diags := req.Plan.Get(ctx, &plan)
@@ -354,26 +424,45 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	var firewallRules []*models.ClusterCreationRequestFirewallRulesItems0
+	var nodeGroupsReq NodeGroups
+	var awsNodeGroupReq []NodeGroup
+	var azureNodeGroupReq []NodeGroup
+	var googleNodeGroupReq []NodeGroup
+
+	diags = plan.NodeGroups.As(ctx, &nodeGroupsReq, basetypes.ObjectAsOptions{})
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	nodeGroupsReq.AWS.ElementsAs(ctx, &awsNodeGroupReq, false)
+	nodeGroupsReq.Azure.ElementsAs(ctx, &azureNodeGroupReq, false)
+	nodeGroupsReq.Google.ElementsAs(ctx, &googleNodeGroupReq, false)
+
+	resp, firewallRules := fireWallRulesClusterReq(ctx, resp, plan.Firewall)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp, awsReq := nodeGroupsClusterReq(ctx, resp, awsNodeGroupReq)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp, azureReq := nodeGroupsClusterReq(ctx, resp, azureNodeGroupReq)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp, googleReq := nodeGroupsClusterReq(ctx, resp, googleNodeGroupReq)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	clusterCreationRequest := &models.ClusterCreationRequest{
 		Name:           plan.Name.ValueString(),
 		CloudAccountID: plan.CloudAccountID.ValueString(),
 		NodeGroups: &models.ClusterCreationRequestNodeGroups{
-			Aws: []*models.NodeGroup{
-				{
-					InstanceType: "t4g.small",
-					Region:       "us-east-1",
-					Nodes: []*models.NodeGroupNodesItems0{
-						{
-							DisplayName: "Node1",
-							IsActive:    true,
-						},
-					},
-				},
-			},
-			Azure:  []*models.NodeGroup{},
-			Google: []*models.NodeGroup{},
+			Aws:    awsReq,
+			Azure:  azureReq,
+			Google: googleReq,
 		},
 		Firewall: &models.ClusterCreationRequestFirewall{
 			Rules: firewallRules,

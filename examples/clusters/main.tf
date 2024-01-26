@@ -15,31 +15,32 @@ data "pgedge_clusters" "tech" {
 }
 
 resource "pgedge_cluster" "tech" {
-    name       = "test124"
-    cloud_account_id = ""
-    node_groups = {
-      aws = [
-        {
-          region = "us-east-1"
-          instance_type = "t4g.small"
-          nodes = [
-            {
-              display_name = "Node1"
-              is_active = true
-            }
-          ]
-        },
-      ]
-      firewall = {
-        rules = [
+  name             = "test124"
+  cloud_account_id = ""
+  firewall = [
+    {
+      type    = "https"
+      port    = 5432
+      sources = ["0.0.0.0/0"]
+    }
+  ]
+  node_groups = {
+    aws = [
+      {
+        region        = "us-east-1"
+        instance_type = "t4g.small"
+        availability_zones = [
+          "us-east-1a",
+        ]
+        nodes = [
           {
-            type = "https"
-            port = 5432
-            sources = ["0.0.0.0/0"]
+            display_name = "Node1"
+            is_active    = true
           }
         ]
-      }
-    }
+      },
+    ]
+  }
 }
 
 

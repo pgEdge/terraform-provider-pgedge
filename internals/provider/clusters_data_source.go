@@ -82,10 +82,16 @@ type NodeGroup struct {
 	InstanceType      types.String `tfsdk:"instance_type"`
 }
 
+type Nodes struct {
+	DisplayName types.String `tfsdk:"display_name"`
+	IPAddress   types.String `tfsdk:"ip_address"`
+	IsActive    types.Bool   `tfsdk:"is_active"`
+}
+
 type NodeGroups struct {
-	AWS    []NodeGroup `tfsdk:"aws"`
-	Azure  []NodeGroup `tfsdk:"azure"`
-	Google []NodeGroup `tfsdk:"google"`
+	AWS    types.List `tfsdk:"aws"`
+	Azure  types.List `tfsdk:"azure"`
+	Google types.List `tfsdk:"google"`
 }
 
 var (
