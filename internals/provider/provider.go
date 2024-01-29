@@ -43,7 +43,7 @@ func (p *PgEdgeProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
 			"base_url": schema.StringAttribute{
-				Required:    true,
+				Optional:    true,
 				Description: "Base Url to use when connecting to the PgEdge service.",
 			},
 			// "client_id": schema.StringAttribute{
@@ -71,14 +71,14 @@ func (p *PgEdgeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		return
 	}
 
-	if config.BaseUrl.IsUnknown() {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("base_url"),
-			"Unknown PgEdge API Base Url",
-			"The provider cannot create the pgEdge API client as there is an unknown configuration value for the pgEdge API Base Url. "+
-				"Either target apply the source of the value first, set the value statically in the configuration, or use the PGEDGE_BASE_URL environment variable.",
-		)
-	}
+	// if config.BaseUrl.IsUnknown() {
+	// 	resp.Diagnostics.AddAttributeError(
+	// 		path.Root("base_url"),
+	// 		"Unknown PgEdge API Base Url",
+	// 		"The provider cannot create the pgEdge API client as there is an unknown configuration value for the pgEdge API Base Url. "+
+	// 			"Either target apply the source of the value first, set the value statically in the configuration, or use the PGEDGE_BASE_URL environment variable.",
+	// 	)
+	// }
 
 	// if config.ClientId.IsUnknown() {
 	// 	resp.Diagnostics.AddAttributeError(
@@ -120,13 +120,7 @@ func (p *PgEdgeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 
 
 	if baseUrl == "" {
-		resp.Diagnostics.AddAttributeError(
-			path.Root("base_url"),
-			"Missing pgEdge API base_url",
-			"The provider cannot create the pgEdge API client as there is a missing or empty value for the pgEdge API base_url. "+
-				"Set the base_url value in the configuration or use the PGEDGE_BASE_URL environment variable. "+
-				"If either is already set, ensure the value is not empty.",
-		)
+		baseUrl = "https://api.pgedge.com"
 	}
 
 	if clientId == "" {

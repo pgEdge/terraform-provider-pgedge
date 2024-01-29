@@ -3,14 +3,15 @@ package provider
 import (
 	"context"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
-	// "github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-	// "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
 	"github.com/pgEdge/terraform-provider-pgedge/models"
@@ -62,9 +63,12 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 			"name": schema.StringAttribute{
 				Optional:    true,
-				// PlanModifiers: []planmodifier.String{
-				// 	stringplanmodifier.RequiresReplace(),
-				// },
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(`^[a-z0-9]+$`),
+						"must contain only lowercase alphanumeric characters",
+					),
+				},
 				Description: "Name of the database",
 			},
 			"cluster_id": schema.StringAttribute{
@@ -172,8 +176,6 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	fmt.Println("plan.Options", plan.Options)
 
 	var databaseOptions []string
 	diags = plan.Options.ElementsAs(ctx, &databaseOptions, false)
