@@ -3,6 +3,7 @@ package provider
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -60,7 +61,7 @@ type DatabaseDetails struct {
 	Status    types.String `tfsdk:"status"`
 	ClusterID types.String `tfsdk:"cluster_id"`
 	Nodes     types.List   `tfsdk:"nodes"`
-	Options   []types.String   `tfsdk:"options"`
+	Options   types.List   `tfsdk:"options"`
 }
 
 type Node struct {
@@ -98,7 +99,7 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Description: "ID of the database",
 						},
 						"name": schema.StringAttribute{
-							Required:    true,
+							Computed:    true,
 							Description: "Name of the database",
 						},
 						"domain": schema.StringAttribute{
@@ -246,7 +247,7 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		var database DatabaseDetails
 		var nodes []attr.Value
 		database.ID = types.StringValue(db.ID.String())
-		database.Name = types.StringValue(db.Name)
+		database.Name = types.StringValue(strings.Trim(strings.ToLower(db.Name), " "))
 		database.Domain = types.StringValue(db.Domain)
 		database.CreatedAt = types.StringValue(db.CreatedAt.String())
 		database.UpdatedAt = types.StringValue(db.UpdatedAt.String())
@@ -271,12 +272,10 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			})
 
 			nodeValue := map[string]attr.Value{
-				"name": types.StringValue(node.Name),
+				"name":       types.StringValue(node.Name),
 				"connection": nodeConnectionValue,
 				"location":   nodeLocationValue,
 			}
-			
-
 			node, _ := types.ObjectValue(nodeType, nodeValue)
 			nodes = append(nodes, node)
 		}
@@ -284,6 +283,21 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		database.Nodes, _ = types.ListValue(types.ObjectType{
 			AttrTypes: nodeType,
 		}, nodes)
+
+		database.ClusterID = types.StringValue(db.ClusterID.String())
+
+		var planOptions types.List
+
+		var databaseOptionsAttr []attr.Value
+
+		for _, option := range db.Options {
+			databaseOptionsAttr = append(databaseOptionsAttr, types.StringValue(option))
+		}
+
+		planOptions, diags = types.ListValue(types.StringType, databaseOptionsAttr)
+		resp.Diagnostics.Append(diags...)
+
+		database.Options = planOptions
 
 		state.Databases = append(state.Databases, database)
 	}

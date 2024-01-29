@@ -20,6 +20,10 @@ import (
 // swagger:model DatabaseDetails
 type DatabaseDetails struct {
 
+	// cluster id
+	// Format: uuid
+	ClusterID strfmt.UUID `json:"cluster_id,omitempty"`
+
 	// components
 	Components []*DatabaseDetailsComponentsItems0 `json:"components"`
 
@@ -36,6 +40,9 @@ type DatabaseDetails struct {
 
 	// nodes
 	Nodes []*Node `json:"nodes"`
+
+	// options
+	Options []string `json:"options"`
 
 	// pg version
 	PgVersion string `json:"pg_version,omitempty"`
@@ -60,6 +67,10 @@ type DatabaseDetails struct {
 // Validate validates this database details
 func (m *DatabaseDetails) Validate(formats strfmt.Registry) error {
 	var res []error
+
+	if err := m.validateClusterID(formats); err != nil {
+		res = append(res, err)
+	}
 
 	if err := m.validateComponents(formats); err != nil {
 		res = append(res, err)
@@ -92,6 +103,18 @@ func (m *DatabaseDetails) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *DatabaseDetails) validateClusterID(formats strfmt.Registry) error {
+	if swag.IsZero(m.ClusterID) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("cluster_id", "body", "uuid", m.ClusterID.String(), formats); err != nil {
+		return err
+	}
+
 	return nil
 }
 

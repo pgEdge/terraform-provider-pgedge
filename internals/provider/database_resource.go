@@ -9,6 +9,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	// "github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	// "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
 	"github.com/pgEdge/terraform-provider-pgedge/models"
@@ -60,7 +62,9 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 			"name": schema.StringAttribute{
 				Optional:    true,
-				Computed:    true,
+				// PlanModifiers: []planmodifier.String{
+				// 	stringplanmodifier.RequiresReplace(),
+				// },
 				Description: "Name of the database",
 			},
 			"cluster_id": schema.StringAttribute{
@@ -87,7 +91,7 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"options": schema.ListAttribute{
 				ElementType: types.StringType,
 				Optional:    true,
-				Computed: true,
+				Computed:    true,
 				Description: "Options for creating the database",
 			},
 			"nodes": schema.ListNestedAttribute{
@@ -171,11 +175,9 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 
 	fmt.Println("plan.Options", plan.Options)
 
-	databaseName := plan.Name.ValueString()
 	var databaseOptions []string
-	for _, option := range plan.Options {
-		databaseOptions = append(databaseOptions, option.ValueString())
-	}
+	diags = plan.Options.ElementsAs(ctx, &databaseOptions, false)
+	resp.Diagnostics.Append(diags...)
 
 	items := &models.DatabaseCreationRequest{
 		Name:      plan.Name.ValueString(),
@@ -219,19 +221,25 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 		},
 	}
 
-	if strings.ToLower(databaseName) != types.StringValue(strings.ToLower(database.Name)).ValueString() {
-		databaseName = database.Name
+	var planOptions types.List
+
+	var databaseOptionsAttr []attr.Value
+
+	for _, option := range database.Options {
+		databaseOptionsAttr = append(databaseOptionsAttr, types.StringValue(option))
 	}
 
+	planOptions, diags = types.ListValue(types.StringType, databaseOptionsAttr)
+	resp.Diagnostics.Append(diags...)
 	plan = DatabaseDetails{
 		ID:        types.StringValue(database.ID.String()),
-		Name:      types.StringValue(databaseName),
+		Name:      types.StringValue(strings.Trim(strings.ToLower(database.Name), " ")),
 		Domain:    types.StringValue(database.Domain),
 		Status:    types.StringValue(database.Status),
-		ClusterID: plan.ClusterID,
+		ClusterID: types.StringValue(database.ClusterID.String()),
 		CreatedAt: types.StringValue(database.CreatedAt.String()),
 		UpdatedAt: types.StringValue(database.UpdatedAt.String()),
-		Options:   plan.Options,
+		Options:   planOptions,
 	}
 
 	var nodes []attr.Value
@@ -293,7 +301,7 @@ func (r *databaseResource) Read(ctx context.Context, req resource.ReadRequest, r
 
 	state = DatabaseDetails{}
 	state.ID = types.StringValue(database.ID.String())
-	state.Name = types.StringValue(database.Name)
+	state.Name = types.StringValue(strings.Trim(strings.ToLower(database.Name), " "))
 	state.Status = types.StringValue(database.Status)
 	state.CreatedAt = types.StringValue(database.CreatedAt.String())
 	state.UpdatedAt = types.StringValue(database.UpdatedAt.String())
@@ -353,6 +361,21 @@ func (r *databaseResource) Read(ctx context.Context, req resource.ReadRequest, r
 		node, _ := types.ObjectValue(nodeType, nodeValue)
 		nodes = append(nodes, node)
 	}
+
+	var planOptions types.List
+
+	var databaseOptionsAttr []attr.Value
+
+	for _, option := range database.Options {
+		databaseOptionsAttr = append(databaseOptionsAttr, types.StringValue(option))
+	}
+
+	planOptions, diags = types.ListValue(types.StringType, databaseOptionsAttr)
+	resp.Diagnostics.Append(diags...)
+
+	state.Options = planOptions
+
+	state.ClusterID = types.StringValue(database.ClusterID.String())
 
 	state.Nodes, _ = types.ListValue(types.ObjectType{
 		AttrTypes: nodeType,

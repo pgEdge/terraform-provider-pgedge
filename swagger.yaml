@@ -297,6 +297,13 @@ definitions:
       updated_at:
         type: string
         format: date-time
+      cluster_id:
+        type: string
+        format: uuid
+      options:
+        type: array
+        items:
+          type: string
   ReplicationResponse:
     type: object
     properties:
@@ -338,6 +345,13 @@ definitions:
           $ref: "#/definitions/Node"
       pg_version:
         type: string
+      cluster_id:
+        type: string
+        format: uuid
+      options:
+        type: array
+        items:
+          type: string
       roles:
         type: array
         items:
@@ -431,6 +445,13 @@ definitions:
       updated_at:
         type: string
         format: date-time
+      cluster_id:
+        type: string
+        format: uuid
+      options:
+        type: array
+        items:
+          type: string
   Node:
     type: object
     properties:

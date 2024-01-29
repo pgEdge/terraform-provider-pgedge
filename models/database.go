@@ -20,6 +20,10 @@ import (
 // swagger:model Database
 type Database struct {
 
+	// cluster id
+	// Format: uuid
+	ClusterID strfmt.UUID `json:"cluster_id,omitempty"`
+
 	// created at
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
@@ -37,6 +41,9 @@ type Database struct {
 	// nodes
 	Nodes []*Node `json:"nodes"`
 
+	// options
+	Options []string `json:"options"`
+
 	// status
 	Status string `json:"status,omitempty"`
 
@@ -48,6 +55,10 @@ type Database struct {
 // Validate validates this database
 func (m *Database) Validate(formats strfmt.Registry) error {
 	var res []error
+
+	if err := m.validateClusterID(formats); err != nil {
+		res = append(res, err)
+	}
 
 	if err := m.validateCreatedAt(formats); err != nil {
 		res = append(res, err)
@@ -68,6 +79,18 @@ func (m *Database) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *Database) validateClusterID(formats strfmt.Registry) error {
+	if swag.IsZero(m.ClusterID) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("cluster_id", "body", "uuid", m.ClusterID.String(), formats); err != nil {
+		return err
+	}
+
 	return nil
 }
 
