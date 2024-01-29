@@ -606,7 +606,7 @@ definitions:
                   type: array
                   items:
                     type: string
-                type_:
+                type:
                   type: string
       id:
         type: string

@@ -15,7 +15,7 @@ data "pgedge_clusters" "tech" {
 }
 
 resource "pgedge_cluster" "tech" {
-  name             = "test124"
+  name             = "testing147"
   cloud_account_id = ""
   firewall = [
     {

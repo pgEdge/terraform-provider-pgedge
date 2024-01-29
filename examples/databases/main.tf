@@ -15,7 +15,7 @@ data "pgedge_databases" "tech" {
 }
 
 resource "pgedge_database" "tech" {
-    name       = "newDatabase1013"
+    name       = "newDatabase2002"
     cluster_id = ""
     options    = ["install:northwind"]
 }

@@ -569,7 +569,7 @@ type ClusterCreationResponseFirewallRulesItems0 struct {
 	Sources []string `json:"sources"`
 
 	// type
-	Type string `json:"type_,omitempty"`
+	Type string `json:"type,omitempty"`
 }
 
 // Validate validates this cluster creation response firewall rules items0

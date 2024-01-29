@@ -75,6 +75,7 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 			"firewall": schema.ListNestedAttribute{
 				Optional: true,
+				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"type": schema.StringAttribute{
@@ -483,12 +484,13 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 
 	firewallElementsType := map[string]attr.Type{
 		"type": types.StringType,
-		"port": types.Float64Type,
+		"port": types.Int64Type,
 		"sources": types.ListType{
 			ElemType: types.StringType,
 		},
 	}
 
+	var firewallResp []types.Object
 	for _, firewall := range createdCluster.Firewall.Rules {
 		var firewallSources []attr.Value
 		firewallType := types.StringValue(firewall.Type)
@@ -517,9 +519,10 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
-		plan.Firewall = append(plan.Firewall, firewallObjectValue)
+		firewallResp = append(firewallResp, firewallObjectValue)
 	}
+
+	plan.Firewall = firewallResp
 
 	var aws types.List
 	var awsItems []attr.Value
@@ -872,7 +875,7 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	firewallElementsType := map[string]attr.Type{
 		"type": types.StringType,
-		"port": types.Float64Type,
+		"port": types.Int64Type,
 		"sources": types.ListType{
 			ElemType: types.StringType,
 		},
