@@ -62,7 +62,7 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Description: "ID of the database",
 			},
 			"name": schema.StringAttribute{
-				Optional:    true,
+				Required:    true,
 				Validators: []validator.String{
 					stringvalidator.RegexMatches(
 						regexp.MustCompile(`^[a-z0-9]+$`),
@@ -72,8 +72,7 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Description: "Name of the database",
 			},
 			"cluster_id": schema.StringAttribute{
-				Optional:    true,
-				Computed:    true,
+				Required:    true,
 				Description: "Cluster Id of the database",
 			},
 			"domain": schema.StringAttribute{
@@ -99,7 +98,7 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Description: "Options for creating the database",
 			},
 			"nodes": schema.ListNestedAttribute{
-				Optional: true,
+				// Optional: true,
 				Computed: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
