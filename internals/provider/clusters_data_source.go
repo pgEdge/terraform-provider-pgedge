@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
+	"github.com/pgEdge/terraform-provider-pgedge/models"
 )
 
 var (
@@ -478,88 +479,9 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 		}
 
 		var aws types.List
-		var awsItems []attr.Value
-		for _, nodeGroup := range cluster.NodeGroups.Aws {
-			var availabilityZones []attr.Value
-
-			for _, zone := range nodeGroup.AvailabilityZones {
-				availabilityZones = append(availabilityZones, types.StringValue(zone))
-			}
-
-			allAvailabilityZones, diags := types.ListValue(types.StringType, availabilityZones)
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			var publicSubnets []attr.Value
-
-			for _, subnet := range nodeGroup.PublicSubnets {
-				publicSubnets = append(publicSubnets, types.StringValue(subnet))
-			}
-
-			allPublicSubnets, diags := types.ListValue(types.StringType, publicSubnets)
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			var privateSubnets []attr.Value
-
-			for _, subnet := range nodeGroup.PrivateSubnets {
-				privateSubnets = append(privateSubnets, types.StringValue(subnet))
-			}
-
-			allPrivateSubnets, diags := types.ListValue(types.StringType, privateSubnets)
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			var nodes []attr.Value
-
-			for _, node := range nodeGroup.Nodes {
-				nodeDetails := map[string]attr.Value{
-					"display_name": types.StringValue(node.DisplayName),
-					"ip_address":   types.StringValue(node.IPAddress),
-					"is_active":    types.BoolValue(node.IsActive),
-				}
-				nodeObjectValue, diags := types.ObjectValue(NodesNodeGroupType, nodeDetails)
-				resp.Diagnostics.Append(diags...)
-
-				if resp.Diagnostics.HasError() {
-					return
-				}
-				nodes = append(nodes, nodeObjectValue)
-			}
-
-			allNodes, diags := types.ListValue(types.ObjectType{
-				AttrTypes: NodesNodeGroupType,
-			}, nodes)
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			AwsItemsValues, diags := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
-				"region":             types.StringValue(nodeGroup.Region),
-				"cidr":               types.StringValue(nodeGroup.Cidr),
-				"availability_zones": allAvailabilityZones,
-				"public_subnets":     allPublicSubnets,
-				"private_subnets":    allPrivateSubnets,
-				"nodes":              allNodes,
-				"node_location":      types.StringValue(nodeGroup.NodeLocation),
-				"volume_size":        types.Int64Value(nodeGroup.VolumeSize),
-				"volume_iops":        types.Int64Value(nodeGroup.VolumeIops),
-				"volume_type":        types.StringValue(nodeGroup.VolumeType),
-				"instance_type":      types.StringValue(nodeGroup.InstanceType),
-			})
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			awsItems = append(awsItems, AwsItemsValues)
+		awsItems, resp := NodeGroupItemsSetter(cluster.NodeGroups.Aws, resp)
+		if resp.Diagnostics.HasError() {
+			return
 		}
 
 		aws, diags = types.ListValue(types.ObjectType{
@@ -573,88 +495,9 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 		}
 
 		var azure types.List
-		var azureItems []attr.Value
-		for _, nodeGroup := range cluster.NodeGroups.Azure {
-			var availabilityZones []attr.Value
-
-			for _, zone := range nodeGroup.AvailabilityZones {
-				availabilityZones = append(availabilityZones, types.StringValue(zone))
-			}
-
-			allAvailabilityZones, diags := types.ListValue(types.StringType, availabilityZones)
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			var publicSubnets []attr.Value
-
-			for _, subnet := range nodeGroup.PublicSubnets {
-				publicSubnets = append(publicSubnets, types.StringValue(subnet))
-			}
-
-			allPublicSubnets, diags := types.ListValue(types.StringType, publicSubnets)
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			var privateSubnets []attr.Value
-
-			for _, subnet := range nodeGroup.PrivateSubnets {
-				privateSubnets = append(privateSubnets, types.StringValue(subnet))
-			}
-
-			allPrivateSubnets, diags := types.ListValue(types.StringType, privateSubnets)
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			var nodes []attr.Value
-
-			for _, node := range nodeGroup.Nodes {
-				nodeDetails := map[string]attr.Value{
-					"display_name": types.StringValue(node.DisplayName),
-					"ip_address":   types.StringValue(node.IPAddress),
-					"is_active":    types.BoolValue(node.IsActive),
-				}
-				nodeObjectValue, diags := types.ObjectValue(NodesNodeGroupType, nodeDetails)
-				resp.Diagnostics.Append(diags...)
-
-				if resp.Diagnostics.HasError() {
-					return
-				}
-				nodes = append(nodes, nodeObjectValue)
-			}
-
-			allNodes, diags := types.ListValue(types.ObjectType{
-				AttrTypes: NodesNodeGroupType,
-			}, nodes)
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			AzureItemsValues, diags := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
-				"region":             types.StringValue(nodeGroup.Region),
-				"cidr":               types.StringValue(nodeGroup.Cidr),
-				"availability_zones": allAvailabilityZones,
-				"public_subnets":     allPublicSubnets,
-				"private_subnets":    allPrivateSubnets,
-				"nodes":              allNodes,
-				"node_location":      types.StringValue(nodeGroup.NodeLocation),
-				"volume_size":        types.Int64Value(nodeGroup.VolumeSize),
-				"volume_iops":        types.Int64Value(nodeGroup.VolumeIops),
-				"volume_type":        types.StringValue(nodeGroup.VolumeType),
-				"instance_type":      types.StringValue(nodeGroup.InstanceType),
-			})
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			azureItems = append(azureItems, AzureItemsValues)
+		azureItems, resp := NodeGroupItemsSetter(cluster.NodeGroups.Azure, resp)
+		if resp.Diagnostics.HasError() {
+			return
 		}
 
 		azure, diags = types.ListValue(types.ObjectType{
@@ -668,88 +511,9 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 		}
 
 		var google types.List
-		var googleItems []attr.Value
-		for _, nodeGroup := range cluster.NodeGroups.Google {
-			var availabilityZones []attr.Value
-
-			for _, zone := range nodeGroup.AvailabilityZones {
-				availabilityZones = append(availabilityZones, types.StringValue(zone))
-			}
-
-			allAvailabilityZones, diags := types.ListValue(types.StringType, availabilityZones)
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			var publicSubnets []attr.Value
-
-			for _, subnet := range nodeGroup.PublicSubnets {
-				publicSubnets = append(publicSubnets, types.StringValue(subnet))
-			}
-
-			allPublicSubnets, diags := types.ListValue(types.StringType, publicSubnets)
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			var privateSubnets []attr.Value
-
-			for _, subnet := range nodeGroup.PrivateSubnets {
-				privateSubnets = append(privateSubnets, types.StringValue(subnet))
-			}
-
-			allPrivateSubnets, diags := types.ListValue(types.StringType, privateSubnets)
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			var nodes []attr.Value
-
-			for _, node := range nodeGroup.Nodes {
-				nodeDetails := map[string]attr.Value{
-					"display_name": types.StringValue(node.DisplayName),
-					"ip_address":   types.StringValue(node.IPAddress),
-					"is_active":    types.BoolValue(node.IsActive),
-				}
-				nodeObjectValue, diags := types.ObjectValue(NodesNodeGroupType, nodeDetails)
-				resp.Diagnostics.Append(diags...)
-
-				if resp.Diagnostics.HasError() {
-					return
-				}
-				nodes = append(nodes, nodeObjectValue)
-			}
-
-			allNodes, diags := types.ListValue(types.ObjectType{
-				AttrTypes: NodesNodeGroupType,
-			}, nodes)
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			GoogleItemsValues, diags := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
-				"region":             types.StringValue(nodeGroup.Region),
-				"cidr":               types.StringValue(nodeGroup.Cidr),
-				"availability_zones": allAvailabilityZones,
-				"public_subnets":     allPublicSubnets,
-				"private_subnets":    allPrivateSubnets,
-				"nodes":              allNodes,
-				"node_location":      types.StringValue(nodeGroup.NodeLocation),
-				"volume_size":        types.Int64Value(nodeGroup.VolumeSize),
-				"volume_iops":        types.Int64Value(nodeGroup.VolumeIops),
-				"volume_type":        types.StringValue(nodeGroup.VolumeType),
-				"instance_type":      types.StringValue(nodeGroup.InstanceType),
-			})
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			googleItems = append(azureItems, GoogleItemsValues)
+		googleItems, resp := NodeGroupItemsSetter(cluster.NodeGroups.Google, resp)
+		if resp.Diagnostics.HasError() {
+			return
 		}
 
 		google, diags = types.ListValue(types.ObjectType{
@@ -783,4 +547,91 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
+}
+
+func NodeGroupItemsSetter(nodeGroups []*models.NodeGroup, resp *datasource.ReadResponse) ([]attr.Value, *datasource.ReadResponse) {
+	var nodeGroupItems []attr.Value
+	for _, nodeGroup := range nodeGroups {
+		var availabilityZones []attr.Value
+
+		for _, zone := range nodeGroup.AvailabilityZones {
+			availabilityZones = append(availabilityZones, types.StringValue(zone))
+		}
+
+		allAvailabilityZones, diags := types.ListValue(types.StringType, availabilityZones)
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return nil, resp
+		}
+		var publicSubnets []attr.Value
+
+		for _, subnet := range nodeGroup.PublicSubnets {
+			publicSubnets = append(publicSubnets, types.StringValue(subnet))
+		}
+
+		allPublicSubnets, diags := types.ListValue(types.StringType, publicSubnets)
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return nil, resp
+		}
+		var privateSubnets []attr.Value
+
+		for _, subnet := range nodeGroup.PrivateSubnets {
+			privateSubnets = append(privateSubnets, types.StringValue(subnet))
+		}
+
+		allPrivateSubnets, diags := types.ListValue(types.StringType, privateSubnets)
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return nil, resp
+		}
+		var nodes []attr.Value
+
+		for _, node := range nodeGroup.Nodes {
+			nodeDetails := map[string]attr.Value{
+				"display_name": types.StringValue(node.DisplayName),
+				"ip_address":   types.StringValue(node.IPAddress),
+				"is_active":    types.BoolValue(node.IsActive),
+			}
+			nodeObjectValue, diags := types.ObjectValue(NodesNodeGroupType, nodeDetails)
+			resp.Diagnostics.Append(diags...)
+
+			if resp.Diagnostics.HasError() {
+				return nil, resp
+			}
+			nodes = append(nodes, nodeObjectValue)
+		}
+
+		allNodes, diags := types.ListValue(types.ObjectType{
+			AttrTypes: NodesNodeGroupType,
+		}, nodes)
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return nil, resp
+		}
+		NodeGroupItemValues, diags := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
+			"region":             types.StringValue(nodeGroup.Region),
+			"cidr":               types.StringValue(nodeGroup.Cidr),
+			"availability_zones": allAvailabilityZones,
+			"public_subnets":     allPublicSubnets,
+			"private_subnets":    allPrivateSubnets,
+			"nodes":              allNodes,
+			"node_location":      types.StringValue(nodeGroup.NodeLocation),
+			"volume_size":        types.Int64Value(nodeGroup.VolumeSize),
+			"volume_iops":        types.Int64Value(nodeGroup.VolumeIops),
+			"volume_type":        types.StringValue(nodeGroup.VolumeType),
+			"instance_type":      types.StringValue(nodeGroup.InstanceType),
+		})
+		resp.Diagnostics.Append(diags...)
+
+		if resp.Diagnostics.HasError() {
+			return nil, resp
+		}
+		nodeGroupItems = append(nodeGroupItems, NodeGroupItemValues)
+	}
+	return nodeGroupItems, resp
 }

@@ -87,6 +87,33 @@ type Location struct {
 	Region    string  `tfsdk:"region"`
 }
 
+var NodeConnectionType = map[string]attr.Type{
+	"database": types.StringType,
+	"host":     types.StringType,
+	"password": types.StringType,
+	"port":     types.Int64Type,
+	"username": types.StringType,
+}
+
+var NodeLocationType = map[string]attr.Type{
+	"code":      types.StringType,
+	"country":   types.StringType,
+	"latitude":  types.Float64Type,
+	"longitude": types.Float64Type,
+	"name":      types.StringType,
+	"region":    types.StringType,
+}
+
+var NodeType = map[string]attr.Type{
+	"name": types.StringType,
+	"connection": types.ObjectType{
+		AttrTypes: NodeConnectionType,
+	},
+	"location": types.ObjectType{
+		AttrTypes: NodeLocationType,
+	},
+}
+
 func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
@@ -216,33 +243,6 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		return
 	}
 
-	nodeConnectionType := map[string]attr.Type{
-		"database": types.StringType,
-		"host":     types.StringType,
-		"password": types.StringType,
-		"port":     types.Int64Type,
-		"username": types.StringType,
-	}
-
-	NodeLocationType := map[string]attr.Type{
-		"code":      types.StringType,
-		"country":   types.StringType,
-		"latitude":  types.Float64Type,
-		"longitude": types.Float64Type,
-		"name":      types.StringType,
-		"region":    types.StringType,
-	}
-
-	nodeType := map[string]attr.Type{
-		"name": types.StringType,
-		"connection": types.ObjectType{
-			AttrTypes: nodeConnectionType,
-		},
-		"location": types.ObjectType{
-			AttrTypes: NodeLocationType,
-		},
-	}
-
 	for _, db := range databases {
 		var database DatabaseDetails
 		var nodes []attr.Value
@@ -254,7 +254,7 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		database.Status = types.StringValue(db.Status)
 
 		for _, node := range db.Nodes {
-			nodeConnectionValue, _ := types.ObjectValue(nodeConnectionType, map[string]attr.Value{
+			nodeConnectionValue, _ := types.ObjectValue(NodeConnectionType, map[string]attr.Value{
 				"database": types.StringValue(node.Connection.Database),
 				"host":     types.StringValue(node.Connection.Host),
 				"password": types.StringValue(node.Connection.Password),
@@ -276,12 +276,12 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 				"connection": nodeConnectionValue,
 				"location":   nodeLocationValue,
 			}
-			node, _ := types.ObjectValue(nodeType, nodeValue)
+			node, _ := types.ObjectValue(NodeType, nodeValue)
 			nodes = append(nodes, node)
 		}
 
 		database.Nodes, _ = types.ListValue(types.ObjectType{
-			AttrTypes: nodeType,
+			AttrTypes: NodeType,
 		}, nodes)
 
 		database.ClusterID = types.StringValue(db.ClusterID.String())
