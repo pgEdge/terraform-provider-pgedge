@@ -133,19 +133,14 @@ func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) error {
 	request.SetAuthorization(c.AuthHeader)
 
 	_, err := c.PgEdgeAPIClient.Operations.DeleteDatabasesID(request)
-	if !strings.Contains(err.Error(), "200") {
+	if strings.Contains(err.Error(), "200") {
 		for {
-			databaseDetails, err := c.GetDatabase(ctx, id)
+			_, err := c.GetDatabase(ctx, id)
 			if err != nil {
-				return err
+				return nil
 			}
 
-			switch databaseDetails.Status {
-			case "deleted":
-				return nil
-			default:
-				time.Sleep(5 * time.Second)
-			}
+			time.Sleep(5 * time.Second)
 		}
 	}
 
@@ -245,19 +240,14 @@ func (c *Client) DeleteCluster(ctx context.Context, id strfmt.UUID) error {
 	request.SetAuthorization(c.AuthHeader)
 
 	_, err := c.PgEdgeAPIClient.Operations.DeleteClustersID(request)
-	if !strings.Contains(err.Error(), "200") {
+	if strings.Contains(err.Error(), "200") {
 		for {
-			clusterDetails, err := c.GetCluster(ctx, id)
+			_, err := c.GetCluster(ctx, id)
 			if err != nil {
-				return err
-			}
-
-			switch clusterDetails.Status {
-			case "deleted":
 				return nil
-			default:
-				time.Sleep(5 * time.Second)
 			}
+			time.Sleep(5 * time.Second)
+
 		}
 	}
 
