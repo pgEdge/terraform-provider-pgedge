@@ -119,6 +119,7 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 								},
 								"password": schema.StringAttribute{
 									Optional:    true,
+									Sensitive:  true,
 									Description: "Password of the node",
 								},
 								"port": schema.Int64Attribute{

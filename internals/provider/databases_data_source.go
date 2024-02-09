@@ -175,6 +175,7 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 											},
 											"password": schema.StringAttribute{
 												Computed:    true,
+												Sensitive:  true,
 												Description: "Password of the node",
 											},
 											"port": schema.Int64Attribute{
