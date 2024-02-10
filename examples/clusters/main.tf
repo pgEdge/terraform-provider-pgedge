@@ -15,14 +15,14 @@ data "pgedge_clusters" "tech" {
 }
 
 resource "pgedge_cluster" "tech" {
-  name             = "testing10732"
+  name             = "testing10712"
   cloud_account_id = ""
   # firewall = [
-    # {
-    #   type    = "https"
-    #   port    = 5432
-    #   sources = ["0.0.0.0/0"]
-    # }
+  #   {
+  #     type    = "https"
+  #     port    = 5432
+  #     sources = ["0.0.0.0/0"]
+  #   }
   # ]
    node_groups = {
     aws = [

@@ -88,17 +88,17 @@ var ClusterNodeGroupTypes = schema.ListNestedAttribute{
 					Attributes: map[string]schema.Attribute{
 						"display_name": schema.StringAttribute{
 							Optional:    true,
-							Computed: true,
+							Computed:    true,
 							Description: "Display name of the node",
 						},
 						"ip_address": schema.StringAttribute{
 							Optional:    true,
-							Computed: true,
+							Computed:    true,
 							Description: "IP address of the node",
 						},
 						"is_active": schema.BoolAttribute{
 							Optional:    true,
-							Computed: true,
+							Computed:    true,
 							Description: "Is the node active",
 						},
 					},
@@ -226,11 +226,11 @@ func nodeGroupsClusterReq(ctx context.Context, resp *resource.CreateResponse, no
 			PublicSubnets:     public_subnets,
 			PrivateSubnets:    private_subnets,
 			Nodes:             nodes,
-			NodeLocation: nodeGroup.NodeLocation.ValueString(),
-			VolumeSize:   nodeGroup.VolumeSize.ValueInt64(),
-			VolumeIops:   nodeGroup.VolumeIOPS.ValueInt64(),
-			VolumeType:   nodeGroup.VolumeType.ValueString(),
-			InstanceType: nodeGroup.InstanceType.ValueString(),
+			NodeLocation:      nodeGroup.NodeLocation.ValueString(),
+			VolumeSize:        nodeGroup.VolumeSize.ValueInt64(),
+			VolumeIops:        nodeGroup.VolumeIOPS.ValueInt64(),
+			VolumeType:        nodeGroup.VolumeType.ValueString(),
+			InstanceType:      nodeGroup.InstanceType.ValueString(),
 		})
 
 	}
@@ -552,15 +552,7 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 }
 
 func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var model ClusterDetails
-
-	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
-
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
+	resp.Diagnostics.AddError("Update Not Supported", "Update is not supported for pgEdge Cluster")
 }
 
 func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
