@@ -211,23 +211,23 @@ func (c *Client) CreateCluster(ctx context.Context, cluster *models.ClusterCreat
 		return nil, err
 	}
 
-	for {
-		clusterDetails, err := c.GetCluster(ctx, strfmt.UUID(resp.Payload.ID))
-		if err != nil {
-			return nil, err
-		}
+	// for {
+	// 	clusterDetails, err := c.GetCluster(ctx, strfmt.UUID(resp.Payload.ID))
+	// 	if err != nil {
+	// 		return nil, err
+	// 	}
 
-		switch clusterDetails.Status {
-		case "available":
+	// 	switch clusterDetails.Status {
+	// 	case "available":
 			return resp.Payload, nil
-		case "failed":
-			return nil, errors.New("cluster creation failed")
-		case "creating":
-			time.Sleep(5 * time.Second)
-		default:
-			return nil, errors.New("unexpected cluster status")
-		}
-	}
+	// 	case "failed":
+	// 		return nil, errors.New("cluster creation failed")
+	// 	case "creating":
+	// 		time.Sleep(5 * time.Second)
+	// 	default:
+	// 		return nil, errors.New("unexpected cluster status")
+	// 	}
+	// }
 }
 
 func (c *Client) DeleteCluster(ctx context.Context, id strfmt.UUID) error {

@@ -15,40 +15,44 @@ data "pgedge_clusters" "tech" {
 }
 
 resource "pgedge_cluster" "tech" {
-  name             = "testing10728"
+  name             = "testing10732"
   cloud_account_id = ""
-  firewall = [
+  # firewall = [
     # {
     #   type    = "https"
     #   port    = 5432
     #   sources = ["0.0.0.0/0"]
     # }
-  ]
-  #  node_groups = {
+  # ]
+   node_groups = {
+    aws = [
+      {
+        region        = "us-west-2"
+        instance_type = "t4g.small",
+        # nodes = [],
+        #  availability_zones = [
+  #         "us-west-2a",
+        # ]
+      },
+    ]
+  }
+  # node_groups = {
   #   aws = [
   #     {
   #       region        = "us-west-2"
   #       instance_type = "t4g.small"
+  #       availability_zones = [
+  #         "us-west-2a",
+  #       ]
+  #       nodes = [
+  #         {
+  #           display_name = "n1"
+  #           is_active    = true
+  #         }
+  #       ]
   #     },
   #   ]
   # }
-  node_groups = {
-    aws = [
-      {
-        region        = "us-west-2"
-        instance_type = "t4g.small"
-        availability_zones = [
-          "us-west-2a",
-        ]
-        nodes = [
-          {
-            display_name = "n1"
-            is_active    = true
-          }
-        ]
-      },
-    ]
-  }
 }
 
 

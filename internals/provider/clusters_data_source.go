@@ -145,6 +145,77 @@ var (
 	}
 )
 
+var ClusterNodeGroupDataSourceTypes = schema.ListNestedAttribute{
+	Computed: true,
+	Optional: true,
+
+	NestedObject: schema.NestedAttributeObject{
+		Attributes: map[string]schema.Attribute{
+			"region": schema.StringAttribute{
+				Computed:    true,
+				Description: "Region of the AWS node group",
+			},
+			"availability_zones": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+				Description: "Availability zones of the AWS node group",
+			},
+			"cidr": schema.StringAttribute{
+				Computed:    true,
+				Description: "CIDR of the AWS node group",
+			},
+			"public_subnets": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"private_subnets": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"nodes": schema.ListNestedAttribute{
+				Computed: true,
+				Optional: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"display_name": schema.StringAttribute{
+							Computed:    true,
+							Description: "Display name of the node",
+						},
+						"ip_address": schema.StringAttribute{
+							Computed:    true,
+							Description: "IP address of the node",
+						},
+						"is_active": schema.BoolAttribute{
+							Computed:    true,
+							Description: "Is the node active",
+						},
+					},
+				},
+			},
+			"node_location": schema.StringAttribute{
+				Computed:    true,
+				Description: "Node location of the AWS node group",
+			},
+			"volume_size": schema.Int64Attribute{
+				Computed:    true,
+				Description: "Volume size of the AWS node group",
+			},
+			"volume_iops": schema.Int64Attribute{
+				Computed:    true,
+				Description: "Volume IOPS of the AWS node group",
+			},
+			"volume_type": schema.StringAttribute{
+				Computed:    true,
+				Description: "Volume type of the AWS node group",
+			},
+			"instance_type": schema.StringAttribute{
+				Computed:    true,
+				Description: "Instance type of the AWS node group",
+			},
+		},
+	},
+}
+
 func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Attributes: map[string]schema.Attribute{
@@ -196,213 +267,9 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 							Computed: true,
 							Optional: true,
 							Attributes: map[string]schema.Attribute{
-								"aws": schema.ListNestedAttribute{
-									Computed: true,
-									Optional: true,
-
-									NestedObject: schema.NestedAttributeObject{
-										Attributes: map[string]schema.Attribute{
-											"region": schema.StringAttribute{
-												Computed:    true,
-												Description: "Region of the AWS node group",
-											},
-											"availability_zones": schema.ListAttribute{
-												ElementType: types.StringType,
-												Computed:    true,
-												Description: "Availability zones of the AWS node group",
-											},
-											"cidr": schema.StringAttribute{
-												Computed:    true,
-												Description: "CIDR of the AWS node group",
-											},
-											"public_subnets": schema.ListAttribute{
-												ElementType: types.StringType,
-												Computed:    true,
-											},
-											"private_subnets": schema.ListAttribute{
-												ElementType: types.StringType,
-												Computed:    true,
-											},
-											"nodes": schema.ListNestedAttribute{
-												Computed: true,
-												NestedObject: schema.NestedAttributeObject{
-													Attributes: map[string]schema.Attribute{
-														"display_name": schema.StringAttribute{
-															Computed:    true,
-															Description: "Display name of the node",
-														},
-														"ip_address": schema.StringAttribute{
-															Computed:    true,
-															Description: "IP address of the node",
-														},
-														"is_active": schema.BoolAttribute{
-															Computed:    true,
-															Description: "Is the node active",
-														},
-													},
-												},
-											},
-											"node_location": schema.StringAttribute{
-												Computed:    true,
-												Description: "Node location of the AWS node group",
-											},
-											"volume_size": schema.Int64Attribute{
-												Computed:    true,
-												Description: "Volume size of the AWS node group",
-											},
-											"volume_iops": schema.Int64Attribute{
-												Computed:    true,
-												Description: "Volume IOPS of the AWS node group",
-											},
-											"volume_type": schema.StringAttribute{
-												Computed:    true,
-												Description: "Volume type of the AWS node group",
-											},
-											"instance_type": schema.StringAttribute{
-												Computed:    true,
-												Description: "Instance type of the AWS node group",
-											},
-										},
-									},
-								},
-								"azure": schema.ListNestedAttribute{
-									Computed: true,
-									Optional: true,
-
-									NestedObject: schema.NestedAttributeObject{
-										Attributes: map[string]schema.Attribute{
-											"region": schema.StringAttribute{
-												Computed:    true,
-												Description: "Region of the AWS node group",
-											},
-											"availability_zones": schema.ListAttribute{
-												ElementType: types.StringType,
-												Computed:    true,
-												Description: "Availability zones of the AWS node group",
-											},
-											"cidr": schema.StringAttribute{
-												Computed:    true,
-												Description: "CIDR of the AWS node group",
-											},
-											"public_subnets": schema.ListAttribute{
-												ElementType: types.StringType,
-												Computed:    true,
-											},
-											"private_subnets": schema.ListAttribute{
-												ElementType: types.StringType,
-												Computed:    true,
-											},
-											"nodes": schema.ListNestedAttribute{
-												Computed: true,
-												NestedObject: schema.NestedAttributeObject{
-													Attributes: map[string]schema.Attribute{
-														"display_name": schema.StringAttribute{
-															Computed:    true,
-															Description: "Display name of the node",
-														},
-														"ip_address": schema.StringAttribute{
-															Computed:    true,
-															Description: "IP address of the node",
-														},
-														"is_active": schema.BoolAttribute{
-															Computed:    true,
-															Description: "Is the node active",
-														},
-													},
-												},
-											},
-											"node_location": schema.StringAttribute{
-												Computed:    true,
-												Description: "Node location of the AWS node group",
-											},
-											"volume_size": schema.Int64Attribute{
-												Computed:    true,
-												Description: "Volume size of the AWS node group",
-											},
-											"volume_iops": schema.Int64Attribute{
-												Computed:    true,
-												Description: "Volume IOPS of the AWS node group",
-											},
-											"volume_type": schema.StringAttribute{
-												Computed:    true,
-												Description: "Volume type of the AWS node group",
-											},
-											"instance_type": schema.StringAttribute{
-												Computed:    true,
-												Description: "Instance type of the AWS node group",
-											},
-										},
-									},
-								},
-								"google": schema.ListNestedAttribute{
-									Computed: true,
-									Optional: true,
-
-									NestedObject: schema.NestedAttributeObject{
-										Attributes: map[string]schema.Attribute{
-											"region": schema.StringAttribute{
-												Computed:    true,
-												Description: "Region of the AWS node group",
-											},
-											"availability_zones": schema.ListAttribute{
-												ElementType: types.StringType,
-												Computed:    true,
-												Description: "Availability zones of the AWS node group",
-											},
-											"cidr": schema.StringAttribute{
-												Computed:    true,
-												Description: "CIDR of the AWS node group",
-											},
-											"public_subnets": schema.ListAttribute{
-												ElementType: types.StringType,
-												Computed:    true,
-											},
-											"private_subnets": schema.ListAttribute{
-												ElementType: types.StringType,
-												Computed:    true,
-											},
-											"nodes": schema.ListNestedAttribute{
-												Computed: true,
-												NestedObject: schema.NestedAttributeObject{
-													Attributes: map[string]schema.Attribute{
-														"display_name": schema.StringAttribute{
-															Computed:    true,
-															Description: "Display name of the node",
-														},
-														"ip_address": schema.StringAttribute{
-															Computed:    true,
-															Description: "IP address of the node",
-														},
-														"is_active": schema.BoolAttribute{
-															Computed:    true,
-															Description: "Is the node active",
-														},
-													},
-												},
-											},
-											"node_location": schema.StringAttribute{
-												Computed:    true,
-												Description: "Node location of the AWS node group",
-											},
-											"volume_size": schema.Int64Attribute{
-												Computed:    true,
-												Description: "Volume size of the AWS node group",
-											},
-											"volume_iops": schema.Int64Attribute{
-												Computed:    true,
-												Description: "Volume IOPS of the AWS node group",
-											},
-											"volume_type": schema.StringAttribute{
-												Computed:    true,
-												Description: "Volume type of the AWS node group",
-											},
-											"instance_type": schema.StringAttribute{
-												Computed:    true,
-												Description: "Instance type of the AWS node group",
-											},
-										},
-									},
-								},
+								"aws": ClusterNodeGroupDataSourceTypes,
+								"azure": ClusterNodeGroupDataSourceTypes,
+								"google": ClusterNodeGroupDataSourceTypes,
 							},
 						},
 					},

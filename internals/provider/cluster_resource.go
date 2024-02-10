@@ -51,66 +51,81 @@ func (r *clusterResource) Configure(_ context.Context, req resource.ConfigureReq
 }
 
 var ClusterNodeGroupTypes = schema.ListNestedAttribute{
+	Computed: true,
 	Optional: true,
 	NestedObject: schema.NestedAttributeObject{
 		Attributes: map[string]schema.Attribute{
 			"region": schema.StringAttribute{
+				Computed:    true,
 				Optional:    true,
 				Description: "Region of the AWS node group",
 			},
 			"availability_zones": schema.ListAttribute{
 				ElementType: types.StringType,
+				Computed:    true,
 				Optional:    true,
 				Description: "Availability zones of the AWS node group",
 			},
 			"cidr": schema.StringAttribute{
+				Computed:    true,
 				Optional:    true,
 				Description: "CIDR of the AWS node group",
 			},
 			"public_subnets": schema.ListAttribute{
 				ElementType: types.StringType,
+				Computed:    true,
 				Optional:    true,
 			},
 			"private_subnets": schema.ListAttribute{
 				ElementType: types.StringType,
+				Computed:    true,
 				Optional:    true,
 			},
 			"nodes": schema.ListNestedAttribute{
+				Computed: true,
 				Optional: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"display_name": schema.StringAttribute{
 							Optional:    true,
+							Computed: true,
 							Description: "Display name of the node",
 						},
 						"ip_address": schema.StringAttribute{
 							Optional:    true,
+							Computed: true,
 							Description: "IP address of the node",
 						},
 						"is_active": schema.BoolAttribute{
 							Optional:    true,
+							Computed: true,
 							Description: "Is the node active",
 						},
 					},
 				},
 			},
 			"node_location": schema.StringAttribute{
+				Computed:    true,
 				Optional:    true,
 				Description: "Node location of the AWS node group",
 			},
 			"volume_size": schema.Int64Attribute{
+				Computed:    true,
 				Optional:    true,
 				Description: "Volume size of the AWS node group",
 			},
 			"volume_iops": schema.Int64Attribute{
+				Computed:    true,
 				Optional:    true,
 				Description: "Volume IOPS of the AWS node group",
 			},
 			"volume_type": schema.StringAttribute{
+				Computed:    true,
 				Optional:    true,
 				Description: "Volume type of the AWS node group",
 			},
 			"instance_type": schema.StringAttribute{
+				Computed:    true,
 				Optional:    true,
 				Description: "Instance type of the AWS node group",
 			},
@@ -187,15 +202,17 @@ func nodeGroupsClusterReq(ctx context.Context, resp *resource.CreateResponse, no
 		private_subnets    []string
 	)
 	for _, nodeGroup := range nodeGroupReq {
-		diags := nodeGroup.Nodes.ElementsAs(ctx, &nodeReq, false)
-		resp.Diagnostics.Append(diags...)
+		if nodeGroup.Nodes.IsNull() {
+			diags := nodeGroup.Nodes.ElementsAs(ctx, &nodeReq, false)
+			resp.Diagnostics.Append(diags...)
 
-		for _, node := range nodeReq {
-			nodes = append(nodes, &models.NodeGroupNodesItems0{
-				DisplayName: node.DisplayName.ValueString(),
-				IPAddress:   node.IPAddress.ValueString(),
-				IsActive:    node.IsActive.ValueBool(),
-			})
+			for _, node := range nodeReq {
+				nodes = append(nodes, &models.NodeGroupNodesItems0{
+					DisplayName: node.DisplayName.ValueString(),
+					IPAddress:   node.IPAddress.ValueString(),
+					IsActive:    node.IsActive.ValueBool(),
+				})
+			}
 		}
 
 		nodeGroup.AvailabilityZones.ElementsAs(ctx, &availability_zones, false)
@@ -209,11 +226,11 @@ func nodeGroupsClusterReq(ctx context.Context, resp *resource.CreateResponse, no
 			PublicSubnets:     public_subnets,
 			PrivateSubnets:    private_subnets,
 			Nodes:             nodes,
-			NodeLocation:      nodeGroup.NodeLocation.ValueString(),
-			VolumeSize:        nodeGroup.VolumeSize.ValueInt64(),
-			VolumeIops:        nodeGroup.VolumeIOPS.ValueInt64(),
-			VolumeType:        nodeGroup.VolumeType.ValueString(),
-			InstanceType:      nodeGroup.InstanceType.ValueString(),
+			NodeLocation: nodeGroup.NodeLocation.ValueString(),
+			VolumeSize:   nodeGroup.VolumeSize.ValueInt64(),
+			VolumeIops:   nodeGroup.VolumeIOPS.ValueInt64(),
+			VolumeType:   nodeGroup.VolumeType.ValueString(),
+			InstanceType: nodeGroup.InstanceType.ValueString(),
 		})
 
 	}
@@ -412,129 +429,138 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 }
 
 func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
-	var state ClusterDetails
-	diags := req.State.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	// var state ClusterDetails
+	// diags := req.State.Get(ctx, &state)
+	// resp.Diagnostics.Append(diags...)
+	// if resp.Diagnostics.HasError() {
+	// 	return
+	// }
 
-	cluster, err := r.client.GetCluster(ctx, strfmt.UUID(state.ID.ValueString()))
-	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading pgEdge Cluster",
-			"Could not read Cluster, unexpected error: "+err.Error(),
-		)
-		return
-	}
+	// cluster, err := r.client.GetCluster(ctx, strfmt.UUID(state.ID.ValueString()))
+	// if err != nil {
+	// 	resp.Diagnostics.AddError(
+	// 		"Error Reading pgEdge Cluster",
+	// 		"Could not read Cluster, unexpected error: "+err.Error(),
+	// 	)
+	// 	return
+	// }
 
-	tagElements := make(map[string]attr.Value)
-	for k, v := range cluster.Aws.Tags {
-		tagElements[k] = types.StringValue(v)
-	}
+	// tagElements := make(map[string]attr.Value)
+	// for k, v := range cluster.Aws.Tags {
+	// 	tagElements[k] = types.StringValue(v)
+	// }
 
-	state.ID = types.StringValue(cluster.ID)
-	state.Name = types.StringValue(cluster.Name)
-	state.CloudAccountID = types.StringValue(cluster.CloudAccountID)
-	state.CreatedAt = types.StringValue(cluster.CreatedAt.String())
-	state.Status = types.StringValue(cluster.Status)
+	// state.ID = types.StringValue(cluster.ID)
+	// state.Name = types.StringValue(cluster.Name)
+	// state.CloudAccountID = types.StringValue(cluster.CloudAccountID)
+	// state.CreatedAt = types.StringValue(cluster.CreatedAt.String())
+	// state.Status = types.StringValue(cluster.Status)
 
-	firewallElementsType := map[string]attr.Type{
-		"type": types.StringType,
-		"port": types.Int64Type,
-		"sources": types.ListType{
-			ElemType: types.StringType,
-		},
-	}
+	// firewallElementsType := map[string]attr.Type{
+	// 	"type": types.StringType,
+	// 	"port": types.Int64Type,
+	// 	"sources": types.ListType{
+	// 		ElemType: types.StringType,
+	// 	},
+	// }
 
-	var firewallResp []types.Object
-	for _, firewall := range cluster.Firewall.Rules {
-		var firewallSources []attr.Value
-		firewallType := types.StringValue(firewall.Type)
-		firewallPort := types.Int64Value(firewall.Port)
-		for _, source := range firewall.Sources {
-			firewallSources = append(firewallSources, types.StringValue(source))
-		}
-		firewallSourcesList, diags := types.ListValue(types.StringType, firewallSources)
-		resp.Diagnostics.Append(diags...)
+	// var firewallResp []types.Object
+	// for _, firewall := range cluster.Firewall.Rules {
+	// 	var firewallSources []attr.Value
+	// 	firewallType := types.StringValue(firewall.Type)
+	// 	firewallPort := types.Int64Value(firewall.Port)
+	// 	for _, source := range firewall.Sources {
+	// 		firewallSources = append(firewallSources, types.StringValue(source))
+	// 	}
+	// 	firewallSourcesList, diags := types.ListValue(types.StringType, firewallSources)
+	// 	resp.Diagnostics.Append(diags...)
 
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		firewallElements := map[string]attr.Value{
-			"type":    firewallType,
-			"port":    firewallPort,
-			"sources": firewallSourcesList,
-		}
-		firewallObjectValue, diags := types.ObjectValue(firewallElementsType, firewallElements)
-		resp.Diagnostics.Append(diags...)
+	// 	if resp.Diagnostics.HasError() {
+	// 		return
+	// 	}
+	// 	firewallElements := map[string]attr.Value{
+	// 		"type":    firewallType,
+	// 		"port":    firewallPort,
+	// 		"sources": firewallSourcesList,
+	// 	}
+	// 	firewallObjectValue, diags := types.ObjectValue(firewallElementsType, firewallElements)
+	// 	resp.Diagnostics.Append(diags...)
 
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		firewallResp = append(firewallResp, firewallObjectValue)
-	}
+	// 	if resp.Diagnostics.HasError() {
+	// 		return
+	// 	}
+	// 	firewallResp = append(firewallResp, firewallObjectValue)
+	// }
 
-	if len(cluster.Firewall.Rules) > 0 {
-		state.Firewall = firewallResp
-	}
+	// if len(cluster.Firewall.Rules) > 0 {
+	// 	state.Firewall = firewallResp
+	// }
 
-	var aws types.List
-	awsItems, resp := NodeGroupResourceReadItemsSetter(cluster.NodeGroups.Aws, resp)
+	// var aws types.List
+	// awsItems, resp := NodeGroupResourceReadItemsSetter(cluster.NodeGroups.Aws, resp)
 
-	aws, diags = types.ListValue(types.ObjectType{
-		AttrTypes: NodeGroupTypes,
-	}, awsItems)
-	resp.Diagnostics.Append(diags...)
+	// aws, diags = types.ListValue(types.ObjectType{
+	// 	AttrTypes: NodeGroupTypes,
+	// }, awsItems)
+	// resp.Diagnostics.Append(diags...)
 
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	var azure types.List
-	azureItems, resp := NodeGroupResourceReadItemsSetter(cluster.NodeGroups.Azure, resp)
-	azure, diags = types.ListValue(types.ObjectType{
-		AttrTypes: NodeGroupTypes,
-	}, azureItems)
+	// if resp.Diagnostics.HasError() {
+	// 	return
+	// }
+	// var azure types.List
+	// azureItems, resp := NodeGroupResourceReadItemsSetter(cluster.NodeGroups.Azure, resp)
+	// azure, diags = types.ListValue(types.ObjectType{
+	// 	AttrTypes: NodeGroupTypes,
+	// }, azureItems)
 
-	resp.Diagnostics.Append(diags...)
+	// resp.Diagnostics.Append(diags...)
 
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	// if resp.Diagnostics.HasError() {
+	// 	return
+	// }
 
-	var google types.List
-	googleItems, resp := NodeGroupResourceReadItemsSetter(cluster.NodeGroups.Google, resp)
+	// var google types.List
+	// googleItems, resp := NodeGroupResourceReadItemsSetter(cluster.NodeGroups.Google, resp)
 
-	google, diags = types.ListValue(types.ObjectType{
-		AttrTypes: NodeGroupTypes,
-	}, googleItems)
-	resp.Diagnostics.Append(diags...)
+	// google, diags = types.ListValue(types.ObjectType{
+	// 	AttrTypes: NodeGroupTypes,
+	// }, googleItems)
+	// resp.Diagnostics.Append(diags...)
 
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	NodeGroupsValues := map[string]attr.Value{
-		"aws":    aws,
-		"azure":  azure,
-		"google": google,
-	}
+	// if resp.Diagnostics.HasError() {
+	// 	return
+	// }
+	// NodeGroupsValues := map[string]attr.Value{
+	// 	"aws":    aws,
+	// 	"azure":  azure,
+	// 	"google": google,
+	// }
 
-	nodeGroupsObjectValue, diags := types.ObjectValue(NodeGroupsTypes, NodeGroupsValues)
-	resp.Diagnostics.Append(diags...)
+	// nodeGroupsObjectValue, diags := types.ObjectValue(NodeGroupsTypes, NodeGroupsValues)
+	// resp.Diagnostics.Append(diags...)
 
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	// if resp.Diagnostics.HasError() {
+	// 	return
+	// }
 
-	state.NodeGroups = nodeGroupsObjectValue
-	diags = resp.State.Set(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	// state.NodeGroups = nodeGroupsObjectValue
+	// diags = resp.State.Set(ctx, &state)
+	// resp.Diagnostics.Append(diags...)
+	// if resp.Diagnostics.HasError() {
+	// 	return
+	// }
 }
 
 func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var model ClusterDetails
+
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &model)...)
+
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	resp.Diagnostics.Append(resp.State.Set(ctx, &model)...)
 }
 
 func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -594,6 +620,7 @@ func NodeGroupResourceCreateItemsSetter(nodeGroups []*models.NodeGroup, resp *re
 		if resp.Diagnostics.HasError() {
 			return nil, resp
 		}
+
 		var nodes []attr.Value
 
 		for _, node := range nodeGroup.Nodes {
@@ -619,7 +646,8 @@ func NodeGroupResourceCreateItemsSetter(nodeGroups []*models.NodeGroup, resp *re
 		if resp.Diagnostics.HasError() {
 			return nil, resp
 		}
-		NodeGropsItemsValues, diags := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
+
+		NodeGroupsItemsValues, diags := types.ObjectValue(NodeGroupTypes, map[string]attr.Value{
 			"region":             types.StringValue(nodeGroup.Region),
 			"cidr":               types.StringValue(nodeGroup.Cidr),
 			"availability_zones": allAvailabilityZones,
@@ -637,7 +665,7 @@ func NodeGroupResourceCreateItemsSetter(nodeGroups []*models.NodeGroup, resp *re
 		if resp.Diagnostics.HasError() {
 			return nil, resp
 		}
-		nodeGroupItems = append(nodeGroupItems, NodeGropsItemsValues)
+		nodeGroupItems = append(nodeGroupItems, NodeGroupsItemsValues)
 	}
 	return nodeGroupItems, resp
 }
