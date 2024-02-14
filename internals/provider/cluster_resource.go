@@ -8,6 +8,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	// "github.com/hashicorp/terraform-plugin-framework/resource/schema/booldefault"
+	// "github.com/hashicorp/terraform-plugin-framework/resource/schema/listdefault"
+	// "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
@@ -50,6 +53,19 @@ func (r *clusterResource) Configure(_ context.Context, req resource.ConfigureReq
 	r.client = client
 }
 
+// var nodeObjectElements = map[string]attr.Value{
+// 	"display_name": types.StringValue("n1"),
+// 	"ip_address":   types.StringValue(""),
+// 	"is_active":    types.BoolValue(true),
+// }
+// var nodeObjectValue, _ = types.ObjectValue(NodesNodeGroupType, nodeObjectElements)
+// var nodeList = []attr.Value{
+// 	nodeObjectValue,
+// }
+// var nodeListValue, _ = types.ListValue(types.ObjectType{
+// 	AttrTypes: NodesNodeGroupType,
+// }, nodeList)
+
 var ClusterNodeGroupTypes = schema.ListNestedAttribute{
 	Computed: true,
 	Optional: true,
@@ -84,21 +100,25 @@ var ClusterNodeGroupTypes = schema.ListNestedAttribute{
 			"nodes": schema.ListNestedAttribute{
 				Computed: true,
 				Optional: true,
+				// Default:  listdefault.StaticValue(nodeListValue),
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"display_name": schema.StringAttribute{
 							Optional:    true,
 							Computed:    true,
+							// Default:     stringdefault.StaticString("n1"),
 							Description: "Display name of the node",
 						},
 						"ip_address": schema.StringAttribute{
 							Optional:    true,
 							Computed:    true,
+							// Default:     stringdefault.StaticString(""),
 							Description: "IP address of the node",
 						},
 						"is_active": schema.BoolAttribute{
 							Optional:    true,
 							Computed:    true,
+							// Default:     booldefault.StaticBool(true),
 							Description: "Is the node active",
 						},
 					},

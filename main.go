@@ -23,7 +23,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "pgEdge/pgedge",
+		Address: "registry.terraform.io/pgEdge/pgedge",
 		Debug:   debug,
 	}
 
