@@ -3,7 +3,7 @@
 
 provider_installation {
   dev_overrides {
-    "pgedge.com/tech/pgedge" = "${HOME}/go/bin" // path to go bin
+    "pgEdge/pgedge" = "${HOME}/go/bin" // path to go bin
   }
   direct {}
 }

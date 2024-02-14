@@ -1,14 +1,13 @@
 terraform {
   required_providers {
     pgedge = {
-      source = "pgedge.com/tech/pgedge"
+      source = "pgEdge/pgedge"
     }
   }
   # required_version = ">= 1.1.0"
 }
 
 provider "pgedge" {
-  base_url = "https://devapi.pgedge.com"
 }
 
 data "pgedge_clusters" "tech" {
@@ -17,13 +16,13 @@ data "pgedge_clusters" "tech" {
 resource "pgedge_cluster" "tech" {
   name             = "testing10712"
   cloud_account_id = ""
-  # firewall = [
-  #   {
-  #     type    = "https"
-  #     port    = 5432
-  #     sources = ["0.0.0.0/0"]
-  #   }
-  # ]
+  firewall = [
+    {
+      type    = "postgres"
+      port    = 5432
+      sources = ["0.0.0.0/0"]
+    }
+  ]
    node_groups = {
     aws = [
       {

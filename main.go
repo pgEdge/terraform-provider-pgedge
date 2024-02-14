@@ -23,7 +23,7 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "pgedge.com/tech/pgedge",
+		Address: "pgEdge/pgedge",
 		Debug:   debug,
 	}
 

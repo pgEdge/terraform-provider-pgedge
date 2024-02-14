@@ -8,7 +8,6 @@ import (
 const (
 	providerConfig = `
 	  provider "pgedge" {
-		base_url = "https://devapi.pgedge.com"
 	  }	  
 `
 )
