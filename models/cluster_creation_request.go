@@ -19,28 +19,54 @@ import (
 // swagger:model ClusterCreationRequest
 type ClusterCreationRequest struct {
 
+	// cloud account
+	CloudAccount *ClusterCreationRequestCloudAccount `json:"cloud_account,omitempty"`
+
 	// cloud account id
 	CloudAccountID string `json:"cloud_account_id,omitempty"`
 
-	// firewall
-	Firewall *ClusterCreationRequestFirewall `json:"firewall,omitempty"`
+	// firewall rules
+	FirewallRules []*FirewallRule `json:"firewall_rules"`
 
 	// name
 	Name string `json:"name,omitempty"`
 
-	// node groups
-	NodeGroups *ClusterCreationRequestNodeGroups `json:"node_groups,omitempty"`
+	// networks
+	Networks []*Network `json:"networks"`
+
+	// node location
+	NodeLocation string `json:"node_location,omitempty"`
+
+	// nodes
+	Nodes []*Node `json:"nodes"`
+
+	// regions
+	Regions []string `json:"regions"`
+
+	// resource tags
+	ResourceTags map[string]string `json:"resource_tags,omitempty"`
+
+	// ssh key id
+	SSHKeyID string `json:"ssh_key_id,omitempty"`
 }
 
 // Validate validates this cluster creation request
 func (m *ClusterCreationRequest) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateFirewall(formats); err != nil {
+	if err := m.validateCloudAccount(formats); err != nil {
 		res = append(res, err)
 	}
 
-	if err := m.validateNodeGroups(formats); err != nil {
+	if err := m.validateFirewallRules(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateNetworks(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateNodes(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -50,17 +76,17 @@ func (m *ClusterCreationRequest) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *ClusterCreationRequest) validateFirewall(formats strfmt.Registry) error {
-	if swag.IsZero(m.Firewall) { // not required
+func (m *ClusterCreationRequest) validateCloudAccount(formats strfmt.Registry) error {
+	if swag.IsZero(m.CloudAccount) { // not required
 		return nil
 	}
 
-	if m.Firewall != nil {
-		if err := m.Firewall.Validate(formats); err != nil {
+	if m.CloudAccount != nil {
+		if err := m.CloudAccount.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("firewall")
+				return ve.ValidateName("cloud_account")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("firewall")
+				return ce.ValidateName("cloud_account")
 			}
 			return err
 		}
@@ -69,20 +95,79 @@ func (m *ClusterCreationRequest) validateFirewall(formats strfmt.Registry) error
 	return nil
 }
 
-func (m *ClusterCreationRequest) validateNodeGroups(formats strfmt.Registry) error {
-	if swag.IsZero(m.NodeGroups) { // not required
+func (m *ClusterCreationRequest) validateFirewallRules(formats strfmt.Registry) error {
+	if swag.IsZero(m.FirewallRules) { // not required
 		return nil
 	}
 
-	if m.NodeGroups != nil {
-		if err := m.NodeGroups.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("node_groups")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("node_groups")
-			}
-			return err
+	for i := 0; i < len(m.FirewallRules); i++ {
+		if swag.IsZero(m.FirewallRules[i]) { // not required
+			continue
 		}
+
+		if m.FirewallRules[i] != nil {
+			if err := m.FirewallRules[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("firewall_rules" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("firewall_rules" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *ClusterCreationRequest) validateNetworks(formats strfmt.Registry) error {
+	if swag.IsZero(m.Networks) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Networks); i++ {
+		if swag.IsZero(m.Networks[i]) { // not required
+			continue
+		}
+
+		if m.Networks[i] != nil {
+			if err := m.Networks[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("networks" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("networks" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *ClusterCreationRequest) validateNodes(formats strfmt.Registry) error {
+	if swag.IsZero(m.Nodes) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Nodes); i++ {
+		if swag.IsZero(m.Nodes[i]) { // not required
+			continue
+		}
+
+		if m.Nodes[i] != nil {
+			if err := m.Nodes[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("nodes" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("nodes" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil
@@ -92,11 +177,19 @@ func (m *ClusterCreationRequest) validateNodeGroups(formats strfmt.Registry) err
 func (m *ClusterCreationRequest) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.contextValidateFirewall(ctx, formats); err != nil {
+	if err := m.contextValidateCloudAccount(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
-	if err := m.contextValidateNodeGroups(ctx, formats); err != nil {
+	if err := m.contextValidateFirewallRules(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateNetworks(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateNodes(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -106,19 +199,19 @@ func (m *ClusterCreationRequest) ContextValidate(ctx context.Context, formats st
 	return nil
 }
 
-func (m *ClusterCreationRequest) contextValidateFirewall(ctx context.Context, formats strfmt.Registry) error {
+func (m *ClusterCreationRequest) contextValidateCloudAccount(ctx context.Context, formats strfmt.Registry) error {
 
-	if m.Firewall != nil {
+	if m.CloudAccount != nil {
 
-		if swag.IsZero(m.Firewall) { // not required
+		if swag.IsZero(m.CloudAccount) { // not required
 			return nil
 		}
 
-		if err := m.Firewall.ContextValidate(ctx, formats); err != nil {
+		if err := m.CloudAccount.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("firewall")
+				return ve.ValidateName("cloud_account")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("firewall")
+				return ce.ValidateName("cloud_account")
 			}
 			return err
 		}
@@ -127,22 +220,76 @@ func (m *ClusterCreationRequest) contextValidateFirewall(ctx context.Context, fo
 	return nil
 }
 
-func (m *ClusterCreationRequest) contextValidateNodeGroups(ctx context.Context, formats strfmt.Registry) error {
+func (m *ClusterCreationRequest) contextValidateFirewallRules(ctx context.Context, formats strfmt.Registry) error {
 
-	if m.NodeGroups != nil {
+	for i := 0; i < len(m.FirewallRules); i++ {
 
-		if swag.IsZero(m.NodeGroups) { // not required
-			return nil
-		}
+		if m.FirewallRules[i] != nil {
 
-		if err := m.NodeGroups.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("node_groups")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("node_groups")
+			if swag.IsZero(m.FirewallRules[i]) { // not required
+				return nil
 			}
-			return err
+
+			if err := m.FirewallRules[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("firewall_rules" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("firewall_rules" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
 		}
+
+	}
+
+	return nil
+}
+
+func (m *ClusterCreationRequest) contextValidateNetworks(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Networks); i++ {
+
+		if m.Networks[i] != nil {
+
+			if swag.IsZero(m.Networks[i]) { // not required
+				return nil
+			}
+
+			if err := m.Networks[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("networks" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("networks" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *ClusterCreationRequest) contextValidateNodes(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Nodes); i++ {
+
+		if m.Nodes[i] != nil {
+
+			if swag.IsZero(m.Nodes[i]) { // not required
+				return nil
+			}
+
+			if err := m.Nodes[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("nodes" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("nodes" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil
@@ -166,139 +313,33 @@ func (m *ClusterCreationRequest) UnmarshalBinary(b []byte) error {
 	return nil
 }
 
-// ClusterCreationRequestFirewall cluster creation request firewall
+// ClusterCreationRequestCloudAccount cluster creation request cloud account
 //
-// swagger:model ClusterCreationRequestFirewall
-type ClusterCreationRequestFirewall struct {
+// swagger:model ClusterCreationRequestCloudAccount
+type ClusterCreationRequestCloudAccount struct {
 
-	// rules
-	Rules []*ClusterCreationRequestFirewallRulesItems0 `json:"rules"`
-}
+	// id
+	ID string `json:"id,omitempty"`
 
-// Validate validates this cluster creation request firewall
-func (m *ClusterCreationRequestFirewall) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateRules(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *ClusterCreationRequestFirewall) validateRules(formats strfmt.Registry) error {
-	if swag.IsZero(m.Rules) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.Rules); i++ {
-		if swag.IsZero(m.Rules[i]) { // not required
-			continue
-		}
-
-		if m.Rules[i] != nil {
-			if err := m.Rules[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("firewall" + "." + "rules" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("firewall" + "." + "rules" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-// ContextValidate validate this cluster creation request firewall based on the context it is used
-func (m *ClusterCreationRequestFirewall) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.contextValidateRules(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *ClusterCreationRequestFirewall) contextValidateRules(ctx context.Context, formats strfmt.Registry) error {
-
-	for i := 0; i < len(m.Rules); i++ {
-
-		if m.Rules[i] != nil {
-
-			if swag.IsZero(m.Rules[i]) { // not required
-				return nil
-			}
-
-			if err := m.Rules[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("firewall" + "." + "rules" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("firewall" + "." + "rules" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *ClusterCreationRequestFirewall) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *ClusterCreationRequestFirewall) UnmarshalBinary(b []byte) error {
-	var res ClusterCreationRequestFirewall
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// ClusterCreationRequestFirewallRulesItems0 cluster creation request firewall rules items0
-//
-// swagger:model ClusterCreationRequestFirewallRulesItems0
-type ClusterCreationRequestFirewallRulesItems0 struct {
-
-	// port
-	Port int64 `json:"port,omitempty"`
-
-	// sources
-	Sources []string `json:"sources"`
+	// name
+	Name string `json:"name,omitempty"`
 
 	// type
 	Type string `json:"type,omitempty"`
 }
 
-// Validate validates this cluster creation request firewall rules items0
-func (m *ClusterCreationRequestFirewallRulesItems0) Validate(formats strfmt.Registry) error {
+// Validate validates this cluster creation request cloud account
+func (m *ClusterCreationRequestCloudAccount) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-// ContextValidate validates this cluster creation request firewall rules items0 based on context it is used
-func (m *ClusterCreationRequestFirewallRulesItems0) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+// ContextValidate validates this cluster creation request cloud account based on context it is used
+func (m *ClusterCreationRequestCloudAccount) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 
 // MarshalBinary interface implementation
-func (m *ClusterCreationRequestFirewallRulesItems0) MarshalBinary() ([]byte, error) {
+func (m *ClusterCreationRequestCloudAccount) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -306,238 +347,8 @@ func (m *ClusterCreationRequestFirewallRulesItems0) MarshalBinary() ([]byte, err
 }
 
 // UnmarshalBinary interface implementation
-func (m *ClusterCreationRequestFirewallRulesItems0) UnmarshalBinary(b []byte) error {
-	var res ClusterCreationRequestFirewallRulesItems0
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// ClusterCreationRequestNodeGroups cluster creation request node groups
-//
-// swagger:model ClusterCreationRequestNodeGroups
-type ClusterCreationRequestNodeGroups struct {
-
-	// aws
-	Aws []*NodeGroup `json:"aws"`
-
-	// azure
-	Azure []*NodeGroup `json:"azure"`
-
-	// google
-	Google []*NodeGroup `json:"google"`
-}
-
-// Validate validates this cluster creation request node groups
-func (m *ClusterCreationRequestNodeGroups) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateAws(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateAzure(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateGoogle(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *ClusterCreationRequestNodeGroups) validateAws(formats strfmt.Registry) error {
-	if swag.IsZero(m.Aws) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.Aws); i++ {
-		if swag.IsZero(m.Aws[i]) { // not required
-			continue
-		}
-
-		if m.Aws[i] != nil {
-			if err := m.Aws[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("node_groups" + "." + "aws" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("node_groups" + "." + "aws" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-func (m *ClusterCreationRequestNodeGroups) validateAzure(formats strfmt.Registry) error {
-	if swag.IsZero(m.Azure) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.Azure); i++ {
-		if swag.IsZero(m.Azure[i]) { // not required
-			continue
-		}
-
-		if m.Azure[i] != nil {
-			if err := m.Azure[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("node_groups" + "." + "azure" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("node_groups" + "." + "azure" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-func (m *ClusterCreationRequestNodeGroups) validateGoogle(formats strfmt.Registry) error {
-	if swag.IsZero(m.Google) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.Google); i++ {
-		if swag.IsZero(m.Google[i]) { // not required
-			continue
-		}
-
-		if m.Google[i] != nil {
-			if err := m.Google[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("node_groups" + "." + "google" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("node_groups" + "." + "google" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-// ContextValidate validate this cluster creation request node groups based on the context it is used
-func (m *ClusterCreationRequestNodeGroups) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.contextValidateAws(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateAzure(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateGoogle(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *ClusterCreationRequestNodeGroups) contextValidateAws(ctx context.Context, formats strfmt.Registry) error {
-
-	for i := 0; i < len(m.Aws); i++ {
-
-		if m.Aws[i] != nil {
-
-			if swag.IsZero(m.Aws[i]) { // not required
-				return nil
-			}
-
-			if err := m.Aws[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("node_groups" + "." + "aws" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("node_groups" + "." + "aws" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-func (m *ClusterCreationRequestNodeGroups) contextValidateAzure(ctx context.Context, formats strfmt.Registry) error {
-
-	for i := 0; i < len(m.Azure); i++ {
-
-		if m.Azure[i] != nil {
-
-			if swag.IsZero(m.Azure[i]) { // not required
-				return nil
-			}
-
-			if err := m.Azure[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("node_groups" + "." + "azure" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("node_groups" + "." + "azure" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-func (m *ClusterCreationRequestNodeGroups) contextValidateGoogle(ctx context.Context, formats strfmt.Registry) error {
-
-	for i := 0; i < len(m.Google); i++ {
-
-		if m.Google[i] != nil {
-
-			if swag.IsZero(m.Google[i]) { // not required
-				return nil
-			}
-
-			if err := m.Google[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("node_groups" + "." + "google" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("node_groups" + "." + "google" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *ClusterCreationRequestNodeGroups) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *ClusterCreationRequestNodeGroups) UnmarshalBinary(b []byte) error {
-	var res ClusterCreationRequestNodeGroups
+func (m *ClusterCreationRequestCloudAccount) UnmarshalBinary(b []byte) error {
+	var res ClusterCreationRequestCloudAccount
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

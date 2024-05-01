@@ -7,9 +7,12 @@ package operations
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
+
+	"github.com/pgEdge/terraform-provider-pgedge/models"
 )
 
 // DeleteClustersIDReader is a Reader for the DeleteClustersID structure.
@@ -26,14 +29,14 @@ func (o *DeleteClustersIDReader) ReadResponse(response runtime.ClientResponse, c
 			return nil, err
 		}
 		return result, nil
-	case 401:
-		result := NewDeleteClustersIDUnauthorized()
+	case 400:
+		result := NewDeleteClustersIDBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-	case 404:
-		result := NewDeleteClustersIDNotFound()
+	case 401:
+		result := NewDeleteClustersIDUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -105,6 +108,74 @@ func (o *DeleteClustersIDNoContent) readResponse(response runtime.ClientResponse
 	return nil
 }
 
+// NewDeleteClustersIDBadRequest creates a DeleteClustersIDBadRequest with default headers values
+func NewDeleteClustersIDBadRequest() *DeleteClustersIDBadRequest {
+	return &DeleteClustersIDBadRequest{}
+}
+
+/*
+DeleteClustersIDBadRequest describes a response with status code 400, with default header values.
+
+Bad Request
+*/
+type DeleteClustersIDBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this delete clusters Id bad request response has a 2xx status code
+func (o *DeleteClustersIDBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this delete clusters Id bad request response has a 3xx status code
+func (o *DeleteClustersIDBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this delete clusters Id bad request response has a 4xx status code
+func (o *DeleteClustersIDBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this delete clusters Id bad request response has a 5xx status code
+func (o *DeleteClustersIDBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this delete clusters Id bad request response a status code equal to that given
+func (o *DeleteClustersIDBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the delete clusters Id bad request response
+func (o *DeleteClustersIDBadRequest) Code() int {
+	return 400
+}
+
+func (o *DeleteClustersIDBadRequest) Error() string {
+	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *DeleteClustersIDBadRequest) String() string {
+	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *DeleteClustersIDBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *DeleteClustersIDBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewDeleteClustersIDUnauthorized creates a DeleteClustersIDUnauthorized with default headers values
 func NewDeleteClustersIDUnauthorized() *DeleteClustersIDUnauthorized {
 	return &DeleteClustersIDUnauthorized{}
@@ -116,6 +187,7 @@ DeleteClustersIDUnauthorized describes a response with status code 401, with def
 Unauthorized
 */
 type DeleteClustersIDUnauthorized struct {
+	Payload *models.Error
 }
 
 // IsSuccess returns true when this delete clusters Id unauthorized response has a 2xx status code
@@ -149,70 +221,25 @@ func (o *DeleteClustersIDUnauthorized) Code() int {
 }
 
 func (o *DeleteClustersIDUnauthorized) Error() string {
-	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdUnauthorized ", 401)
+	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdUnauthorized  %+v", 401, o.Payload)
 }
 
 func (o *DeleteClustersIDUnauthorized) String() string {
-	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdUnauthorized ", 401)
+	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *DeleteClustersIDUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *DeleteClustersIDUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	return nil
-}
+	o.Payload = new(models.Error)
 
-// NewDeleteClustersIDNotFound creates a DeleteClustersIDNotFound with default headers values
-func NewDeleteClustersIDNotFound() *DeleteClustersIDNotFound {
-	return &DeleteClustersIDNotFound{}
-}
-
-/*
-DeleteClustersIDNotFound describes a response with status code 404, with default header values.
-
-Cluster not found
-*/
-type DeleteClustersIDNotFound struct {
-}
-
-// IsSuccess returns true when this delete clusters Id not found response has a 2xx status code
-func (o *DeleteClustersIDNotFound) IsSuccess() bool {
-	return false
-}
-
-// IsRedirect returns true when this delete clusters Id not found response has a 3xx status code
-func (o *DeleteClustersIDNotFound) IsRedirect() bool {
-	return false
-}
-
-// IsClientError returns true when this delete clusters Id not found response has a 4xx status code
-func (o *DeleteClustersIDNotFound) IsClientError() bool {
-	return true
-}
-
-// IsServerError returns true when this delete clusters Id not found response has a 5xx status code
-func (o *DeleteClustersIDNotFound) IsServerError() bool {
-	return false
-}
-
-// IsCode returns true when this delete clusters Id not found response a status code equal to that given
-func (o *DeleteClustersIDNotFound) IsCode(code int) bool {
-	return code == 404
-}
-
-// Code gets the status code for the delete clusters Id not found response
-func (o *DeleteClustersIDNotFound) Code() int {
-	return 404
-}
-
-func (o *DeleteClustersIDNotFound) Error() string {
-	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdNotFound ", 404)
-}
-
-func (o *DeleteClustersIDNotFound) String() string {
-	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdNotFound ", 404)
-}
-
-func (o *DeleteClustersIDNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }
@@ -228,6 +255,7 @@ DeleteClustersIDInternalServerError describes a response with status code 500, w
 Internal Server Error
 */
 type DeleteClustersIDInternalServerError struct {
+	Payload *models.Error
 }
 
 // IsSuccess returns true when this delete clusters Id internal server error response has a 2xx status code
@@ -261,14 +289,25 @@ func (o *DeleteClustersIDInternalServerError) Code() int {
 }
 
 func (o *DeleteClustersIDInternalServerError) Error() string {
-	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdInternalServerError ", 500)
+	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdInternalServerError  %+v", 500, o.Payload)
 }
 
 func (o *DeleteClustersIDInternalServerError) String() string {
-	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdInternalServerError ", 500)
+	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdInternalServerError  %+v", 500, o.Payload)
+}
+
+func (o *DeleteClustersIDInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *DeleteClustersIDInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }

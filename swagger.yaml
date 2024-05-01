@@ -23,22 +23,40 @@ paths:
                 type: string
               client_secret:
                 type: string
+              grant_type:
+                type: string
       responses:
         "200":
           description: Successful response
           schema:
+            type: array
+            items:
+              type: object
+              properties:
+                token_type:
+                  type: string
+                access_token:
+                  type: string
+                expires_in:
+                  type: integer
+        "400":
+          description: Bad request
+          schema:
             type: object
             properties:
-              access_token:
-                type: string
-              token_type:
-                type: string
-              expires_in:
+              code:
                 type: integer
-        "401":
-          description: Unauthorized
+              message:
+                type: string
         "500":
           description: Internal Server Error
+          schema:
+            type: object
+            properties:
+              code:
+                type: integer
+              message:
+                type: string
 
   /databases:
     get:
@@ -57,10 +75,19 @@ paths:
             type: array
             items:
               $ref: "#/definitions/Database"
+        "400":
+          description: Bad request
+          schema:
+            $ref: "#/definitions/Error"
         "401":
           description: Unauthorized
+          schema:
+            $ref: "#/definitions/Error"
         "500":
           description: Internal Server Error
+          schema:
+            $ref: "#/definitions/Error"
+
     post:
       summary: Create a new Database
       description: Create a new database with the specified options
@@ -85,10 +112,18 @@ paths:
           description: Successful response
           schema:
             $ref: "#/definitions/DatabaseCreationResponse"
+        "400":
+          description: Bad Request
+          schema:
+            $ref: "#/definitions/Error"
         "401":
           description: Unauthorized
+          schema:
+            $ref: "#/definitions/Error"
         "500":
           description: Internal Server Error
+          schema:
+            $ref: "#/definitions/Error"
 
   /databases/{id}:
     get:
@@ -110,10 +145,18 @@ paths:
           description: Successful response
           schema:
             $ref: "#/definitions/DatabaseDetails"
+        "400":
+          description: Bad Request
+          schema:
+            $ref: "#/definitions/Error"
         "401":
           description: Unauthorized
+          schema:
+            $ref: "#/definitions/Error"
         "500":
           description: Internal Server Error
+          schema:
+            $ref: "#/definitions/Error"
     delete:
       summary: Delete a Database
       description: Delete the database with the specified ID
@@ -131,12 +174,55 @@ paths:
       responses:
         "204":
           description: No Content (successful deletion)
+        "400":
+          description: Bad Request
+          schema:
+            $ref: "#/definitions/Error"
         "401":
           description: Unauthorized
-        "404":
-          description: Database not found
+          schema:
+            $ref: "#/definitions/Error"
         "500":
           description: Internal Server Error
+          schema:
+            $ref: "#/definitions/Error"
+    patch:
+      summary: Update a Database
+      description: Update the database with the specified ID
+      parameters:
+        - name: id
+          in: path
+          type: string
+          format: uuid
+          required: true
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+        - in: body
+          name: body
+          description: Database creation request body
+          required: true
+          schema:
+            $ref: "#/definitions/DatabaseUpdateRequest"
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: "#/definitions/DatabaseDetails"
+        "400":
+          description: Bad Request
+          schema:
+            $ref: "#/definitions/Error"
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: "#/definitions/Error"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/Error"
 
   /databases/{id}/replicate:
     post:
@@ -191,10 +277,19 @@ paths:
             type: array
             items:
               $ref: "#/definitions/ClusterDetails"
+        "400":
+          description: Bad Request
+          schema:
+            $ref: "#/definitions/Error"
         "401":
           description: Unauthorized
+          schema:
+            $ref: "#/definitions/Error"
         "500":
           description: Internal Server Error
+          schema:
+            $ref: "#/definitions/Error"
+
     post:
       summary: Create a new Cluster
       description: Create a new cluster with the specified options
@@ -219,10 +314,18 @@ paths:
           description: Successful response
           schema:
             $ref: "#/definitions/ClusterCreationResponse"
+        "400":
+          description: Bad Request
+          schema:
+            $ref: "#/definitions/Error"
         "401":
           description: Unauthorized
+          schema:
+            $ref: "#/definitions/Error"
         "500":
           description: Internal Server Error
+          schema:
+            $ref: "#/definitions/Error"
 
   /clusters/{id}:
     get:
@@ -244,12 +347,19 @@ paths:
           description: Successful response
           schema:
             $ref: "#/definitions/ClusterDetails"
+        "400":
+          description: Bad Request
+          schema:
+            $ref: "#/definitions/Error"
         "401":
           description: Unauthorized
-        "404":
-          description: Cluster not found
+          schema:
+            $ref: "#/definitions/Error"
         "500":
           description: Internal Server Error
+          schema:
+            $ref: "#/definitions/Error"
+
     delete:
       summary: Delete Cluster by ID
       description: Delete the cluster with the specified ID
@@ -267,43 +377,233 @@ paths:
       responses:
         "204":
           description: No Content (successful deletion)
+        "400":
+          description: Bad Request
+          schema:
+            $ref: "#/definitions/Error"
         "401":
           description: Unauthorized
-        "404":
-          description: Cluster not found
+          schema:
+            $ref: "#/definitions/Error"
         "500":
           description: Internal Server Error
+          schema:
+            $ref: "#/definitions/Error"
+          
+          
+    patch:
+      summary: Update Cluster by ID
+      description: Update the cluster with the specified ID
+      parameters:
+        - name: id
+          in: path
+          type: string
+          format: uuid
+          required: true
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+        - in: body
+          name: body
+          description: Cluster update request body
+          required: true
+          schema:
+            $ref: "#/definitions/ClusterUpdateRequest"
+      responses:
+        "200":
+          description: Successful response
+          schema:
+            $ref: "#/definitions/ClusterDetails"
+        "400":
+          description: Bad Request
+          schema:
+            $ref: "#/definitions/Error"
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: "#/definitions/Error"
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: "#/definitions/Error"
 
 definitions:
   Database:
     type: object
     properties:
-      created_at:
-        type: string
-        format: date-time
-      domain:
-        type: string
       id:
         type: string
-        format: uuid
+      cluster_id:
+        type: string
       name:
         type: string
+      status:
+        type: string
+      created_at:
+        type: string
+      updated_at:
+        type: string
+      backups:
+        type: object
+        properties:
+          provider:
+            type: string
+          config:
+            type: array
+            items:
+              type: object
+              properties:
+                id:
+                  type: string
+                node_name:
+                  type: string
+                repositories:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                      type:
+                        type: string
+                      base_path:
+                        type: string
+                      namespace:
+                        type: string
+                      retention_full:
+                        type: integer
+                      retention_full_type:
+                        type: string
+                      s3_bucket:
+                        type: string
+                      s3_region:
+                        type: string
+                schedules:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      type:
+                        type: string
+                      cron_expression:
+                        type: string
+      components:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+            version:
+              type: string
+            release_date:
+              type: string
+            status:
+              type: string
+      domain:
+        type: string
+      extensions:
+        type: object
+        properties:
+          auto_manage:
+            type: boolean
+          available:
+            type: array
+            items:
+              type: string
+          requested:
+            type: array
+            items:
+              type: string
       nodes:
         type: array
         items:
           $ref: "#/definitions/Node"
-      status:
-        type: string
-      updated_at:
-        type: string
-        format: date-time
-      cluster_id:
-        type: string
-        format: uuid
       options:
         type: array
         items:
           type: string
+      pg_version:
+        type: string
+      roles:
+        type: array
+        items:
+          type: object
+          properties:
+            name:
+              type: string
+            connection_limit:
+              type: integer
+            superuser:
+              type: boolean
+            create_role:
+              type: boolean
+            create_db:
+              type: boolean
+            login:
+              type: boolean
+            inherit:
+              type: boolean
+            replication:
+              type: boolean
+            bypass_rls:
+              type: boolean
+      storage_used:
+        type: integer
+      tables:
+        type: array
+        items:
+          type: object
+          properties:
+            schema:
+              type: string
+            name:
+              type: string
+            primary_key:
+              type: array
+              items:
+                type: string
+            replication_sets:
+              type: array
+              items:
+                type: string
+            status:
+              type: array
+              items:
+                type: object
+                properties:
+                  node_name:
+                    type: string
+                  present:
+                    type: boolean
+                  aligned:
+                    type: boolean
+                  replicating:
+                    type: boolean
+            columns:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  ordinal_position:
+                    type: integer
+                  data_type:
+                    type: string
+                  default:
+                    type: string
+                  is_nullable:
+                    type: boolean
+                  is_primary_key:
+                    type: boolean
+
   ReplicationResponse:
     type: object
     properties:
@@ -315,218 +615,424 @@ definitions:
   DatabaseDetails:
     type: object
     properties:
-      components:
-        type: array
-        items:
-          type: object
-          properties:
-            id:
-              type: string
-            name:
-              type: string
-            release_date:
-              type: string
-              format: date
-            status:
-              type: string
-            version:
-              type: string
+      id:
+        type: string
+      cluster_id:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
       created_at:
         type: string
         format: date-time
-      id:
+      updated_at:
         type: string
-        format: uuid
-      name:
+        format: date-time
+      backups:
+        type: object
+        properties:
+          provider:
+            type: string
+          config:
+            type: array
+            items:
+              $ref: "#/definitions/BackupConfig"
+      components:
+        type: array
+        items:
+          $ref: "#/definitions/Component"
+      domain:
         type: string
+      extensions:
+        type: object
+        properties:
+          auto_manage:
+            type: boolean
+          available:
+            type: array
+            items:
+              type: string
+          requested:
+            type: array
+            items:
+              type: string
       nodes:
         type: array
         items:
           $ref: "#/definitions/Node"
-      pg_version:
-        type: string
-      cluster_id:
-        type: string
-        format: uuid
       options:
         type: array
         items:
           type: string
+      pg_version:
+        type: string
       roles:
         type: array
         items:
-          type: object
-          properties:
-            bypass_rls:
-              type: boolean
-            connection_limit:
-              type: integer
-            create_db:
-              type: boolean
-            create_role:
-              type: boolean
-            inherit:
-              type: boolean
-            login:
-              type: boolean
-            name:
-              type: string
-            replication:
-              type: boolean
-            superuser:
-              type: boolean
-      status:
-        type: string
+          $ref: "#/definitions/Role"
       storage_used:
         type: integer
       tables:
         type: array
         items:
-          type: object
-          properties:
-            name:
-              type: string
-            primary_key:
-              type: array
-              items:
-                type: string
-            replication_sets:
-              type: object
-            schema:
-              type: string
-            status:
-              type: array
-              items:
-                type: object
-                properties:
-                  aligned:
-                    type: boolean
-                  node_name:
-                    type: string
-                  present:
-                    type: boolean
-                  replicating:
-                    type: boolean
-      updated_at:
-        type: string
-        format: date-time
+          $ref: "#/definitions/Table"
 
   DatabaseCreationRequest:
     type: object
     properties:
       name:
         type: string
+      backups:
+        type: object
+        properties:
+          provider:
+            type: string
+          config:
+            type: array
+            items:
+              $ref: "#/definitions/BackupConfig"
       cluster_id:
         type: string
+      config_version:
+        type: string
+      extensions:
+        type: object
+        properties:
+          auto_manage:
+            type: boolean
+          available:
+            type: array
+            items:
+              type: string
+          requested:
+            type: array
+            items:
+              type: string
       options:
         type: array
         items:
           type: string
 
-  DatabaseCreationResponse:
+  DatabaseUpdateRequest:
     type: object
     properties:
-      created_at:
-        type: string
-        format: date-time
-      domain:
-        type: string
-      id:
-        type: string
-        format: uuid
-      name:
-        type: string
-      nodes:
-        type: array
-        items:
-          $ref: "#/definitions/Node"
-      status:
-        type: string
-      updated_at:
-        type: string
-        format: date-time
-      cluster_id:
-        type: string
-        format: uuid
+      extensions:
+        type: object
+        properties:
+          auto_manage:
+            type: boolean
+          available:
+            type: array
+            items:
+              type: string
+          requested:
+            type: array
+            items:
+              type: string
       options:
         type: array
         items:
           type: string
+
+  BackupConfig:
+    type: object
+    properties:
+      id:
+        type: string
+      node_name:
+        type: string
+      repositories:
+        type: array
+        items:
+          $ref: "#/definitions/Repository"
+      schedules:
+        type: array
+        items:
+          $ref: "#/definitions/Schedule"
+
+  Repository:
+    type: object
+    properties:
+      id:
+        type: integer
+      type:
+        type: string
+      base_path:
+        type: string
+      namespace:
+        type: string
+      retention_full:
+        type: integer
+      retention_full_type:
+        type: string
+      s3_bucket:
+        type: string
+      s3_region:
+        type: string
+
+  Schedule:
+    type: object
+    properties:
+      id:
+        type: string
+      type:
+        type: string
+      cron_expression:
+        type: string
+
+  DatabaseCreationResponse:
+    type: object
+    properties:
+      id:
+        type: string
+      cluster_id:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+      created_at:
+        type: string
+        format: date-time
+      updated_at:
+        type: string
+        format: date-time
+      backups:
+        $ref: "#/definitions/BackupConfig"
+      components:
+        type: array
+        items:
+          $ref: "#/definitions/Component"
+      domain:
+        type: string
+      extensions:
+        $ref: "#/definitions/Extensions"
+      nodes:
+        type: array
+        items:
+          $ref: "#/definitions/Node"
+      options:
+        type: array
+        items:
+          type: string
+      pg_version:
+        type: string
+      roles:
+        type: array
+        items:
+          $ref: "#/definitions/Role"
+      storage_used:
+        type: string
+        format: integer
+      tables:
+        type: array
+        items:
+          $ref: "#/definitions/Table"
+
+  Extensions:
+    type: object
+    properties:
+      auto_manage:
+        type: boolean
+      available:
+        type: array
+        items:
+          type: string
+      requested:
+        type: array
+        items:
+          type: string    
+  Component:
+    type: object
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      version:
+        type: string
+      release_date:
+        type: string
+      status:
+        type: string
+
   Node:
     type: object
     properties:
+      name:
+        type: string
       connection:
         type: object
         properties:
-          database:
-            type: string
-          host:
+          username:
             type: string
           password:
             type: string
           port:
             type: integer
-          username:
+          database:
+            type: string
+          external_ip_address:
+            type: string
+          host:
+            type: string
+          internal_host:
+            type: string
+          internal_ip_address:
             type: string
       location:
         type: object
         properties:
-          code:
-            type: string
-          country:
-            type: string
           latitude:
             type: number
           longitude:
             type: number
+          city:
+            type: string
+          code:
+            type: string
+          country:
+            type: string
+          metro_code:
+            type: string
           name:
+            type: string
+          postal_code:
             type: string
           region:
             type: string
           region_code:
             type: string
-      name:
-        type: string
+          timezone:
+            type: string
+      distance_measurement:
+        type: object
+        properties:
+          distance:
+            type: number
+          unit:
+            type: string
+          from_latitude:
+            type: number
+          from_longitude:
+            type: number
+      extensions:
+        type: object
+        properties:
+          installed:
+            type: array
+            items:
+              type: string
+          errors:
+            type: object
+            properties:
+              mollit267:
+                type: string
+              enim3b:
+                type: string
+              laborum_d:
+                type: string
+              anim9ef:
+                type: string
+      region:
+        type: object
+        properties:
+          cloud:
+            type: string
+          code:
+            type: string
+          name:
+            type: string
+          availability_zones:
+            type: array
+            items:
+              type: string
+          active:
+            type: boolean
+          parent:
+            type: string
 
-  NodeGroup:
+  Role:
     type: object
     properties:
-      availability_zones:
-        type: array
-        items:
-          type: string
-      cidr:
+      name:
         type: string
-      instance_type:
-        type: string
-      node_location:
-        type: string
-      nodes:
-        type: array
-        items:
-          type: object
-          properties:
-            display_name:
-              type: string
-            ip_address:
-              type: string
-            is_active:
-              type: boolean
-      public_subnets:
-        type: array
-        items:
-          type: string
-      private_subnets:
-        type: array
-        items:
-          type: string
-      region:
-        type: string
-      volume_size:
+      connection_limit:
         type: integer
-      volume_iops:
+      superuser:
+        type: boolean
+      create_role:
+        type: boolean
+      create_db:
+        type: boolean
+      login:
+        type: boolean
+      inherit:
+        type: boolean
+      replication:
+        type: boolean
+      bypass_rls:
+        type: boolean
+
+  Table:
+    type: object
+    properties:
+      schema:
+        type: string
+      name:
+        type: string
+      primary_key:
+        type: array
+        items:
+          type: string
+      replication_sets:
+        type: array
+        items:
+          type: string
+      status:
+        type: array
+        items:
+          $ref: "#/definitions/TableStatus"
+      columns:
+        type: array
+        items:
+          $ref: "#/definitions/Column"
+
+  TableStatus:
+    type: object
+    properties:
+      node_name:
+        type: string
+      present:
+        type: boolean
+      aligned:
+        type: boolean
+      replicating:
+        type: boolean
+
+  Column:
+    type: object
+    properties:
+      name:
+        type: string
+      ordinal_position:
         type: integer
-      volume_type:
+      data_type:
+        type: string
+      default:
+        type: string
+      is_nullable:
+        type: boolean
+      is_primary_key:
+        type: boolean
+
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+      message:
         type: string
 
   DatabaseScripts:
@@ -540,188 +1046,214 @@ definitions:
     properties:
       name:
         type: string
-      node_groups:
+      regions:
+        type: array
+        items:
+          type: string
+      node_location:
+        type: string
+      cloud_account:
         type: object
         properties:
-          aws:
-            type: array
-            items:
-              $ref: "#/definitions/NodeGroup"
-          azure:
-            type: array
-            items:
-              $ref: "#/definitions/NodeGroup"
-          google:
-            type: array
-            items:
-              $ref: "#/definitions/NodeGroup"
-      firewall:
-        type: object
-        properties:
-          rules:
-            type: array
-            items:
-              type: object
-              properties:
-                port:
-                  type: integer
-                sources:
-                  type: array
-                  items:
-                    type: string
-                type:
-                  type: string
+          id:
+            type: string
+          name:
+            type: string
+          type:
+            type: string
       cloud_account_id:
+        type: string
+      firewall_rules:
+        type: array
+        items:
+          $ref: "#/definitions/FirewallRule"
+      networks:
+        type: array
+        items:
+          $ref: "#/definitions/Network"
+      nodes:
+        type: array
+        items:
+          $ref: "#/definitions/Node"
+      resource_tags:
+        type: object
+        additionalProperties:
+          type: string
+      ssh_key_id:
         type: string
 
   ClusterCreationResponse:
     type: object
     properties:
-      aws:
-        type: object
-        properties:
-          role_arn:
-            type: string
-          key_pair:
-            type: string
-          tags:
-            type: object
-            additionalProperties:
-              type: string
-      cloud_account_id:
-        type: string
-      created_at:
-        type: string
-        format: date-time
-      database:
-        type: object
-        properties:
-          pg_version:
-            type: string
-          username:
-            type: string
-          password:
-            type: string
-          name:
-            type: string
-          port:
-            type: number
-          components:
-            type: array
-            items:
-              type: string
-          scripts:
-            $ref: "#/definitions/DatabaseScripts"
-
-      firewall:
-        type: object
-        properties:
-          rules:
-            type: array
-            items:
-              type: object
-              properties:
-                port:
-                  type: integer
-                sources:
-                  type: array
-                  items:
-                    type: string
-                type:
-                  type: string
       id:
         type: string
       name:
         type: string
-      node_groups:
-        type: object
-        properties:
-          aws:
-            type: array
-            items:
-              $ref: "#/definitions/NodeGroup"
-          azure:
-            type: array
-            items:
-              $ref: "#/definitions/NodeGroup"
-          google:
-            type: array
-            items:
-              $ref: "#/definitions/NodeGroup"
       status:
         type: string
+      created_at:
+        type: string
+        format: date-time
+      regions:
+        type: array
+        items:
+          type: string
+      cloud_account:
+        type: object
+        properties:
+          id:
+            type: string
+          name:
+            type: string
+          type:
+            type: string
+      node_location:
+        type: string
+      firewall_rules:
+        type: array
+        items:
+          $ref: "#/definitions/FirewallRule"
+      networks:
+        type: array
+        items:
+          $ref: "#/definitions/Network"
+      nodes:
+        type: array
+        items:
+          $ref: "#/definitions/ClusterNode"
+      resource_tags:
+        type: object
+        additionalProperties:
+          type: string
+      ssh_key_id:
+        type: string
+
   ClusterDetails:
     type: object
     properties:
-      aws:
-        type: object
-        properties:
-          role_arn:
-            type: string
-          key_pair:
-            type: string
-          tags:
-            type: object
-            additionalProperties:
-              type: string
-      cloud_account_id:
-        type: string
-      created_at:
-        type: string
-        format: date-time
-      database:
-        type: object
-        properties:
-          pg_version:
-            type: string
-          username:
-            type: string
-          password:
-            type: string
-          name:
-            type: string
-          port:
-            type: number
-          components:
-            type: array
-            items:
-              type: string
-          scripts:
-            $ref: "#/definitions/DatabaseScripts"
-      firewall:
-        type: object
-        properties:
-          rules:
-            type: array
-            items:
-              type: object
-              properties:
-                port:
-                  type: integer
-                sources:
-                  type: array
-                  items:
-                    type: string
-                type:
-                  type: string
       id:
         type: string
       name:
         type: string
-      node_groups:
+      status:
+        type: string
+      created_at:
+        type: string
+        format: date-time
+      regions:
+        type: array
+        items:
+          type: string
+      cloud_account:
         type: object
         properties:
-          aws:
-            type: array
-            items:
-              $ref: "#/definitions/NodeGroup"
-          azure:
-            type: array
-            items:
-              $ref: "#/definitions/NodeGroup"
-          google:
-            type: array
-            items:
-              $ref: "#/definitions/NodeGroup"
-      status:
+          id:
+            type: string
+          name:
+            type: string
+          type:
+            type: string
+      node_location:
+        type: string
+      firewall_rules:
+        type: array
+        items:
+          $ref: "#/definitions/FirewallRule"
+      networks:
+        type: array
+        items:
+          $ref: "#/definitions/Network"
+      nodes:
+        type: array
+        items:
+          $ref: "#/definitions/ClusterNode"
+      resource_tags:
+        type: object
+        additionalProperties:
+          type: string
+      ssh_key_id:
+        type: string
+
+  ClusterNode:
+    type: object
+    properties:
+      region:
+        type: string
+      availability_zone:
+        type: string
+      image:
+        type: string
+      instance_type:
+        type: string
+      name:
+        type: string
+      options:
+        type: array
+        items:
+          type: string
+      volume_iops:
+        type: integer
+      volume_size:
+        type: integer
+      volume_type:
+        type: string
+
+  FirewallRule:
+    type: object
+    properties:
+      port:
+        type: integer
+      sources:
+        type: array
+        items:
+          type: string
+      name:
+        type: string
+
+  Network:
+    type: object
+    properties:
+      region:
+        type: string
+      cidr:
+        type: string
+      external:
+        type: boolean
+      external_id:
+        type: string
+      name:
+        type: string
+      private_subnets:
+        type: array
+        items:
+          type: string
+      public_subnets:
+        type: array
+        items:
+          type: string
+
+  ClusterUpdateRequest:
+    type: object
+    properties:
+      regions:
+        type: array
+        items:
+          type: string
+      firewall_rules:
+        type: array
+        items:
+          $ref: "#/definitions/FirewallRule"
+      networks:
+        type: array
+        items:
+          $ref: "#/definitions/Network"
+      nodes:
+        type: array
+        items:
+          $ref: "#/definitions/ClusterNode"
+      resource_tags:
+        type: object
+        additionalProperties:
+          type: string
+      ssh_key_id:
         type: string

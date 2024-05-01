@@ -29,6 +29,12 @@ func (o *PostDatabasesReader) ReadResponse(response runtime.ClientResponse, cons
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewPostDatabasesBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 401:
 		result := NewPostDatabasesUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -114,6 +120,74 @@ func (o *PostDatabasesOK) readResponse(response runtime.ClientResponse, consumer
 	return nil
 }
 
+// NewPostDatabasesBadRequest creates a PostDatabasesBadRequest with default headers values
+func NewPostDatabasesBadRequest() *PostDatabasesBadRequest {
+	return &PostDatabasesBadRequest{}
+}
+
+/*
+PostDatabasesBadRequest describes a response with status code 400, with default header values.
+
+Bad Request
+*/
+type PostDatabasesBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this post databases bad request response has a 2xx status code
+func (o *PostDatabasesBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this post databases bad request response has a 3xx status code
+func (o *PostDatabasesBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this post databases bad request response has a 4xx status code
+func (o *PostDatabasesBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this post databases bad request response has a 5xx status code
+func (o *PostDatabasesBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this post databases bad request response a status code equal to that given
+func (o *PostDatabasesBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the post databases bad request response
+func (o *PostDatabasesBadRequest) Code() int {
+	return 400
+}
+
+func (o *PostDatabasesBadRequest) Error() string {
+	return fmt.Sprintf("[POST /databases][%d] postDatabasesBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PostDatabasesBadRequest) String() string {
+	return fmt.Sprintf("[POST /databases][%d] postDatabasesBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *PostDatabasesBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *PostDatabasesBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewPostDatabasesUnauthorized creates a PostDatabasesUnauthorized with default headers values
 func NewPostDatabasesUnauthorized() *PostDatabasesUnauthorized {
 	return &PostDatabasesUnauthorized{}
@@ -125,6 +199,7 @@ PostDatabasesUnauthorized describes a response with status code 401, with defaul
 Unauthorized
 */
 type PostDatabasesUnauthorized struct {
+	Payload *models.Error
 }
 
 // IsSuccess returns true when this post databases unauthorized response has a 2xx status code
@@ -158,14 +233,25 @@ func (o *PostDatabasesUnauthorized) Code() int {
 }
 
 func (o *PostDatabasesUnauthorized) Error() string {
-	return fmt.Sprintf("[POST /databases][%d] postDatabasesUnauthorized ", 401)
+	return fmt.Sprintf("[POST /databases][%d] postDatabasesUnauthorized  %+v", 401, o.Payload)
 }
 
 func (o *PostDatabasesUnauthorized) String() string {
-	return fmt.Sprintf("[POST /databases][%d] postDatabasesUnauthorized ", 401)
+	return fmt.Sprintf("[POST /databases][%d] postDatabasesUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *PostDatabasesUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PostDatabasesUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }
@@ -181,6 +267,7 @@ PostDatabasesInternalServerError describes a response with status code 500, with
 Internal Server Error
 */
 type PostDatabasesInternalServerError struct {
+	Payload *models.Error
 }
 
 // IsSuccess returns true when this post databases internal server error response has a 2xx status code
@@ -214,14 +301,25 @@ func (o *PostDatabasesInternalServerError) Code() int {
 }
 
 func (o *PostDatabasesInternalServerError) Error() string {
-	return fmt.Sprintf("[POST /databases][%d] postDatabasesInternalServerError ", 500)
+	return fmt.Sprintf("[POST /databases][%d] postDatabasesInternalServerError  %+v", 500, o.Payload)
 }
 
 func (o *PostDatabasesInternalServerError) String() string {
-	return fmt.Sprintf("[POST /databases][%d] postDatabasesInternalServerError ", 500)
+	return fmt.Sprintf("[POST /databases][%d] postDatabasesInternalServerError  %+v", 500, o.Payload)
+}
+
+func (o *PostDatabasesInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *PostDatabasesInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }

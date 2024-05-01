@@ -15,13 +15,13 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// ClusterCreationResponse cluster creation response
+// Cluster cluster
 //
-// swagger:model ClusterCreationResponse
-type ClusterCreationResponse struct {
+// swagger:model Cluster
+type Cluster struct {
 
 	// cloud account
-	CloudAccount *ClusterCreationResponseCloudAccount `json:"cloud_account,omitempty"`
+	CloudAccount *ClusterCloudAccount `json:"cloud_account,omitempty"`
 
 	// created at
 	// Format: date-time
@@ -58,8 +58,8 @@ type ClusterCreationResponse struct {
 	Status string `json:"status,omitempty"`
 }
 
-// Validate validates this cluster creation response
-func (m *ClusterCreationResponse) Validate(formats strfmt.Registry) error {
+// Validate validates this cluster
+func (m *Cluster) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateCloudAccount(formats); err != nil {
@@ -88,7 +88,7 @@ func (m *ClusterCreationResponse) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *ClusterCreationResponse) validateCloudAccount(formats strfmt.Registry) error {
+func (m *Cluster) validateCloudAccount(formats strfmt.Registry) error {
 	if swag.IsZero(m.CloudAccount) { // not required
 		return nil
 	}
@@ -107,7 +107,7 @@ func (m *ClusterCreationResponse) validateCloudAccount(formats strfmt.Registry) 
 	return nil
 }
 
-func (m *ClusterCreationResponse) validateCreatedAt(formats strfmt.Registry) error {
+func (m *Cluster) validateCreatedAt(formats strfmt.Registry) error {
 	if swag.IsZero(m.CreatedAt) { // not required
 		return nil
 	}
@@ -119,7 +119,7 @@ func (m *ClusterCreationResponse) validateCreatedAt(formats strfmt.Registry) err
 	return nil
 }
 
-func (m *ClusterCreationResponse) validateFirewallRules(formats strfmt.Registry) error {
+func (m *Cluster) validateFirewallRules(formats strfmt.Registry) error {
 	if swag.IsZero(m.FirewallRules) { // not required
 		return nil
 	}
@@ -145,7 +145,7 @@ func (m *ClusterCreationResponse) validateFirewallRules(formats strfmt.Registry)
 	return nil
 }
 
-func (m *ClusterCreationResponse) validateNetworks(formats strfmt.Registry) error {
+func (m *Cluster) validateNetworks(formats strfmt.Registry) error {
 	if swag.IsZero(m.Networks) { // not required
 		return nil
 	}
@@ -171,7 +171,7 @@ func (m *ClusterCreationResponse) validateNetworks(formats strfmt.Registry) erro
 	return nil
 }
 
-func (m *ClusterCreationResponse) validateNodes(formats strfmt.Registry) error {
+func (m *Cluster) validateNodes(formats strfmt.Registry) error {
 	if swag.IsZero(m.Nodes) { // not required
 		return nil
 	}
@@ -197,8 +197,8 @@ func (m *ClusterCreationResponse) validateNodes(formats strfmt.Registry) error {
 	return nil
 }
 
-// ContextValidate validate this cluster creation response based on the context it is used
-func (m *ClusterCreationResponse) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+// ContextValidate validate this cluster based on the context it is used
+func (m *Cluster) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.contextValidateCloudAccount(ctx, formats); err != nil {
@@ -223,7 +223,7 @@ func (m *ClusterCreationResponse) ContextValidate(ctx context.Context, formats s
 	return nil
 }
 
-func (m *ClusterCreationResponse) contextValidateCloudAccount(ctx context.Context, formats strfmt.Registry) error {
+func (m *Cluster) contextValidateCloudAccount(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.CloudAccount != nil {
 
@@ -244,7 +244,7 @@ func (m *ClusterCreationResponse) contextValidateCloudAccount(ctx context.Contex
 	return nil
 }
 
-func (m *ClusterCreationResponse) contextValidateFirewallRules(ctx context.Context, formats strfmt.Registry) error {
+func (m *Cluster) contextValidateFirewallRules(ctx context.Context, formats strfmt.Registry) error {
 
 	for i := 0; i < len(m.FirewallRules); i++ {
 
@@ -269,7 +269,7 @@ func (m *ClusterCreationResponse) contextValidateFirewallRules(ctx context.Conte
 	return nil
 }
 
-func (m *ClusterCreationResponse) contextValidateNetworks(ctx context.Context, formats strfmt.Registry) error {
+func (m *Cluster) contextValidateNetworks(ctx context.Context, formats strfmt.Registry) error {
 
 	for i := 0; i < len(m.Networks); i++ {
 
@@ -294,7 +294,7 @@ func (m *ClusterCreationResponse) contextValidateNetworks(ctx context.Context, f
 	return nil
 }
 
-func (m *ClusterCreationResponse) contextValidateNodes(ctx context.Context, formats strfmt.Registry) error {
+func (m *Cluster) contextValidateNodes(ctx context.Context, formats strfmt.Registry) error {
 
 	for i := 0; i < len(m.Nodes); i++ {
 
@@ -320,7 +320,7 @@ func (m *ClusterCreationResponse) contextValidateNodes(ctx context.Context, form
 }
 
 // MarshalBinary interface implementation
-func (m *ClusterCreationResponse) MarshalBinary() ([]byte, error) {
+func (m *Cluster) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -328,8 +328,8 @@ func (m *ClusterCreationResponse) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *ClusterCreationResponse) UnmarshalBinary(b []byte) error {
-	var res ClusterCreationResponse
+func (m *Cluster) UnmarshalBinary(b []byte) error {
+	var res Cluster
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}
@@ -337,10 +337,10 @@ func (m *ClusterCreationResponse) UnmarshalBinary(b []byte) error {
 	return nil
 }
 
-// ClusterCreationResponseCloudAccount cluster creation response cloud account
+// ClusterCloudAccount cluster cloud account
 //
-// swagger:model ClusterCreationResponseCloudAccount
-type ClusterCreationResponseCloudAccount struct {
+// swagger:model ClusterCloudAccount
+type ClusterCloudAccount struct {
 
 	// id
 	ID string `json:"id,omitempty"`
@@ -352,18 +352,18 @@ type ClusterCreationResponseCloudAccount struct {
 	Type string `json:"type,omitempty"`
 }
 
-// Validate validates this cluster creation response cloud account
-func (m *ClusterCreationResponseCloudAccount) Validate(formats strfmt.Registry) error {
+// Validate validates this cluster cloud account
+func (m *ClusterCloudAccount) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-// ContextValidate validates this cluster creation response cloud account based on context it is used
-func (m *ClusterCreationResponseCloudAccount) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+// ContextValidate validates this cluster cloud account based on context it is used
+func (m *ClusterCloudAccount) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 
 // MarshalBinary interface implementation
-func (m *ClusterCreationResponseCloudAccount) MarshalBinary() ([]byte, error) {
+func (m *ClusterCloudAccount) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -371,8 +371,8 @@ func (m *ClusterCreationResponseCloudAccount) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *ClusterCreationResponseCloudAccount) UnmarshalBinary(b []byte) error {
-	var res ClusterCreationResponseCloudAccount
+func (m *ClusterCloudAccount) UnmarshalBinary(b []byte) error {
+	var res ClusterCloudAccount
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}
