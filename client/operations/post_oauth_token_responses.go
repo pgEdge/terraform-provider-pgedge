@@ -57,7 +57,7 @@ PostOauthTokenOK describes a response with status code 200, with default header 
 Successful response
 */
 type PostOauthTokenOK struct {
-	Payload []*PostOauthTokenOKBodyItems0
+	Payload *PostOauthTokenOKBody
 }
 
 // IsSuccess returns true when this post oauth token o k response has a 2xx status code
@@ -98,14 +98,16 @@ func (o *PostOauthTokenOK) String() string {
 	return fmt.Sprintf("[POST /oauth/token][%d] postOauthTokenOK  %+v", 200, o.Payload)
 }
 
-func (o *PostOauthTokenOK) GetPayload() []*PostOauthTokenOKBodyItems0 {
+func (o *PostOauthTokenOK) GetPayload() *PostOauthTokenOKBody {
 	return o.Payload
 }
 
 func (o *PostOauthTokenOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
+	o.Payload = new(PostOauthTokenOKBody)
+
 	// response payload
-	if err := consumer.Consume(response.Body(), &o.Payload); err != nil && err != io.EOF {
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
 		return err
 	}
 
@@ -375,10 +377,10 @@ func (o *PostOauthTokenInternalServerErrorBody) UnmarshalBinary(b []byte) error 
 }
 
 /*
-PostOauthTokenOKBodyItems0 post oauth token o k body items0
-swagger:model PostOauthTokenOKBodyItems0
+PostOauthTokenOKBody post oauth token o k body
+swagger:model PostOauthTokenOKBody
 */
-type PostOauthTokenOKBodyItems0 struct {
+type PostOauthTokenOKBody struct {
 
 	// access token
 	AccessToken string `json:"access_token,omitempty"`
@@ -390,18 +392,18 @@ type PostOauthTokenOKBodyItems0 struct {
 	TokenType string `json:"token_type,omitempty"`
 }
 
-// Validate validates this post oauth token o k body items0
-func (o *PostOauthTokenOKBodyItems0) Validate(formats strfmt.Registry) error {
+// Validate validates this post oauth token o k body
+func (o *PostOauthTokenOKBody) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-// ContextValidate validates this post oauth token o k body items0 based on context it is used
-func (o *PostOauthTokenOKBodyItems0) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+// ContextValidate validates this post oauth token o k body based on context it is used
+func (o *PostOauthTokenOKBody) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 
 // MarshalBinary interface implementation
-func (o *PostOauthTokenOKBodyItems0) MarshalBinary() ([]byte, error) {
+func (o *PostOauthTokenOKBody) MarshalBinary() ([]byte, error) {
 	if o == nil {
 		return nil, nil
 	}
@@ -409,8 +411,8 @@ func (o *PostOauthTokenOKBodyItems0) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (o *PostOauthTokenOKBodyItems0) UnmarshalBinary(b []byte) error {
-	var res PostOauthTokenOKBodyItems0
+func (o *PostOauthTokenOKBody) UnmarshalBinary(b []byte) error {
+	var res PostOauthTokenOKBody
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

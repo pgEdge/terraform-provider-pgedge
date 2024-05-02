@@ -29,16 +29,14 @@ paths:
         "200":
           description: Successful response
           schema:
-            type: array
-            items:
-              type: object
-              properties:
-                token_type:
-                  type: string
-                access_token:
-                  type: string
-                expires_in:
-                  type: integer
+            type: object
+            properties:
+              token_type:
+                type: string
+              access_token:
+                type: string
+              expires_in:
+                type: integer
         "400":
           description: Bad request
           schema:
@@ -435,7 +433,9 @@ definitions:
     properties:
       id:
         type: string
+        format: uuid
       cluster_id:
+        format: uuid
         type: string
       name:
         type: string
@@ -616,8 +616,10 @@ definitions:
     type: object
     properties:
       id:
+        format: uuid
         type: string
       cluster_id:
+        format: uuid
         type: string
       name:
         type: string
@@ -693,6 +695,7 @@ definitions:
             items:
               $ref: "#/definitions/BackupConfig"
       cluster_id:
+        format: uuid
         type: string
       config_version:
         type: string
@@ -786,8 +789,10 @@ definitions:
     properties:
       id:
         type: string
+        format: uuid
       cluster_id:
         type: string
+        format: uuid
       name:
         type: string
       status:
@@ -1057,6 +1062,7 @@ definitions:
         properties:
           id:
             type: string
+            format: uuid
           name:
             type: string
           type:
@@ -1074,7 +1080,7 @@ definitions:
       nodes:
         type: array
         items:
-          $ref: "#/definitions/Node"
+          $ref: "#/definitions/ClusterNode"
       resource_tags:
         type: object
         additionalProperties:
@@ -1087,6 +1093,7 @@ definitions:
     properties:
       id:
         type: string
+        format: uuid
       name:
         type: string
       status:
@@ -1133,6 +1140,7 @@ definitions:
     properties:
       id:
         type: string
+        format: uuid
       name:
         type: string
       status:
@@ -1149,6 +1157,7 @@ definitions:
         properties:
           id:
             type: string
+            format: uuid
           name:
             type: string
           type:

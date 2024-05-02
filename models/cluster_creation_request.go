@@ -12,6 +12,7 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // ClusterCreationRequest cluster creation request
@@ -38,7 +39,7 @@ type ClusterCreationRequest struct {
 	NodeLocation string `json:"node_location,omitempty"`
 
 	// nodes
-	Nodes []*Node `json:"nodes"`
+	Nodes []*ClusterNode `json:"nodes"`
 
 	// regions
 	Regions []string `json:"regions"`
@@ -319,7 +320,8 @@ func (m *ClusterCreationRequest) UnmarshalBinary(b []byte) error {
 type ClusterCreationRequestCloudAccount struct {
 
 	// id
-	ID string `json:"id,omitempty"`
+	// Format: uuid
+	ID strfmt.UUID `json:"id,omitempty"`
 
 	// name
 	Name string `json:"name,omitempty"`
@@ -330,6 +332,27 @@ type ClusterCreationRequestCloudAccount struct {
 
 // Validate validates this cluster creation request cloud account
 func (m *ClusterCreationRequestCloudAccount) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.validateID(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *ClusterCreationRequestCloudAccount) validateID(formats strfmt.Registry) error {
+	if swag.IsZero(m.ID) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("cloud_account"+"."+"id", "body", "uuid", m.ID.String(), formats); err != nil {
+		return err
+	}
+
 	return nil
 }
 

@@ -31,7 +31,8 @@ type ClusterCreationResponse struct {
 	FirewallRules []*FirewallRule `json:"firewall_rules"`
 
 	// id
-	ID string `json:"id,omitempty"`
+	// Format: uuid
+	ID strfmt.UUID `json:"id,omitempty"`
 
 	// name
 	Name string `json:"name,omitempty"`
@@ -71,6 +72,10 @@ func (m *ClusterCreationResponse) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateFirewallRules(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateID(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -140,6 +145,18 @@ func (m *ClusterCreationResponse) validateFirewallRules(formats strfmt.Registry)
 			}
 		}
 
+	}
+
+	return nil
+}
+
+func (m *ClusterCreationResponse) validateID(formats strfmt.Registry) error {
+	if swag.IsZero(m.ID) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("id", "body", "uuid", m.ID.String(), formats); err != nil {
+		return err
 	}
 
 	return nil

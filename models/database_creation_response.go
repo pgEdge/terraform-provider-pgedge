@@ -24,7 +24,8 @@ type DatabaseCreationResponse struct {
 	Backups *BackupConfig `json:"backups,omitempty"`
 
 	// cluster id
-	ClusterID string `json:"cluster_id,omitempty"`
+	// Format: uuid
+	ClusterID strfmt.UUID `json:"cluster_id,omitempty"`
 
 	// components
 	Components []*Component `json:"components"`
@@ -40,7 +41,8 @@ type DatabaseCreationResponse struct {
 	Extensions *Extensions `json:"extensions,omitempty"`
 
 	// id
-	ID string `json:"id,omitempty"`
+	// Format: uuid
+	ID strfmt.UUID `json:"id,omitempty"`
 
 	// name
 	Name string `json:"name,omitempty"`
@@ -79,6 +81,10 @@ func (m *DatabaseCreationResponse) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateClusterID(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateComponents(formats); err != nil {
 		res = append(res, err)
 	}
@@ -88,6 +94,10 @@ func (m *DatabaseCreationResponse) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateExtensions(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateID(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -127,6 +137,18 @@ func (m *DatabaseCreationResponse) validateBackups(formats strfmt.Registry) erro
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *DatabaseCreationResponse) validateClusterID(formats strfmt.Registry) error {
+	if swag.IsZero(m.ClusterID) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("cluster_id", "body", "uuid", m.ClusterID.String(), formats); err != nil {
+		return err
 	}
 
 	return nil
@@ -184,6 +206,18 @@ func (m *DatabaseCreationResponse) validateExtensions(formats strfmt.Registry) e
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *DatabaseCreationResponse) validateID(formats strfmt.Registry) error {
+	if swag.IsZero(m.ID) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("id", "body", "uuid", m.ID.String(), formats); err != nil {
+		return err
 	}
 
 	return nil

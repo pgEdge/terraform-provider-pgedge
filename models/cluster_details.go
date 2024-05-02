@@ -31,7 +31,8 @@ type ClusterDetails struct {
 	FirewallRules []*FirewallRule `json:"firewall_rules"`
 
 	// id
-	ID string `json:"id,omitempty"`
+	// Format: uuid
+	ID strfmt.UUID `json:"id,omitempty"`
 
 	// name
 	Name string `json:"name,omitempty"`
@@ -71,6 +72,10 @@ func (m *ClusterDetails) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateFirewallRules(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateID(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -140,6 +145,18 @@ func (m *ClusterDetails) validateFirewallRules(formats strfmt.Registry) error {
 			}
 		}
 
+	}
+
+	return nil
+}
+
+func (m *ClusterDetails) validateID(formats strfmt.Registry) error {
+	if swag.IsZero(m.ID) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("id", "body", "uuid", m.ID.String(), formats); err != nil {
+		return err
 	}
 
 	return nil
@@ -343,7 +360,8 @@ func (m *ClusterDetails) UnmarshalBinary(b []byte) error {
 type ClusterDetailsCloudAccount struct {
 
 	// id
-	ID string `json:"id,omitempty"`
+	// Format: uuid
+	ID strfmt.UUID `json:"id,omitempty"`
 
 	// name
 	Name string `json:"name,omitempty"`
@@ -354,6 +372,27 @@ type ClusterDetailsCloudAccount struct {
 
 // Validate validates this cluster details cloud account
 func (m *ClusterDetailsCloudAccount) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.validateID(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *ClusterDetailsCloudAccount) validateID(formats strfmt.Registry) error {
+	if swag.IsZero(m.ID) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("cloud_account"+"."+"id", "body", "uuid", m.ID.String(), formats); err != nil {
+		return err
+	}
+
 	return nil
 }
 

@@ -12,6 +12,7 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // DatabaseCreationRequest database creation request
@@ -23,7 +24,8 @@ type DatabaseCreationRequest struct {
 	Backups *DatabaseCreationRequestBackups `json:"backups,omitempty"`
 
 	// cluster id
-	ClusterID string `json:"cluster_id,omitempty"`
+	// Format: uuid
+	ClusterID strfmt.UUID `json:"cluster_id,omitempty"`
 
 	// config version
 	ConfigVersion string `json:"config_version,omitempty"`
@@ -43,6 +45,10 @@ func (m *DatabaseCreationRequest) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateBackups(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateClusterID(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -70,6 +76,18 @@ func (m *DatabaseCreationRequest) validateBackups(formats strfmt.Registry) error
 			}
 			return err
 		}
+	}
+
+	return nil
+}
+
+func (m *DatabaseCreationRequest) validateClusterID(formats strfmt.Registry) error {
+	if swag.IsZero(m.ClusterID) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("cluster_id", "body", "uuid", m.ClusterID.String(), formats); err != nil {
+		return err
 	}
 
 	return nil

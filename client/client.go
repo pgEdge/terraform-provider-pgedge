@@ -254,13 +254,14 @@ func (c *Client) DeleteCluster(ctx context.Context, id strfmt.UUID) error {
 	return err
 }
 
-func (c *Client) OAuthToken(ctx context.Context, clientId, clientSecret string) (*operations.PostOauthTokenOKBody, error) {
+func (c *Client) OAuthToken(ctx context.Context, clientId, clientSecret, grantType string) (*operations.PostOauthTokenOKBody, error) {
 	request := &operations.PostOauthTokenParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
 		Body: operations.PostOauthTokenBody{
 			ClientID:     clientId,
 			ClientSecret: clientSecret,
+			GrantType:    grantType,
 		},
 	}
 
