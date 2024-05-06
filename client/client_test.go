@@ -83,6 +83,23 @@ func TestGetCluster(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestUpdateCluster(t *testing.T){
+	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+
+	request := &models.ClusterUpdateRequest{
+		Nodes: []*models.ClusterNode{
+			{
+				Name: "Node2",
+			},
+		},
+		}
+
+	cluster, err := client.UpdateCluster(context.Background(),*ClusterID, request)
+	ClusterID = &cluster.ID
+
+	assert.Nil(t, err)
+}
+
 func TestGetAllClusters(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 	_, err := client.GetAllClusters(context.Background())
@@ -107,6 +124,21 @@ func TestCreateDatabase(t *testing.T) {
 func TestGetDatabase(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 	_, err := client.GetDatabase(context.Background(), *DatabaseID)
+
+	assert.Nil(t, err)
+}
+
+func TestUpdateDatabase(t *testing.T) {
+	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+
+	request := &models.DatabaseUpdateRequest{
+		Extensions: &models.DatabaseUpdateRequestExtensions{
+			AutoManage: false,
+		},
+	}
+
+	database, err := client.UpdateDatabase(context.Background(),*DatabaseID, request)
+	DatabaseID = &database.ID
 
 	assert.Nil(t, err)
 }

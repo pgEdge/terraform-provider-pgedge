@@ -250,8 +250,8 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		database.ID = types.StringValue(db.ID.String())
 		database.Name = types.StringValue(strings.Trim(strings.ToLower(db.Name), " "))
 		database.Domain = types.StringValue(db.Domain)
-		database.CreatedAt = types.StringValue(db.CreatedAt.String())
-		database.UpdatedAt = types.StringValue(db.UpdatedAt.String())
+		database.CreatedAt = types.StringValue(db.CreatedAt)
+		database.UpdatedAt = types.StringValue(db.UpdatedAt)
 		database.Status = types.StringValue(db.Status)
 
 		for _, node := range db.Nodes {

@@ -165,7 +165,7 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Description: "Name of the cluster",
 			},
 			"cloud_account_id": schema.StringAttribute{
-				Required:    true,
+				Computed:    true,
 				Description: "Cloud account ID of the cluster",
 			},
 			"created_at": schema.StringAttribute{
@@ -176,33 +176,96 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Computed:    true,
 				Description: "Status of the cluster",
 			},
-			"firewall": schema.ListNestedAttribute{
+			"ssh_key_id": schema.StringAttribute{
+				Computed:    true,
+				Description: "SSH key ID of the cluster",
+			},
+			// "resource_tags": schema.MapAttribute{
+			// 	ElementType: types.StringType,
+			// 	Computed:    true,
+			// },
+			"regions": schema.ListAttribute{
+				ElementType: types.StringType,
+				Computed:    true,
+			},
+			"node_location": schema.StringAttribute{
+				Computed:    true,
+				Description: "Node location of the cluster",
+			},
+			"cloud_account": schema.ListNestedAttribute{
+				Computed: true,
 				Optional: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"type": schema.StringAttribute{
-							Optional:    true,
-							Description: "Type of the firewall rule",
+						"id": schema.StringAttribute{
+							Computed:    true,
+							Description: "Display name of the node",
+						},
+						"name": schema.StringAttribute{
+							Computed:    true,
+							Description: "IP address of the node",
+						},
+						"Type": schema.StringAttribute{
+							Computed:    true,
+							Description: "Type of the node",
+						},
+					},
+				},
+			},
+			"firewall_rules": schema.ListNestedAttribute{
+				Computed: true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Computed:    true,
+							Description: "Name of the firewall rule",
 						},
 						"port": schema.Int64Attribute{
-							Optional:    true,
+							Computed:    true,
 							Description: "Port for the firewall rule",
 						},
 						"sources": schema.ListAttribute{
 							ElementType: types.StringType,
-							Optional:    true,
+							Computed:    true,
 							Description: "Sources for the firewall rule",
 						},
 					},
 				},
 			},
-			"node_groups": schema.SingleNestedAttribute{
-				Optional: true,
+			"nodes": ClusterNodeDataSourceType,
+			"networks": schema.ListNestedAttribute{
 				Computed: true,
-				Attributes: map[string]schema.Attribute{
-					"aws":    ClusterNodeGroupTypes,
-					"azure":  ClusterNodeGroupTypes,
-					"google": ClusterNodeGroupTypes,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{
+							Computed:    true,
+							Description: "Name of the network",
+						},
+						"region": schema.StringAttribute{
+							Computed:    true,
+							Description: "Region of the network",
+						},
+						"external": schema.BoolAttribute{
+							Computed:    true,
+							Description: "Is the network external",
+						},
+						"external_id": schema.StringAttribute{
+							Computed:    true,
+							Description: "External ID of the network",
+						},
+						"cidr": schema.StringAttribute{
+							Computed:    true,
+							Description: "CIDR of the AWS node group",
+						},
+						"public_subnets": schema.ListAttribute{
+							ElementType: types.StringType,
+							Computed:    true,
+						},
+						"private_subnets": schema.ListAttribute{
+							ElementType: types.StringType,
+							Computed:    true,
+						},
+					},
 				},
 			},
 		},
@@ -260,7 +323,7 @@ func nodeGroupsClusterReq(ctx context.Context, resp *resource.CreateResponse, no
 
 func fireWallRulesClusterReq(ctx context.Context, resp *resource.CreateResponse, firewallRuleReq []basetypes.ObjectValue) (*resource.CreateResponse, []*models.ClusterCreationRequestFirewallRulesItems0) {
 	var (
-		firewallRules    []*models.ClusterCreationRequestFirewallRulesItems0
+		firewallRules    []*models.FirewallRule
 		firewallRuleType FirewallRule
 		sources          []string
 	)
@@ -271,8 +334,8 @@ func fireWallRulesClusterReq(ctx context.Context, resp *resource.CreateResponse,
 		resp.Diagnostics.Append(diags...)
 		diags = firewallRuleType.Sources.ElementsAs(ctx, &sources, false)
 		resp.Diagnostics.Append(diags...)
-		firewallRules = append(firewallRules, &models.ClusterCreationRequestFirewallRulesItems0{
-			Type:    firewallRuleType.Type.ValueString(),
+		firewallRules = append(firewallRules, &models.FirewallRule{
+			Name:    firewallRuleType.Name.ValueString(),
 			Port:    firewallRuleType.Port.ValueInt64(),
 			Sources: sources,
 		})
@@ -288,20 +351,6 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	var nodeGroupsReq NodeGroups
-	var awsNodeGroupReq []NodeGroup
-	var azureNodeGroupReq []NodeGroup
-	var googleNodeGroupReq []NodeGroup
-
-	diags = plan.NodeGroups.As(ctx, &nodeGroupsReq, basetypes.ObjectAsOptions{})
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	nodeGroupsReq.AWS.ElementsAs(ctx, &awsNodeGroupReq, false)
-	nodeGroupsReq.Azure.ElementsAs(ctx, &azureNodeGroupReq, false)
-	nodeGroupsReq.Google.ElementsAs(ctx, &googleNodeGroupReq, false)
 
 	resp, firewallRules := fireWallRulesClusterReq(ctx, resp, plan.Firewall)
 	if resp.Diagnostics.HasError() {
