@@ -58,6 +58,7 @@ type ClusterDetails struct {
 	CreatedAt      types.String   `tfsdk:"created_at"`
 	Status         types.String   `tfsdk:"status"`
 	SSHKeyID       types.String   `tfsdk:"ssh_key_id"`
+	LastUpdated 	types.String     `tfsdk:"last_updated"`
 	// ResourceTags   types.Map      `tfsdk:"resource_tags"`
 	Regions        types.List     `tfsdk:"regions"`
 	NodeLocation   types.String   `tfsdk:"node_location"`
@@ -195,6 +196,10 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 							Computed:    true,
 							Description: "ID of the cluster",
 						},
+						// "last_updated": schema.StringAttribute{
+						// 	Computed: true,
+						// 	Optional: true,
+						// },
 						"name": schema.StringAttribute{
 							Required:    true,
 							Description: "Name of the cluster",
