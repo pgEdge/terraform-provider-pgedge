@@ -38,7 +38,7 @@ func TestCreateCluster(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
 	request := &models.ClusterCreationRequest{
-		Name: "n5",
+		Name: "n3",
 		CloudAccountID: CloudAccountID,
 		Regions: []string{"us-east-2"},
 		Nodes: []*models.ClusterNode{
@@ -139,7 +139,7 @@ func TestCreateDatabase(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
 	request := &models.DatabaseCreationRequest{
-		Name:      "db1",
+		Name:      "db5",
 		ClusterID: *ClusterID,
 	}
 
