@@ -2,13 +2,16 @@ package provider
 
 import (
 	"context"
+	"regexp"
 	"fmt"
-	"time"
+	// "time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
@@ -58,15 +61,21 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Computed:    true,
 				Description: "ID of the cluster",
 			},
-			"last_updated": schema.StringAttribute{
-				Computed: true,
-			},
+			// "last_updated": schema.StringAttribute{
+			// 	Computed: true,
+			// },
 			"name": schema.StringAttribute{
-				Required:    true,
+				Required: true,
+				Validators: []validator.String{
+					stringvalidator.RegexMatches(
+						regexp.MustCompile(`^[a-z0-9]+$`),
+						"must contain only lowercase alphanumeric characters",
+					),
+				},
 				Description: "Name of the cluster",
 			},
 			"cloud_account_id": schema.StringAttribute{
-				Computed:    true,
+				Required:    true,
 				Description: "Cloud account ID of the cluster",
 			},
 			"created_at": schema.StringAttribute{
@@ -78,6 +87,7 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Description: "Status of the cluster",
 			},
 			"ssh_key_id": schema.StringAttribute{
+				Optional:    true,
 				Computed:    true,
 				Description: "SSH key ID of the cluster",
 			},
@@ -87,47 +97,49 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			// },
 			"regions": schema.ListAttribute{
 				ElementType: types.StringType,
-				Computed:    true,
+				Optional:    true,
 			},
 			"node_location": schema.StringAttribute{
+				Optional:    true,
 				Computed:    true,
 				Description: "Node location of the cluster",
 			},
-			"cloud_account": schema.ListNestedAttribute{
+			"cloud_account": schema.SingleNestedAttribute{
 				Computed: true,
 				Optional: true,
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"id": schema.StringAttribute{
-							Computed:    true,
-							Description: "Display name of the node",
-						},
-						"name": schema.StringAttribute{
-							Computed:    true,
-							Description: "IP address of the node",
-						},
-						"Type": schema.StringAttribute{
-							Computed:    true,
-							Description: "Type of the node",
-						},
+				Attributes: map[string]schema.Attribute{
+					"id": schema.StringAttribute{
+						Computed:    true,
+						Optional:    true,
+						Description: "Display name of the node",
+					},
+					"name": schema.StringAttribute{
+						Computed:    true,
+						Optional:    true,
+						Description: "IP address of the node",
+					},
+					"type": schema.StringAttribute{
+						Computed:    true,
+						Optional:    true,
+						Description: "Type of the node",
 					},
 				},
 			},
 			"firewall_rules": schema.ListNestedAttribute{
-				Computed: true,
+				Optional: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
-							Computed:    true,
+							Optional:    true,
 							Description: "Name of the firewall rule",
 						},
 						"port": schema.Int64Attribute{
-							Computed:    true,
+							Optional:    true,
 							Description: "Port for the firewall rule",
 						},
 						"sources": schema.ListAttribute{
 							ElementType: types.StringType,
-							Computed:    true,
+							Optional:    true,
 							Description: "Sources for the firewall rule",
 						},
 					},
@@ -136,34 +148,42 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			"nodes": ClusterNodeDataSourceType,
 			"networks": schema.ListNestedAttribute{
 				Computed: true,
+				Optional: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
+							Optional:    true,
 							Computed:    true,
 							Description: "Name of the network",
 						},
 						"region": schema.StringAttribute{
+							Optional:    true,
 							Computed:    true,
 							Description: "Region of the network",
 						},
 						"external": schema.BoolAttribute{
+							Optional:    true,
 							Computed:    true,
 							Description: "Is the network external",
 						},
 						"external_id": schema.StringAttribute{
+							Optional:    true,
 							Computed:    true,
 							Description: "External ID of the network",
 						},
 						"cidr": schema.StringAttribute{
+							Optional:    true,
 							Computed:    true,
 							Description: "CIDR of the AWS node group",
 						},
 						"public_subnets": schema.ListAttribute{
 							ElementType: types.StringType,
+							Optional:    true,
 							Computed:    true,
 						},
 						"private_subnets": schema.ListAttribute{
 							ElementType: types.StringType,
+							Optional:    true,
 							Computed:    true,
 						},
 					},
@@ -208,12 +228,18 @@ func networksAccountClusterReq(ctx context.Context, resp *resource.CreateRespons
 			Region: networkType.Region.ValueString(),
 			Cidr:   networkType.Cidr.ValueString(),
 			PublicSubnets: func() []string {
+				if networkType.PublicSubnets.IsUnknown() {
+					return nil
+				}
 				var publicSubnets []string
 				diags = networkType.PublicSubnets.ElementsAs(ctx, &publicSubnets, false)
 				resp.Diagnostics.Append(diags...)
 				return publicSubnets
 			}(),
 			PrivateSubnets: func() []string {
+				if networkType.PrivateSubnets.IsUnknown() {
+					return nil
+				}
 				var privateSubnets []string
 				diags = networkType.PrivateSubnets.ElementsAs(ctx, &privateSubnets, false)
 				resp.Diagnostics.Append(diags...)
@@ -234,6 +260,27 @@ func nodesClusterReq(ctx context.Context, resp *resource.CreateResponse, nodesRe
 		resp.Diagnostics.Append(diags...)
 		nodes = append(nodes, &models.ClusterNode{
 			Name: nodeType.Name.ValueString(),
+			Image: nodeType.Image.ValueString(),
+			Region: nodeType.Region.ValueString(),
+			AvailabilityZone: func() string {
+				if nodeType.AvailabilityZone.IsUnknown() {
+					return ""
+				}
+				return nodeType.AvailabilityZone.ValueString()
+			}(),
+			Options: func() []string {
+				if nodeType.Options.IsUnknown() {
+					return nil
+				}
+				var options []string
+				diags = nodeType.Options.ElementsAs(ctx, &options, false)
+				resp.Diagnostics.Append(diags...)
+				return options
+			}(),
+			InstanceType: nodeType.InstanceType.ValueString(),
+			VolumeSize:   nodeType.VolumeSize.ValueInt64(),
+			VolumeIops:   nodeType.VolumeIOPS.ValueInt64(),
+			VolumeType:   nodeType.VolumeType.ValueString(),
 		})
 	}
 	return resp, nodes
@@ -257,43 +304,51 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	resp, firewallRules := fireWallRulesClusterReq(ctx, resp, plan.Firewall)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	resp, cloudAccount := cloudAccountClusterReq(ctx, resp, plan.CloudAccount)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	resp, networks := networksAccountClusterReq(ctx, resp, plan.Networks)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
-	resp, nodes := nodesClusterReq(ctx, resp, plan.Nodes)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-
 	clusterCreationRequest := &models.ClusterCreationRequest{
 		Name:           plan.Name.ValueString(),
 		CloudAccountID: plan.CloudAccountID.ValueString(),
-		FirewallRules:  firewallRules,
-		CloudAccount:   cloudAccount,
-		Networks:       networks,
-		Nodes:          nodes,
 		NodeLocation:   plan.NodeLocation.ValueString(),
-		Regions: func() []string {
-			var regions []string
-			for _, region := range plan.Regions.Elements() {
-				regions = append(regions, region.String())
-			}
-			return regions
-		}(),
 		// ResourceTags: ,
 		SSHKeyID: plan.SSHKeyID.ValueString(),
+	}
+
+	if plan.Firewall != nil {
+		resp, firewallRules := fireWallRulesClusterReq(ctx, resp, plan.Firewall)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		clusterCreationRequest.FirewallRules = firewallRules
+	}
+
+	if !plan.CloudAccount.IsUnknown() {
+		resp, cloudAccount := cloudAccountClusterReq(ctx, resp, plan.CloudAccount)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		clusterCreationRequest.CloudAccount = cloudAccount
+	}
+
+	if plan.Networks != nil {
+		resp, networks := networksAccountClusterReq(ctx, resp, plan.Networks)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		clusterCreationRequest.Networks = networks
+	}
+
+	if plan.Nodes != nil {
+		resp, nodes := nodesClusterReq(ctx, resp, plan.Nodes)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		clusterCreationRequest.Nodes = nodes
+	}
+
+	if !plan.Regions.IsUnknown() {
+		var regions []string
+		diags = plan.Regions.ElementsAs(ctx, &regions, false)
+		resp.Diagnostics.Append(diags...)
+		clusterCreationRequest.Regions = regions
 	}
 
 	createdCluster, err := r.client.CreateCluster(ctx, clusterCreationRequest)
@@ -379,6 +434,9 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 				}
 
 				publicSubnetList, _ := types.ListValue(types.StringType, publicSubnets)
+				if publicSubnetList.IsNull() {
+				return types.ListNull(types.StringType)
+				}
 				return publicSubnetList
 			}(),
 			"private_subnets": func() types.List {
@@ -388,6 +446,9 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 				}
 
 				privateSubnetList, _ := types.ListValue(types.StringType, privateSubnets)
+				if privateSubnetList.IsNull() {
+				return types.ListNull(types.StringType)
+				}
 				return privateSubnetList
 			}(),
 
@@ -420,6 +481,9 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 					options = append(options, types.StringValue(option))
 				}
 				optionsList, _ := types.ListValue(types.StringType, options)
+				if optionsList.IsNull() {
+					return types.ListNull(types.StringType)
+				}
 				return optionsList
 			}(),
 			"volume_size":   types.Int64Value(node.VolumeSize),
@@ -608,6 +672,13 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
+	var state ClusterDetails
+	diags = req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
 	newResp := &resource.CreateResponse{}
 
 	*newResp = resource.CreateResponse(*resp)
@@ -644,7 +715,7 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		SSHKeyID: plan.SSHKeyID.ValueString(),
 	}
 
-	updatedCluster, err := r.client.UpdateCluster(ctx, strfmt.UUID(plan.ID.ValueString()), clusterUpdateRequest)
+	updatedCluster, err := r.client.UpdateCluster(ctx, strfmt.UUID(state.ID.ValueString()), clusterUpdateRequest)
 	if err != nil {
 		resp.Diagnostics.AddError("Error updating pgEdge Cluster", "Could not update Cluster, unexpected error: "+err.Error())
 		return
@@ -736,6 +807,9 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 				}
 
 				privateSubnetList, _ := types.ListValue(types.StringType, privateSubnets)
+				if privateSubnetList.IsNull() {
+				return types.ListNull(types.StringType)
+				}
 				return privateSubnetList
 			}(),
 
@@ -768,6 +842,9 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 					options = append(options, types.StringValue(option))
 				}
 				optionsList, _ := types.ListValue(types.StringType, options)
+				if optionsList.IsNull() {
+					return types.ListNull(types.StringType)
+				}
 				return optionsList
 			}(),
 			"volume_size":   types.Int64Value(node.VolumeSize),
@@ -787,7 +864,7 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		plan.Nodes = nodeResp
 	}
 
-	plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
+	// plan.LastUpdated = types.StringValue(time.Now().Format(time.RFC850))
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)

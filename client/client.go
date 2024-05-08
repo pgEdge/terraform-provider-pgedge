@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	// "encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -242,6 +243,11 @@ func (c *Client) CreateCluster(ctx context.Context, cluster *models.ClusterCreat
 
 	request.SetAuthorization(c.AuthHeader)
 
+// 	fmt.Println(cluster.Nodes,&cluster.Nodes,cluster.Nodes[0].InstanceType, "cluster")
+// 	res2B, _ := json.Marshal(cluster)
+// fmt.Println(string(res2B))
+
+
 	resp, err := c.PgEdgeAPIClient.Operations.PostClusters(request)
 	if err != nil {
 		return nil, err
@@ -308,12 +314,11 @@ func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models
 	}
 
 	// for {
-		clusterDetails, err := c.GetCluster(ctx, strfmt.UUID(resp.Payload.ID))
+		_, err = c.GetCluster(ctx, strfmt.UUID(resp.Payload.ID))
 		if err != nil {
 			return nil, err
 		}
 
-		fmt.Println(clusterDetails, "cluster details")
 
 		// switch clusterDetails.Status {
 		// case "available":

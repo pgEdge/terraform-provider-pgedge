@@ -58,7 +58,7 @@ type ClusterDetails struct {
 	CreatedAt      types.String   `tfsdk:"created_at"`
 	Status         types.String   `tfsdk:"status"`
 	SSHKeyID       types.String   `tfsdk:"ssh_key_id"`
-	LastUpdated 	types.String     `tfsdk:"last_updated"`
+	// LastUpdated 	types.String     `tfsdk:"last_updated"`
 	// ResourceTags   types.Map      `tfsdk:"resource_tags"`
 	Regions        types.List     `tfsdk:"regions"`
 	NodeLocation   types.String   `tfsdk:"node_location"`
@@ -146,38 +146,47 @@ var ClusterNodeDataSourceType = schema.ListNestedAttribute{
 	NestedObject: schema.NestedAttributeObject{
 		Attributes: map[string]schema.Attribute{
 			"region": schema.StringAttribute{
+				Optional:true,
 				Computed:    true,
 				Description: "Region of the AWS node group",
 			},
 			"image": schema.StringAttribute{
+				Optional:true,
 				Computed:    true,
 				Description: "Image of the AWS node group",
 			},
 			"name": schema.StringAttribute{
+				Optional:true,
 				Computed:    true,
 				Description: "Name of the AWS node group",
 			},
 			"availability_zone": schema.StringAttribute{
+				Optional:true,
 				Computed:    true,
 				Description: "Availability zone of the AWS node group",
 			},
 			"options": schema.ListAttribute{
 				ElementType: types.StringType,
+				Optional:true,
 				Computed:    true,
 			},
 			"volume_size": schema.Int64Attribute{
+				Optional:true,
 				Computed:    true,
 				Description: "Volume size of the AWS node group",
 			},
 			"volume_iops": schema.Int64Attribute{
+				Optional:true,
 				Computed:    true,
 				Description: "Volume IOPS of the AWS node group",
 			},
 			"volume_type": schema.StringAttribute{
+				Optional:true,
 				Computed:    true,
 				Description: "Volume type of the AWS node group",
 			},
 			"instance_type": schema.StringAttribute{
+				Optional:true,
 				Computed:    true,
 				Description: "Instance type of the AWS node group",
 			},
@@ -232,11 +241,10 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 							Computed:    true,
 							Description: "Node location of the cluster",
 						},
-						"cloud_account": schema.ListNestedAttribute{
+						"cloud_account": schema.SingleNestedAttribute{
 							Computed: true,
 							Optional: true,
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: map[string]schema.Attribute{
+							Attributes: map[string]schema.Attribute{
 									"id": schema.StringAttribute{
 										Computed:    true,
 										Description: "Display name of the node",
@@ -245,10 +253,9 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 										Computed:    true,
 										Description: "IP address of the node",
 									},
-									"Type": schema.StringAttribute{
+									"type": schema.StringAttribute{
 										Computed:    true,
 										Description: "Type of the node",
-									},
 								},
 							},
 						},

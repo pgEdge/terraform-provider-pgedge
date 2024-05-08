@@ -38,12 +38,12 @@ func TestCreateCluster(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
 	request := &models.ClusterCreationRequest{
-		Name: "n1",
+		Name: "n5",
 		CloudAccountID: CloudAccountID,
 		Regions: []string{"us-east-2"},
 		Nodes: []*models.ClusterNode{
 			{
-				Name: "Node1",
+				Name: "n1",
 				Region: "us-east-2",
 				Image: "postgres",
 				InstanceType: "t4g.small",
@@ -87,9 +87,37 @@ func TestUpdateCluster(t *testing.T){
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
 	request := &models.ClusterUpdateRequest{
+		Regions: []string{"us-east-2"},
 		Nodes: []*models.ClusterNode{
 			{
-				Name: "Node2",
+				Name: "n1",
+				Region: "us-east-2",
+				Image: "postgres",
+				InstanceType: "t4g.small",
+				AvailabilityZone: "us-east-2a",
+				VolumeType: "gp2",
+			},
+			{
+				Name: "n2",
+				Region: "us-east-1",
+				Image: "postgres",
+				InstanceType: "t4g.small",
+				AvailabilityZone: "us-east-2a",
+				VolumeType: "gp2",
+			},
+		},
+		Networks: []*models.Network{
+			{
+				Region: "us-east-2",
+				Cidr: "10.1.0.0/16",
+				PublicSubnets: []string{"10.1.0.0/24"},
+			},
+		},
+		FirewallRules: []*models.FirewallRule{
+			{
+				Name: "postgres",
+				Port: 5432,
+				Sources: []string{"0.0.0.0/0"},
 			},
 		},
 		}
