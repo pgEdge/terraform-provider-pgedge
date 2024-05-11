@@ -2,9 +2,9 @@ package client
 
 import (
 	"context"
-	// "encoding/json"
 	"errors"
 	"fmt"
+	"github.com/sanity-io/litter"
 	"net/http"
 	"strings"
 	"time"
@@ -113,6 +113,7 @@ func (c *Client) CreateDatabase(ctx context.Context, database *models.DatabaseCr
 
 		switch databaseDetails.Status {
 		case "available":
+			litter.Dump(databaseDetails)
 			return resp.Payload, nil
 		case "failed":
 			return nil, errors.New("database creation failed")
@@ -129,7 +130,7 @@ func (c *Client) UpdateDatabase(ctx context.Context, id strfmt.UUID, body *model
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
 		ID:         id,
-		Body: body,
+		Body:       body,
 	}
 
 	request.SetAuthorization(c.AuthHeader)
@@ -140,23 +141,23 @@ func (c *Client) UpdateDatabase(ctx context.Context, id strfmt.UUID, body *model
 	}
 
 	// for {
-		databaseDetails, err := c.GetDatabase(ctx, resp.Payload.ID)
-		if err != nil {
-			return nil, err
-		}
+	databaseDetails, err := c.GetDatabase(ctx, resp.Payload.ID)
+	if err != nil {
+		return nil, err
+	}
 
-		fmt.Println(databaseDetails, "databse details")
+	fmt.Println(databaseDetails, "databse details")
 
-		// switch databaseDetails.Status {
-		// case "available":
-			return resp.Payload, nil
-		// case "failed":
-			// return nil, errors.New("database creation failed")
-		// case "creating":
-			// time.Sleep(5 * time.Second)
-		// default:
-			// return nil, errors.New("unexpected database status")
-		// }
+	// switch databaseDetails.Status {
+	// case "available":
+	return resp.Payload, nil
+	// case "failed":
+	// return nil, errors.New("database creation failed")
+	// case "creating":
+	// time.Sleep(5 * time.Second)
+	// default:
+	// return nil, errors.New("unexpected database status")
+	// }
 	// }
 }
 
@@ -243,10 +244,9 @@ func (c *Client) CreateCluster(ctx context.Context, cluster *models.ClusterCreat
 
 	request.SetAuthorization(c.AuthHeader)
 
-// 	fmt.Println(cluster.Nodes,&cluster.Nodes,cluster.Nodes[0].InstanceType, "cluster")
-// 	res2B, _ := json.Marshal(cluster)
-// fmt.Println(string(res2B))
-
+	// 	fmt.Println(cluster.Nodes,&cluster.Nodes,cluster.Nodes[0].InstanceType, "cluster")
+	// 	res2B, _ := json.Marshal(cluster)
+	// fmt.Println(string(res2B))
 
 	resp, err := c.PgEdgeAPIClient.Operations.PostClusters(request)
 	if err != nil {
@@ -303,7 +303,7 @@ func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
 		ID:         id,
-		Body: body,
+		Body:       body,
 	}
 
 	request.SetAuthorization(c.AuthHeader)
@@ -314,22 +314,21 @@ func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models
 	}
 
 	// for {
-		_, err = c.GetCluster(ctx, strfmt.UUID(resp.Payload.ID))
-		if err != nil {
-			return nil, err
-		}
+	_, err = c.GetCluster(ctx, strfmt.UUID(resp.Payload.ID))
+	if err != nil {
+		return nil, err
+	}
 
-
-		// switch clusterDetails.Status {
-		// case "available":
-			return resp.Payload, nil
-		// case "failed":
-			// return nil, errors.New("cluster creation failed")
-		// case "creating":
-			// time.Sleep(5 * time.Second)
-		// default:
-			// return nil, errors.New("unexpected cluster status")
-		// }
+	// switch clusterDetails.Status {
+	// case "available":
+	return resp.Payload, nil
+	// case "failed":
+	// return nil, errors.New("cluster creation failed")
+	// case "creating":
+	// time.Sleep(5 * time.Second)
+	// default:
+	// return nil, errors.New("unexpected cluster status")
+	// }
 	// }
 }
 
