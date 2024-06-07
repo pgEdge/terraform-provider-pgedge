@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/sanity-io/litter"
 	"net/http"
 	"strings"
 	"time"
@@ -105,13 +106,14 @@ func (c *Client) CreateDatabase(ctx context.Context, database *models.DatabaseCr
 	}
 
 	for {
-		databaseDetails, err := c.GetDatabase(ctx, strfmt.UUID(resp.Payload.ID))
+		databaseDetails, err := c.GetDatabase(ctx, resp.Payload.ID)
 		if err != nil {
 			return nil, err
 		}
 
 		switch databaseDetails.Status {
 		case "available":
+			litter.Dump(databaseDetails)
 			return resp.Payload, nil
 		case "failed":
 			return nil, errors.New("database creation failed")
@@ -121,6 +123,42 @@ func (c *Client) CreateDatabase(ctx context.Context, database *models.DatabaseCr
 			return nil, errors.New("unexpected database status")
 		}
 	}
+}
+
+func (c *Client) UpdateDatabase(ctx context.Context, id strfmt.UUID, body *models.DatabaseUpdateRequest) (*models.DatabaseDetails, error) {
+	request := &operations.PatchDatabasesIDParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		ID:         id,
+		Body:       body,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	resp, err := c.PgEdgeAPIClient.Operations.PatchDatabasesID(request)
+	if err != nil {
+		return nil, err
+	}
+
+	// for {
+	databaseDetails, err := c.GetDatabase(ctx, resp.Payload.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	fmt.Println(databaseDetails, "databse details")
+
+	// switch databaseDetails.Status {
+	// case "available":
+	return resp.Payload, nil
+	// case "failed":
+	// return nil, errors.New("database creation failed")
+	// case "creating":
+	// time.Sleep(5 * time.Second)
+	// default:
+	// return nil, errors.New("unexpected database status")
+	// }
+	// }
 }
 
 func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) error {
@@ -206,6 +244,10 @@ func (c *Client) CreateCluster(ctx context.Context, cluster *models.ClusterCreat
 
 	request.SetAuthorization(c.AuthHeader)
 
+	// 	fmt.Println(cluster.Nodes,&cluster.Nodes,cluster.Nodes[0].InstanceType, "cluster")
+	// 	res2B, _ := json.Marshal(cluster)
+	// fmt.Println(string(res2B))
+
 	resp, err := c.PgEdgeAPIClient.Operations.PostClusters(request)
 	if err != nil {
 		return nil, err
@@ -254,13 +296,50 @@ func (c *Client) DeleteCluster(ctx context.Context, id strfmt.UUID) error {
 	return err
 }
 
-func (c *Client) OAuthToken(ctx context.Context, clientId, clientSecret string) (*operations.PostOauthTokenOKBody, error) {
+func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models.ClusterUpdateRequest) (*models.ClusterDetails, error) {
+	fmt.Println(id, "cluster id")
+	fmt.Println(&body.Nodes, "cluster body")
+	request := &operations.PatchClustersIDParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		ID:         id,
+		Body:       body,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	resp, err := c.PgEdgeAPIClient.Operations.PatchClustersID(request)
+	if err != nil {
+		return nil, err
+	}
+
+	// for {
+	_, err = c.GetCluster(ctx, strfmt.UUID(resp.Payload.ID))
+	if err != nil {
+		return nil, err
+	}
+
+	// switch clusterDetails.Status {
+	// case "available":
+	return resp.Payload, nil
+	// case "failed":
+	// return nil, errors.New("cluster creation failed")
+	// case "creating":
+	// time.Sleep(5 * time.Second)
+	// default:
+	// return nil, errors.New("unexpected cluster status")
+	// }
+	// }
+}
+
+func (c *Client) OAuthToken(ctx context.Context, clientId, clientSecret, grantType string) (*operations.PostOauthTokenOKBody, error) {
 	request := &operations.PostOauthTokenParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
 		Body: operations.PostOauthTokenBody{
 			ClientID:     clientId,
 			ClientSecret: clientSecret,
+			GrantType:    grantType,
 		},
 	}
 

@@ -12,3 +12,8 @@ test:
 .PHONY: docs
 docs:
 	go generate ./...
+
+# Run swagger generate
+.PHONY: swagger
+swagger:
+	swagger generate client -f swagger.yaml -c client

@@ -20,30 +20,40 @@ import (
 // swagger:model ClusterDetails
 type ClusterDetails struct {
 
-	// aws
-	Aws *ClusterDetailsAws `json:"aws,omitempty"`
-
-	// cloud account id
-	CloudAccountID string `json:"cloud_account_id,omitempty"`
+	// cloud account
+	CloudAccount *ClusterDetailsCloudAccount `json:"cloud_account,omitempty"`
 
 	// created at
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
 
-	// database
-	Database *ClusterDetailsDatabase `json:"database,omitempty"`
-
-	// firewall
-	Firewall *ClusterDetailsFirewall `json:"firewall,omitempty"`
+	// firewall rules
+	FirewallRules []*FirewallRule `json:"firewall_rules"`
 
 	// id
-	ID string `json:"id,omitempty"`
+	// Format: uuid
+	ID strfmt.UUID `json:"id,omitempty"`
 
 	// name
 	Name string `json:"name,omitempty"`
 
-	// node groups
-	NodeGroups *ClusterDetailsNodeGroups `json:"node_groups,omitempty"`
+	// networks
+	Networks []*Network `json:"networks"`
+
+	// node location
+	NodeLocation string `json:"node_location,omitempty"`
+
+	// nodes
+	Nodes []*ClusterNode `json:"nodes"`
+
+	// regions
+	Regions []string `json:"regions"`
+
+	// resource tags
+	ResourceTags map[string]string `json:"resource_tags,omitempty"`
+
+	// ssh key id
+	SSHKeyID string `json:"ssh_key_id,omitempty"`
 
 	// status
 	Status string `json:"status,omitempty"`
@@ -53,7 +63,7 @@ type ClusterDetails struct {
 func (m *ClusterDetails) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateAws(formats); err != nil {
+	if err := m.validateCloudAccount(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -61,15 +71,19 @@ func (m *ClusterDetails) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateDatabase(formats); err != nil {
+	if err := m.validateFirewallRules(formats); err != nil {
 		res = append(res, err)
 	}
 
-	if err := m.validateFirewall(formats); err != nil {
+	if err := m.validateID(formats); err != nil {
 		res = append(res, err)
 	}
 
-	if err := m.validateNodeGroups(formats); err != nil {
+	if err := m.validateNetworks(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateNodes(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -79,17 +93,17 @@ func (m *ClusterDetails) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *ClusterDetails) validateAws(formats strfmt.Registry) error {
-	if swag.IsZero(m.Aws) { // not required
+func (m *ClusterDetails) validateCloudAccount(formats strfmt.Registry) error {
+	if swag.IsZero(m.CloudAccount) { // not required
 		return nil
 	}
 
-	if m.Aws != nil {
-		if err := m.Aws.Validate(formats); err != nil {
+	if m.CloudAccount != nil {
+		if err := m.CloudAccount.Validate(formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("aws")
+				return ve.ValidateName("cloud_account")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("aws")
+				return ce.ValidateName("cloud_account")
 			}
 			return err
 		}
@@ -110,58 +124,91 @@ func (m *ClusterDetails) validateCreatedAt(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *ClusterDetails) validateDatabase(formats strfmt.Registry) error {
-	if swag.IsZero(m.Database) { // not required
+func (m *ClusterDetails) validateFirewallRules(formats strfmt.Registry) error {
+	if swag.IsZero(m.FirewallRules) { // not required
 		return nil
 	}
 
-	if m.Database != nil {
-		if err := m.Database.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("database")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("database")
-			}
-			return err
+	for i := 0; i < len(m.FirewallRules); i++ {
+		if swag.IsZero(m.FirewallRules[i]) { // not required
+			continue
 		}
+
+		if m.FirewallRules[i] != nil {
+			if err := m.FirewallRules[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("firewall_rules" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("firewall_rules" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil
 }
 
-func (m *ClusterDetails) validateFirewall(formats strfmt.Registry) error {
-	if swag.IsZero(m.Firewall) { // not required
+func (m *ClusterDetails) validateID(formats strfmt.Registry) error {
+	if swag.IsZero(m.ID) { // not required
 		return nil
 	}
 
-	if m.Firewall != nil {
-		if err := m.Firewall.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("firewall")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("firewall")
-			}
-			return err
-		}
+	if err := validate.FormatOf("id", "body", "uuid", m.ID.String(), formats); err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (m *ClusterDetails) validateNodeGroups(formats strfmt.Registry) error {
-	if swag.IsZero(m.NodeGroups) { // not required
+func (m *ClusterDetails) validateNetworks(formats strfmt.Registry) error {
+	if swag.IsZero(m.Networks) { // not required
 		return nil
 	}
 
-	if m.NodeGroups != nil {
-		if err := m.NodeGroups.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("node_groups")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("node_groups")
-			}
-			return err
+	for i := 0; i < len(m.Networks); i++ {
+		if swag.IsZero(m.Networks[i]) { // not required
+			continue
 		}
+
+		if m.Networks[i] != nil {
+			if err := m.Networks[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("networks" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("networks" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *ClusterDetails) validateNodes(formats strfmt.Registry) error {
+	if swag.IsZero(m.Nodes) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Nodes); i++ {
+		if swag.IsZero(m.Nodes[i]) { // not required
+			continue
+		}
+
+		if m.Nodes[i] != nil {
+			if err := m.Nodes[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("nodes" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("nodes" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
 	}
 
 	return nil
@@ -171,19 +218,19 @@ func (m *ClusterDetails) validateNodeGroups(formats strfmt.Registry) error {
 func (m *ClusterDetails) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.contextValidateAws(ctx, formats); err != nil {
+	if err := m.contextValidateCloudAccount(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
-	if err := m.contextValidateDatabase(ctx, formats); err != nil {
+	if err := m.contextValidateFirewallRules(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
-	if err := m.contextValidateFirewall(ctx, formats); err != nil {
+	if err := m.contextValidateNetworks(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
-	if err := m.contextValidateNodeGroups(ctx, formats); err != nil {
+	if err := m.contextValidateNodes(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -193,19 +240,19 @@ func (m *ClusterDetails) ContextValidate(ctx context.Context, formats strfmt.Reg
 	return nil
 }
 
-func (m *ClusterDetails) contextValidateAws(ctx context.Context, formats strfmt.Registry) error {
+func (m *ClusterDetails) contextValidateCloudAccount(ctx context.Context, formats strfmt.Registry) error {
 
-	if m.Aws != nil {
+	if m.CloudAccount != nil {
 
-		if swag.IsZero(m.Aws) { // not required
+		if swag.IsZero(m.CloudAccount) { // not required
 			return nil
 		}
 
-		if err := m.Aws.ContextValidate(ctx, formats); err != nil {
+		if err := m.CloudAccount.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("aws")
+				return ve.ValidateName("cloud_account")
 			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("aws")
+				return ce.ValidateName("cloud_account")
 			}
 			return err
 		}
@@ -214,64 +261,76 @@ func (m *ClusterDetails) contextValidateAws(ctx context.Context, formats strfmt.
 	return nil
 }
 
-func (m *ClusterDetails) contextValidateDatabase(ctx context.Context, formats strfmt.Registry) error {
+func (m *ClusterDetails) contextValidateFirewallRules(ctx context.Context, formats strfmt.Registry) error {
 
-	if m.Database != nil {
+	for i := 0; i < len(m.FirewallRules); i++ {
 
-		if swag.IsZero(m.Database) { // not required
-			return nil
-		}
+		if m.FirewallRules[i] != nil {
 
-		if err := m.Database.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("database")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("database")
+			if swag.IsZero(m.FirewallRules[i]) { // not required
+				return nil
 			}
-			return err
+
+			if err := m.FirewallRules[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("firewall_rules" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("firewall_rules" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
 		}
+
 	}
 
 	return nil
 }
 
-func (m *ClusterDetails) contextValidateFirewall(ctx context.Context, formats strfmt.Registry) error {
+func (m *ClusterDetails) contextValidateNetworks(ctx context.Context, formats strfmt.Registry) error {
 
-	if m.Firewall != nil {
+	for i := 0; i < len(m.Networks); i++ {
 
-		if swag.IsZero(m.Firewall) { // not required
-			return nil
-		}
+		if m.Networks[i] != nil {
 
-		if err := m.Firewall.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("firewall")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("firewall")
+			if swag.IsZero(m.Networks[i]) { // not required
+				return nil
 			}
-			return err
+
+			if err := m.Networks[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("networks" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("networks" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
 		}
+
 	}
 
 	return nil
 }
 
-func (m *ClusterDetails) contextValidateNodeGroups(ctx context.Context, formats strfmt.Registry) error {
+func (m *ClusterDetails) contextValidateNodes(ctx context.Context, formats strfmt.Registry) error {
 
-	if m.NodeGroups != nil {
+	for i := 0; i < len(m.Nodes); i++ {
 
-		if swag.IsZero(m.NodeGroups) { // not required
-			return nil
-		}
+		if m.Nodes[i] != nil {
 
-		if err := m.NodeGroups.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("node_groups")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("node_groups")
+			if swag.IsZero(m.Nodes[i]) { // not required
+				return nil
 			}
-			return err
+
+			if err := m.Nodes[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("nodes" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("nodes" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
 		}
+
 	}
 
 	return nil
@@ -295,525 +354,55 @@ func (m *ClusterDetails) UnmarshalBinary(b []byte) error {
 	return nil
 }
 
-// ClusterDetailsAws cluster details aws
+// ClusterDetailsCloudAccount cluster details cloud account
 //
-// swagger:model ClusterDetailsAws
-type ClusterDetailsAws struct {
+// swagger:model ClusterDetailsCloudAccount
+type ClusterDetailsCloudAccount struct {
 
-	// key pair
-	KeyPair string `json:"key_pair,omitempty"`
-
-	// role arn
-	RoleArn string `json:"role_arn,omitempty"`
-
-	// tags
-	Tags map[string]string `json:"tags,omitempty"`
-}
-
-// Validate validates this cluster details aws
-func (m *ClusterDetailsAws) Validate(formats strfmt.Registry) error {
-	return nil
-}
-
-// ContextValidate validates this cluster details aws based on context it is used
-func (m *ClusterDetailsAws) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *ClusterDetailsAws) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *ClusterDetailsAws) UnmarshalBinary(b []byte) error {
-	var res ClusterDetailsAws
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// ClusterDetailsDatabase cluster details database
-//
-// swagger:model ClusterDetailsDatabase
-type ClusterDetailsDatabase struct {
-
-	// components
-	Components []string `json:"components"`
+	// id
+	// Format: uuid
+	ID strfmt.UUID `json:"id,omitempty"`
 
 	// name
 	Name string `json:"name,omitempty"`
-
-	// password
-	Password string `json:"password,omitempty"`
-
-	// pg version
-	PgVersion string `json:"pg_version,omitempty"`
-
-	// port
-	Port float64 `json:"port,omitempty"`
-
-	// scripts
-	Scripts *DatabaseScripts `json:"scripts,omitempty"`
-
-	// username
-	Username string `json:"username,omitempty"`
-}
-
-// Validate validates this cluster details database
-func (m *ClusterDetailsDatabase) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateScripts(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *ClusterDetailsDatabase) validateScripts(formats strfmt.Registry) error {
-	if swag.IsZero(m.Scripts) { // not required
-		return nil
-	}
-
-	if m.Scripts != nil {
-		if err := m.Scripts.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("database" + "." + "scripts")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("database" + "." + "scripts")
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
-// ContextValidate validate this cluster details database based on the context it is used
-func (m *ClusterDetailsDatabase) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.contextValidateScripts(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *ClusterDetailsDatabase) contextValidateScripts(ctx context.Context, formats strfmt.Registry) error {
-
-	if m.Scripts != nil {
-
-		if swag.IsZero(m.Scripts) { // not required
-			return nil
-		}
-
-		if err := m.Scripts.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("database" + "." + "scripts")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("database" + "." + "scripts")
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *ClusterDetailsDatabase) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *ClusterDetailsDatabase) UnmarshalBinary(b []byte) error {
-	var res ClusterDetailsDatabase
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// ClusterDetailsFirewall cluster details firewall
-//
-// swagger:model ClusterDetailsFirewall
-type ClusterDetailsFirewall struct {
-
-	// rules
-	Rules []*ClusterDetailsFirewallRulesItems0 `json:"rules"`
-}
-
-// Validate validates this cluster details firewall
-func (m *ClusterDetailsFirewall) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateRules(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *ClusterDetailsFirewall) validateRules(formats strfmt.Registry) error {
-	if swag.IsZero(m.Rules) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.Rules); i++ {
-		if swag.IsZero(m.Rules[i]) { // not required
-			continue
-		}
-
-		if m.Rules[i] != nil {
-			if err := m.Rules[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("firewall" + "." + "rules" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("firewall" + "." + "rules" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-// ContextValidate validate this cluster details firewall based on the context it is used
-func (m *ClusterDetailsFirewall) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.contextValidateRules(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *ClusterDetailsFirewall) contextValidateRules(ctx context.Context, formats strfmt.Registry) error {
-
-	for i := 0; i < len(m.Rules); i++ {
-
-		if m.Rules[i] != nil {
-
-			if swag.IsZero(m.Rules[i]) { // not required
-				return nil
-			}
-
-			if err := m.Rules[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("firewall" + "." + "rules" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("firewall" + "." + "rules" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *ClusterDetailsFirewall) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *ClusterDetailsFirewall) UnmarshalBinary(b []byte) error {
-	var res ClusterDetailsFirewall
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// ClusterDetailsFirewallRulesItems0 cluster details firewall rules items0
-//
-// swagger:model ClusterDetailsFirewallRulesItems0
-type ClusterDetailsFirewallRulesItems0 struct {
-
-	// port
-	Port int64 `json:"port,omitempty"`
-
-	// sources
-	Sources []string `json:"sources"`
 
 	// type
 	Type string `json:"type,omitempty"`
 }
 
-// Validate validates this cluster details firewall rules items0
-func (m *ClusterDetailsFirewallRulesItems0) Validate(formats strfmt.Registry) error {
-	return nil
-}
+// Validate validates this cluster details cloud account
+func (m *ClusterDetailsCloudAccount) Validate(formats strfmt.Registry) error {
+	var res []error
 
-// ContextValidate validates this cluster details firewall rules items0 based on context it is used
-func (m *ClusterDetailsFirewallRulesItems0) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *ClusterDetailsFirewallRulesItems0) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
+	if err := m.validateID(formats); err != nil {
+		res = append(res, err)
 	}
-	return swag.WriteJSON(m)
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
 }
 
-// UnmarshalBinary interface implementation
-func (m *ClusterDetailsFirewallRulesItems0) UnmarshalBinary(b []byte) error {
-	var res ClusterDetailsFirewallRulesItems0
-	if err := swag.ReadJSON(b, &res); err != nil {
+func (m *ClusterDetailsCloudAccount) validateID(formats strfmt.Registry) error {
+	if swag.IsZero(m.ID) { // not required
+		return nil
+	}
+
+	if err := validate.FormatOf("cloud_account"+"."+"id", "body", "uuid", m.ID.String(), formats); err != nil {
 		return err
 	}
-	*m = res
-	return nil
-}
-
-// ClusterDetailsNodeGroups cluster details node groups
-//
-// swagger:model ClusterDetailsNodeGroups
-type ClusterDetailsNodeGroups struct {
-
-	// aws
-	Aws []*NodeGroup `json:"aws"`
-
-	// azure
-	Azure []*NodeGroup `json:"azure"`
-
-	// google
-	Google []*NodeGroup `json:"google"`
-}
-
-// Validate validates this cluster details node groups
-func (m *ClusterDetailsNodeGroups) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateAws(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateAzure(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateGoogle(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *ClusterDetailsNodeGroups) validateAws(formats strfmt.Registry) error {
-	if swag.IsZero(m.Aws) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.Aws); i++ {
-		if swag.IsZero(m.Aws[i]) { // not required
-			continue
-		}
-
-		if m.Aws[i] != nil {
-			if err := m.Aws[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("node_groups" + "." + "aws" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("node_groups" + "." + "aws" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
 
 	return nil
 }
 
-func (m *ClusterDetailsNodeGroups) validateAzure(formats strfmt.Registry) error {
-	if swag.IsZero(m.Azure) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.Azure); i++ {
-		if swag.IsZero(m.Azure[i]) { // not required
-			continue
-		}
-
-		if m.Azure[i] != nil {
-			if err := m.Azure[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("node_groups" + "." + "azure" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("node_groups" + "." + "azure" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-func (m *ClusterDetailsNodeGroups) validateGoogle(formats strfmt.Registry) error {
-	if swag.IsZero(m.Google) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.Google); i++ {
-		if swag.IsZero(m.Google[i]) { // not required
-			continue
-		}
-
-		if m.Google[i] != nil {
-			if err := m.Google[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("node_groups" + "." + "google" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("node_groups" + "." + "google" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-// ContextValidate validate this cluster details node groups based on the context it is used
-func (m *ClusterDetailsNodeGroups) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.contextValidateAws(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateAzure(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateGoogle(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *ClusterDetailsNodeGroups) contextValidateAws(ctx context.Context, formats strfmt.Registry) error {
-
-	for i := 0; i < len(m.Aws); i++ {
-
-		if m.Aws[i] != nil {
-
-			if swag.IsZero(m.Aws[i]) { // not required
-				return nil
-			}
-
-			if err := m.Aws[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("node_groups" + "." + "aws" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("node_groups" + "." + "aws" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-func (m *ClusterDetailsNodeGroups) contextValidateAzure(ctx context.Context, formats strfmt.Registry) error {
-
-	for i := 0; i < len(m.Azure); i++ {
-
-		if m.Azure[i] != nil {
-
-			if swag.IsZero(m.Azure[i]) { // not required
-				return nil
-			}
-
-			if err := m.Azure[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("node_groups" + "." + "azure" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("node_groups" + "." + "azure" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-func (m *ClusterDetailsNodeGroups) contextValidateGoogle(ctx context.Context, formats strfmt.Registry) error {
-
-	for i := 0; i < len(m.Google); i++ {
-
-		if m.Google[i] != nil {
-
-			if swag.IsZero(m.Google[i]) { // not required
-				return nil
-			}
-
-			if err := m.Google[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("node_groups" + "." + "google" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("node_groups" + "." + "google" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
+// ContextValidate validates this cluster details cloud account based on context it is used
+func (m *ClusterDetailsCloudAccount) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 
 // MarshalBinary interface implementation
-func (m *ClusterDetailsNodeGroups) MarshalBinary() ([]byte, error) {
+func (m *ClusterDetailsCloudAccount) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -821,8 +410,8 @@ func (m *ClusterDetailsNodeGroups) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *ClusterDetailsNodeGroups) UnmarshalBinary(b []byte) error {
-	var res ClusterDetailsNodeGroups
+func (m *ClusterDetailsCloudAccount) UnmarshalBinary(b []byte) error {
+	var res ClusterDetailsCloudAccount
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

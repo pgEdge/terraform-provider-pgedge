@@ -29,6 +29,12 @@ func (o *GetDatabasesReader) ReadResponse(response runtime.ClientResponse, consu
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewGetDatabasesBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 401:
 		result := NewGetDatabasesUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -112,6 +118,74 @@ func (o *GetDatabasesOK) readResponse(response runtime.ClientResponse, consumer 
 	return nil
 }
 
+// NewGetDatabasesBadRequest creates a GetDatabasesBadRequest with default headers values
+func NewGetDatabasesBadRequest() *GetDatabasesBadRequest {
+	return &GetDatabasesBadRequest{}
+}
+
+/*
+GetDatabasesBadRequest describes a response with status code 400, with default header values.
+
+Bad request
+*/
+type GetDatabasesBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this get databases bad request response has a 2xx status code
+func (o *GetDatabasesBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get databases bad request response has a 3xx status code
+func (o *GetDatabasesBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get databases bad request response has a 4xx status code
+func (o *GetDatabasesBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this get databases bad request response has a 5xx status code
+func (o *GetDatabasesBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this get databases bad request response a status code equal to that given
+func (o *GetDatabasesBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the get databases bad request response
+func (o *GetDatabasesBadRequest) Code() int {
+	return 400
+}
+
+func (o *GetDatabasesBadRequest) Error() string {
+	return fmt.Sprintf("[GET /databases][%d] getDatabasesBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *GetDatabasesBadRequest) String() string {
+	return fmt.Sprintf("[GET /databases][%d] getDatabasesBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *GetDatabasesBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *GetDatabasesBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewGetDatabasesUnauthorized creates a GetDatabasesUnauthorized with default headers values
 func NewGetDatabasesUnauthorized() *GetDatabasesUnauthorized {
 	return &GetDatabasesUnauthorized{}
@@ -123,6 +197,7 @@ GetDatabasesUnauthorized describes a response with status code 401, with default
 Unauthorized
 */
 type GetDatabasesUnauthorized struct {
+	Payload *models.Error
 }
 
 // IsSuccess returns true when this get databases unauthorized response has a 2xx status code
@@ -156,14 +231,25 @@ func (o *GetDatabasesUnauthorized) Code() int {
 }
 
 func (o *GetDatabasesUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /databases][%d] getDatabasesUnauthorized ", 401)
+	return fmt.Sprintf("[GET /databases][%d] getDatabasesUnauthorized  %+v", 401, o.Payload)
 }
 
 func (o *GetDatabasesUnauthorized) String() string {
-	return fmt.Sprintf("[GET /databases][%d] getDatabasesUnauthorized ", 401)
+	return fmt.Sprintf("[GET /databases][%d] getDatabasesUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *GetDatabasesUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *GetDatabasesUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }
@@ -179,6 +265,7 @@ GetDatabasesInternalServerError describes a response with status code 500, with 
 Internal Server Error
 */
 type GetDatabasesInternalServerError struct {
+	Payload *models.Error
 }
 
 // IsSuccess returns true when this get databases internal server error response has a 2xx status code
@@ -212,14 +299,25 @@ func (o *GetDatabasesInternalServerError) Code() int {
 }
 
 func (o *GetDatabasesInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /databases][%d] getDatabasesInternalServerError ", 500)
+	return fmt.Sprintf("[GET /databases][%d] getDatabasesInternalServerError  %+v", 500, o.Payload)
 }
 
 func (o *GetDatabasesInternalServerError) String() string {
-	return fmt.Sprintf("[GET /databases][%d] getDatabasesInternalServerError ", 500)
+	return fmt.Sprintf("[GET /databases][%d] getDatabasesInternalServerError  %+v", 500, o.Payload)
+}
+
+func (o *GetDatabasesInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *GetDatabasesInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }

@@ -42,6 +42,10 @@ type ClientService interface {
 
 	GetDatabasesID(params *GetDatabasesIDParams, opts ...ClientOption) (*GetDatabasesIDOK, error)
 
+	PatchClustersID(params *PatchClustersIDParams, opts ...ClientOption) (*PatchClustersIDOK, error)
+
+	PatchDatabasesID(params *PatchDatabasesIDParams, opts ...ClientOption) (*PatchDatabasesIDOK, error)
+
 	PostClusters(params *PostClustersParams, opts ...ClientOption) (*PostClustersOK, error)
 
 	PostDatabases(params *PostDatabasesParams, opts ...ClientOption) (*PostDatabasesOK, error)
@@ -290,6 +294,86 @@ func (a *Client) GetDatabasesID(params *GetDatabasesIDParams, opts ...ClientOpti
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for GetDatabasesID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PatchClustersID updates cluster by ID
+
+Update the cluster with the specified ID
+*/
+func (a *Client) PatchClustersID(params *PatchClustersIDParams, opts ...ClientOption) (*PatchClustersIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPatchClustersIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "PatchClustersID",
+		Method:             "PATCH",
+		PathPattern:        "/clusters/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PatchClustersIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PatchClustersIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for PatchClustersID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PatchDatabasesID updates a database
+
+Update the database with the specified ID
+*/
+func (a *Client) PatchDatabasesID(params *PatchDatabasesIDParams, opts ...ClientOption) (*PatchDatabasesIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPatchDatabasesIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "PatchDatabasesID",
+		Method:             "PATCH",
+		PathPattern:        "/databases/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PatchDatabasesIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PatchDatabasesIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for PatchDatabasesID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

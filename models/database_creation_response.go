@@ -20,9 +20,15 @@ import (
 // swagger:model DatabaseCreationResponse
 type DatabaseCreationResponse struct {
 
+	// backups
+	Backups *BackupConfig `json:"backups,omitempty"`
+
 	// cluster id
 	// Format: uuid
 	ClusterID strfmt.UUID `json:"cluster_id,omitempty"`
+
+	// components
+	Components []*Component `json:"components"`
 
 	// created at
 	// Format: date-time
@@ -30,6 +36,9 @@ type DatabaseCreationResponse struct {
 
 	// domain
 	Domain string `json:"domain,omitempty"`
+
+	// extensions
+	Extensions *Extensions `json:"extensions,omitempty"`
 
 	// id
 	// Format: uuid
@@ -44,8 +53,20 @@ type DatabaseCreationResponse struct {
 	// options
 	Options []string `json:"options"`
 
+	// pg version
+	PgVersion string `json:"pg_version,omitempty"`
+
+	// roles
+	Roles []*Role `json:"roles"`
+
 	// status
 	Status string `json:"status,omitempty"`
+
+	// storage used
+	StorageUsed int64 `json:"storage_used,omitempty"`
+
+	// tables
+	Tables []*Table `json:"tables"`
 
 	// updated at
 	// Format: date-time
@@ -56,11 +77,23 @@ type DatabaseCreationResponse struct {
 func (m *DatabaseCreationResponse) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateBackups(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateClusterID(formats); err != nil {
 		res = append(res, err)
 	}
 
+	if err := m.validateComponents(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateCreatedAt(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateExtensions(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -72,6 +105,14 @@ func (m *DatabaseCreationResponse) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateRoles(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateTables(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateUpdatedAt(formats); err != nil {
 		res = append(res, err)
 	}
@@ -79,6 +120,25 @@ func (m *DatabaseCreationResponse) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *DatabaseCreationResponse) validateBackups(formats strfmt.Registry) error {
+	if swag.IsZero(m.Backups) { // not required
+		return nil
+	}
+
+	if m.Backups != nil {
+		if err := m.Backups.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("backups")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("backups")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -94,6 +154,32 @@ func (m *DatabaseCreationResponse) validateClusterID(formats strfmt.Registry) er
 	return nil
 }
 
+func (m *DatabaseCreationResponse) validateComponents(formats strfmt.Registry) error {
+	if swag.IsZero(m.Components) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Components); i++ {
+		if swag.IsZero(m.Components[i]) { // not required
+			continue
+		}
+
+		if m.Components[i] != nil {
+			if err := m.Components[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("components" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("components" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
 func (m *DatabaseCreationResponse) validateCreatedAt(formats strfmt.Registry) error {
 	if swag.IsZero(m.CreatedAt) { // not required
 		return nil
@@ -101,6 +187,25 @@ func (m *DatabaseCreationResponse) validateCreatedAt(formats strfmt.Registry) er
 
 	if err := validate.FormatOf("created_at", "body", "date-time", m.CreatedAt.String(), formats); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *DatabaseCreationResponse) validateExtensions(formats strfmt.Registry) error {
+	if swag.IsZero(m.Extensions) { // not required
+		return nil
+	}
+
+	if m.Extensions != nil {
+		if err := m.Extensions.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("extensions")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("extensions")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -144,6 +249,58 @@ func (m *DatabaseCreationResponse) validateNodes(formats strfmt.Registry) error 
 	return nil
 }
 
+func (m *DatabaseCreationResponse) validateRoles(formats strfmt.Registry) error {
+	if swag.IsZero(m.Roles) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Roles); i++ {
+		if swag.IsZero(m.Roles[i]) { // not required
+			continue
+		}
+
+		if m.Roles[i] != nil {
+			if err := m.Roles[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("roles" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("roles" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *DatabaseCreationResponse) validateTables(formats strfmt.Registry) error {
+	if swag.IsZero(m.Tables) { // not required
+		return nil
+	}
+
+	for i := 0; i < len(m.Tables); i++ {
+		if swag.IsZero(m.Tables[i]) { // not required
+			continue
+		}
+
+		if m.Tables[i] != nil {
+			if err := m.Tables[i].Validate(formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("tables" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("tables" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
 func (m *DatabaseCreationResponse) validateUpdatedAt(formats strfmt.Registry) error {
 	if swag.IsZero(m.UpdatedAt) { // not required
 		return nil
@@ -160,13 +317,100 @@ func (m *DatabaseCreationResponse) validateUpdatedAt(formats strfmt.Registry) er
 func (m *DatabaseCreationResponse) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.contextValidateBackups(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateComponents(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateExtensions(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateNodes(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateRoles(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateTables(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *DatabaseCreationResponse) contextValidateBackups(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Backups != nil {
+
+		if swag.IsZero(m.Backups) { // not required
+			return nil
+		}
+
+		if err := m.Backups.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("backups")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("backups")
+			}
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (m *DatabaseCreationResponse) contextValidateComponents(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Components); i++ {
+
+		if m.Components[i] != nil {
+
+			if swag.IsZero(m.Components[i]) { // not required
+				return nil
+			}
+
+			if err := m.Components[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("components" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("components" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *DatabaseCreationResponse) contextValidateExtensions(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Extensions != nil {
+
+		if swag.IsZero(m.Extensions) { // not required
+			return nil
+		}
+
+		if err := m.Extensions.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("extensions")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("extensions")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -185,6 +429,56 @@ func (m *DatabaseCreationResponse) contextValidateNodes(ctx context.Context, for
 					return ve.ValidateName("nodes" + "." + strconv.Itoa(i))
 				} else if ce, ok := err.(*errors.CompositeError); ok {
 					return ce.ValidateName("nodes" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *DatabaseCreationResponse) contextValidateRoles(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Roles); i++ {
+
+		if m.Roles[i] != nil {
+
+			if swag.IsZero(m.Roles[i]) { // not required
+				return nil
+			}
+
+			if err := m.Roles[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("roles" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("roles" + "." + strconv.Itoa(i))
+				}
+				return err
+			}
+		}
+
+	}
+
+	return nil
+}
+
+func (m *DatabaseCreationResponse) contextValidateTables(ctx context.Context, formats strfmt.Registry) error {
+
+	for i := 0; i < len(m.Tables); i++ {
+
+		if m.Tables[i] != nil {
+
+			if swag.IsZero(m.Tables[i]) { // not required
+				return nil
+			}
+
+			if err := m.Tables[i].ContextValidate(ctx, formats); err != nil {
+				if ve, ok := err.(*errors.Validation); ok {
+					return ve.ValidateName("tables" + "." + strconv.Itoa(i))
+				} else if ce, ok := err.(*errors.CompositeError); ok {
+					return ce.ValidateName("tables" + "." + strconv.Itoa(i))
 				}
 				return err
 			}

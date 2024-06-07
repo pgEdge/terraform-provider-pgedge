@@ -29,6 +29,12 @@ func (o *GetClustersReader) ReadResponse(response runtime.ClientResponse, consum
 			return nil, err
 		}
 		return result, nil
+	case 400:
+		result := NewGetClustersBadRequest()
+		if err := result.readResponse(response, consumer, o.formats); err != nil {
+			return nil, err
+		}
+		return nil, result
 	case 401:
 		result := NewGetClustersUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
@@ -112,6 +118,74 @@ func (o *GetClustersOK) readResponse(response runtime.ClientResponse, consumer r
 	return nil
 }
 
+// NewGetClustersBadRequest creates a GetClustersBadRequest with default headers values
+func NewGetClustersBadRequest() *GetClustersBadRequest {
+	return &GetClustersBadRequest{}
+}
+
+/*
+GetClustersBadRequest describes a response with status code 400, with default header values.
+
+Bad Request
+*/
+type GetClustersBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this get clusters bad request response has a 2xx status code
+func (o *GetClustersBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this get clusters bad request response has a 3xx status code
+func (o *GetClustersBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this get clusters bad request response has a 4xx status code
+func (o *GetClustersBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this get clusters bad request response has a 5xx status code
+func (o *GetClustersBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this get clusters bad request response a status code equal to that given
+func (o *GetClustersBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the get clusters bad request response
+func (o *GetClustersBadRequest) Code() int {
+	return 400
+}
+
+func (o *GetClustersBadRequest) Error() string {
+	return fmt.Sprintf("[GET /clusters][%d] getClustersBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *GetClustersBadRequest) String() string {
+	return fmt.Sprintf("[GET /clusters][%d] getClustersBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *GetClustersBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *GetClustersBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewGetClustersUnauthorized creates a GetClustersUnauthorized with default headers values
 func NewGetClustersUnauthorized() *GetClustersUnauthorized {
 	return &GetClustersUnauthorized{}
@@ -123,6 +197,7 @@ GetClustersUnauthorized describes a response with status code 401, with default 
 Unauthorized
 */
 type GetClustersUnauthorized struct {
+	Payload *models.Error
 }
 
 // IsSuccess returns true when this get clusters unauthorized response has a 2xx status code
@@ -156,14 +231,25 @@ func (o *GetClustersUnauthorized) Code() int {
 }
 
 func (o *GetClustersUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /clusters][%d] getClustersUnauthorized ", 401)
+	return fmt.Sprintf("[GET /clusters][%d] getClustersUnauthorized  %+v", 401, o.Payload)
 }
 
 func (o *GetClustersUnauthorized) String() string {
-	return fmt.Sprintf("[GET /clusters][%d] getClustersUnauthorized ", 401)
+	return fmt.Sprintf("[GET /clusters][%d] getClustersUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *GetClustersUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *GetClustersUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }
@@ -179,6 +265,7 @@ GetClustersInternalServerError describes a response with status code 500, with d
 Internal Server Error
 */
 type GetClustersInternalServerError struct {
+	Payload *models.Error
 }
 
 // IsSuccess returns true when this get clusters internal server error response has a 2xx status code
@@ -212,14 +299,25 @@ func (o *GetClustersInternalServerError) Code() int {
 }
 
 func (o *GetClustersInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /clusters][%d] getClustersInternalServerError ", 500)
+	return fmt.Sprintf("[GET /clusters][%d] getClustersInternalServerError  %+v", 500, o.Payload)
 }
 
 func (o *GetClustersInternalServerError) String() string {
-	return fmt.Sprintf("[GET /clusters][%d] getClustersInternalServerError ", 500)
+	return fmt.Sprintf("[GET /clusters][%d] getClustersInternalServerError  %+v", 500, o.Payload)
+}
+
+func (o *GetClustersInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *GetClustersInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }

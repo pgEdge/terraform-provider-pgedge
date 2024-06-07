@@ -20,16 +20,25 @@ import (
 // swagger:model DatabaseDetails
 type DatabaseDetails struct {
 
+	// backups
+	Backups *DatabaseDetailsBackups `json:"backups,omitempty"`
+
 	// cluster id
 	// Format: uuid
 	ClusterID strfmt.UUID `json:"cluster_id,omitempty"`
 
 	// components
-	Components []*DatabaseDetailsComponentsItems0 `json:"components"`
+	Components []*Component `json:"components"`
 
 	// created at
 	// Format: date-time
 	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
+
+	// domain
+	Domain string `json:"domain,omitempty"`
+
+	// extensions
+	Extensions *DatabaseDetailsExtensions `json:"extensions,omitempty"`
 
 	// id
 	// Format: uuid
@@ -48,7 +57,7 @@ type DatabaseDetails struct {
 	PgVersion string `json:"pg_version,omitempty"`
 
 	// roles
-	Roles []*DatabaseDetailsRolesItems0 `json:"roles"`
+	Roles []*Role `json:"roles"`
 
 	// status
 	Status string `json:"status,omitempty"`
@@ -57,7 +66,7 @@ type DatabaseDetails struct {
 	StorageUsed int64 `json:"storage_used,omitempty"`
 
 	// tables
-	Tables []*DatabaseDetailsTablesItems0 `json:"tables"`
+	Tables []*Table `json:"tables"`
 
 	// updated at
 	// Format: date-time
@@ -68,6 +77,10 @@ type DatabaseDetails struct {
 func (m *DatabaseDetails) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateBackups(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateClusterID(formats); err != nil {
 		res = append(res, err)
 	}
@@ -77,6 +90,10 @@ func (m *DatabaseDetails) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateCreatedAt(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateExtensions(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -103,6 +120,25 @@ func (m *DatabaseDetails) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *DatabaseDetails) validateBackups(formats strfmt.Registry) error {
+	if swag.IsZero(m.Backups) { // not required
+		return nil
+	}
+
+	if m.Backups != nil {
+		if err := m.Backups.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("backups")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("backups")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -151,6 +187,25 @@ func (m *DatabaseDetails) validateCreatedAt(formats strfmt.Registry) error {
 
 	if err := validate.FormatOf("created_at", "body", "date-time", m.CreatedAt.String(), formats); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (m *DatabaseDetails) validateExtensions(formats strfmt.Registry) error {
+	if swag.IsZero(m.Extensions) { // not required
+		return nil
+	}
+
+	if m.Extensions != nil {
+		if err := m.Extensions.Validate(formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("extensions")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("extensions")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -262,7 +317,15 @@ func (m *DatabaseDetails) validateUpdatedAt(formats strfmt.Registry) error {
 func (m *DatabaseDetails) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.contextValidateBackups(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.contextValidateComponents(ctx, formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.contextValidateExtensions(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -281,6 +344,27 @@ func (m *DatabaseDetails) ContextValidate(ctx context.Context, formats strfmt.Re
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *DatabaseDetails) contextValidateBackups(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Backups != nil {
+
+		if swag.IsZero(m.Backups) { // not required
+			return nil
+		}
+
+		if err := m.Backups.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("backups")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("backups")
+			}
+			return err
+		}
+	}
+
 	return nil
 }
 
@@ -304,6 +388,27 @@ func (m *DatabaseDetails) contextValidateComponents(ctx context.Context, formats
 			}
 		}
 
+	}
+
+	return nil
+}
+
+func (m *DatabaseDetails) contextValidateExtensions(ctx context.Context, formats strfmt.Registry) error {
+
+	if m.Extensions != nil {
+
+		if swag.IsZero(m.Extensions) { // not required
+			return nil
+		}
+
+		if err := m.Extensions.ContextValidate(ctx, formats); err != nil {
+			if ve, ok := err.(*errors.Validation); ok {
+				return ve.ValidateName("extensions")
+			} else if ce, ok := err.(*errors.CompositeError); ok {
+				return ce.ValidateName("extensions")
+			}
+			return err
+		}
 	}
 
 	return nil
@@ -402,33 +507,23 @@ func (m *DatabaseDetails) UnmarshalBinary(b []byte) error {
 	return nil
 }
 
-// DatabaseDetailsComponentsItems0 database details components items0
+// DatabaseDetailsBackups database details backups
 //
-// swagger:model DatabaseDetailsComponentsItems0
-type DatabaseDetailsComponentsItems0 struct {
+// swagger:model DatabaseDetailsBackups
+type DatabaseDetailsBackups struct {
 
-	// id
-	ID string `json:"id,omitempty"`
+	// config
+	Config []*BackupConfig `json:"config"`
 
-	// name
-	Name string `json:"name,omitempty"`
-
-	// release date
-	// Format: date
-	ReleaseDate strfmt.Date `json:"release_date,omitempty"`
-
-	// status
-	Status string `json:"status,omitempty"`
-
-	// version
-	Version string `json:"version,omitempty"`
+	// provider
+	Provider string `json:"provider,omitempty"`
 }
 
-// Validate validates this database details components items0
-func (m *DatabaseDetailsComponentsItems0) Validate(formats strfmt.Registry) error {
+// Validate validates this database details backups
+func (m *DatabaseDetailsBackups) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateReleaseDate(formats); err != nil {
+	if err := m.validateConfig(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -438,153 +533,22 @@ func (m *DatabaseDetailsComponentsItems0) Validate(formats strfmt.Registry) erro
 	return nil
 }
 
-func (m *DatabaseDetailsComponentsItems0) validateReleaseDate(formats strfmt.Registry) error {
-	if swag.IsZero(m.ReleaseDate) { // not required
+func (m *DatabaseDetailsBackups) validateConfig(formats strfmt.Registry) error {
+	if swag.IsZero(m.Config) { // not required
 		return nil
 	}
 
-	if err := validate.FormatOf("release_date", "body", "date", m.ReleaseDate.String(), formats); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// ContextValidate validates this database details components items0 based on context it is used
-func (m *DatabaseDetailsComponentsItems0) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *DatabaseDetailsComponentsItems0) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *DatabaseDetailsComponentsItems0) UnmarshalBinary(b []byte) error {
-	var res DatabaseDetailsComponentsItems0
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// DatabaseDetailsRolesItems0 database details roles items0
-//
-// swagger:model DatabaseDetailsRolesItems0
-type DatabaseDetailsRolesItems0 struct {
-
-	// bypass rls
-	BypassRls bool `json:"bypass_rls,omitempty"`
-
-	// connection limit
-	ConnectionLimit int64 `json:"connection_limit,omitempty"`
-
-	// create db
-	CreateDb bool `json:"create_db,omitempty"`
-
-	// create role
-	CreateRole bool `json:"create_role,omitempty"`
-
-	// inherit
-	Inherit bool `json:"inherit,omitempty"`
-
-	// login
-	Login bool `json:"login,omitempty"`
-
-	// name
-	Name string `json:"name,omitempty"`
-
-	// replication
-	Replication bool `json:"replication,omitempty"`
-
-	// superuser
-	Superuser bool `json:"superuser,omitempty"`
-}
-
-// Validate validates this database details roles items0
-func (m *DatabaseDetailsRolesItems0) Validate(formats strfmt.Registry) error {
-	return nil
-}
-
-// ContextValidate validates this database details roles items0 based on context it is used
-func (m *DatabaseDetailsRolesItems0) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *DatabaseDetailsRolesItems0) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *DatabaseDetailsRolesItems0) UnmarshalBinary(b []byte) error {
-	var res DatabaseDetailsRolesItems0
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// DatabaseDetailsTablesItems0 database details tables items0
-//
-// swagger:model DatabaseDetailsTablesItems0
-type DatabaseDetailsTablesItems0 struct {
-
-	// name
-	Name string `json:"name,omitempty"`
-
-	// primary key
-	PrimaryKey []string `json:"primary_key"`
-
-	// replication sets
-	ReplicationSets interface{} `json:"replication_sets,omitempty"`
-
-	// schema
-	Schema string `json:"schema,omitempty"`
-
-	// status
-	Status []*DatabaseDetailsTablesItems0StatusItems0 `json:"status"`
-}
-
-// Validate validates this database details tables items0
-func (m *DatabaseDetailsTablesItems0) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateStatus(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *DatabaseDetailsTablesItems0) validateStatus(formats strfmt.Registry) error {
-	if swag.IsZero(m.Status) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.Status); i++ {
-		if swag.IsZero(m.Status[i]) { // not required
+	for i := 0; i < len(m.Config); i++ {
+		if swag.IsZero(m.Config[i]) { // not required
 			continue
 		}
 
-		if m.Status[i] != nil {
-			if err := m.Status[i].Validate(formats); err != nil {
+		if m.Config[i] != nil {
+			if err := m.Config[i].Validate(formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("status" + "." + strconv.Itoa(i))
+					return ve.ValidateName("backups" + "." + "config" + "." + strconv.Itoa(i))
 				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("status" + "." + strconv.Itoa(i))
+					return ce.ValidateName("backups" + "." + "config" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -595,11 +559,11 @@ func (m *DatabaseDetailsTablesItems0) validateStatus(formats strfmt.Registry) er
 	return nil
 }
 
-// ContextValidate validate this database details tables items0 based on the context it is used
-func (m *DatabaseDetailsTablesItems0) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+// ContextValidate validate this database details backups based on the context it is used
+func (m *DatabaseDetailsBackups) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.contextValidateStatus(ctx, formats); err != nil {
+	if err := m.contextValidateConfig(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -609,21 +573,21 @@ func (m *DatabaseDetailsTablesItems0) ContextValidate(ctx context.Context, forma
 	return nil
 }
 
-func (m *DatabaseDetailsTablesItems0) contextValidateStatus(ctx context.Context, formats strfmt.Registry) error {
+func (m *DatabaseDetailsBackups) contextValidateConfig(ctx context.Context, formats strfmt.Registry) error {
 
-	for i := 0; i < len(m.Status); i++ {
+	for i := 0; i < len(m.Config); i++ {
 
-		if m.Status[i] != nil {
+		if m.Config[i] != nil {
 
-			if swag.IsZero(m.Status[i]) { // not required
+			if swag.IsZero(m.Config[i]) { // not required
 				return nil
 			}
 
-			if err := m.Status[i].ContextValidate(ctx, formats); err != nil {
+			if err := m.Config[i].ContextValidate(ctx, formats); err != nil {
 				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("status" + "." + strconv.Itoa(i))
+					return ve.ValidateName("backups" + "." + "config" + "." + strconv.Itoa(i))
 				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("status" + "." + strconv.Itoa(i))
+					return ce.ValidateName("backups" + "." + "config" + "." + strconv.Itoa(i))
 				}
 				return err
 			}
@@ -635,7 +599,7 @@ func (m *DatabaseDetailsTablesItems0) contextValidateStatus(ctx context.Context,
 }
 
 // MarshalBinary interface implementation
-func (m *DatabaseDetailsTablesItems0) MarshalBinary() ([]byte, error) {
+func (m *DatabaseDetailsBackups) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -643,8 +607,8 @@ func (m *DatabaseDetailsTablesItems0) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *DatabaseDetailsTablesItems0) UnmarshalBinary(b []byte) error {
-	var res DatabaseDetailsTablesItems0
+func (m *DatabaseDetailsBackups) UnmarshalBinary(b []byte) error {
+	var res DatabaseDetailsBackups
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}
@@ -652,36 +616,33 @@ func (m *DatabaseDetailsTablesItems0) UnmarshalBinary(b []byte) error {
 	return nil
 }
 
-// DatabaseDetailsTablesItems0StatusItems0 database details tables items0 status items0
+// DatabaseDetailsExtensions database details extensions
 //
-// swagger:model DatabaseDetailsTablesItems0StatusItems0
-type DatabaseDetailsTablesItems0StatusItems0 struct {
+// swagger:model DatabaseDetailsExtensions
+type DatabaseDetailsExtensions struct {
 
-	// aligned
-	Aligned bool `json:"aligned,omitempty"`
+	// auto manage
+	AutoManage bool `json:"auto_manage,omitempty"`
 
-	// node name
-	NodeName string `json:"node_name,omitempty"`
+	// available
+	Available []string `json:"available"`
 
-	// present
-	Present bool `json:"present,omitempty"`
-
-	// replicating
-	Replicating bool `json:"replicating,omitempty"`
+	// requested
+	Requested []string `json:"requested"`
 }
 
-// Validate validates this database details tables items0 status items0
-func (m *DatabaseDetailsTablesItems0StatusItems0) Validate(formats strfmt.Registry) error {
+// Validate validates this database details extensions
+func (m *DatabaseDetailsExtensions) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-// ContextValidate validates this database details tables items0 status items0 based on context it is used
-func (m *DatabaseDetailsTablesItems0StatusItems0) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+// ContextValidate validates this database details extensions based on context it is used
+func (m *DatabaseDetailsExtensions) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	return nil
 }
 
 // MarshalBinary interface implementation
-func (m *DatabaseDetailsTablesItems0StatusItems0) MarshalBinary() ([]byte, error) {
+func (m *DatabaseDetailsExtensions) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -689,8 +650,8 @@ func (m *DatabaseDetailsTablesItems0StatusItems0) MarshalBinary() ([]byte, error
 }
 
 // UnmarshalBinary interface implementation
-func (m *DatabaseDetailsTablesItems0StatusItems0) UnmarshalBinary(b []byte) error {
-	var res DatabaseDetailsTablesItems0StatusItems0
+func (m *DatabaseDetailsExtensions) UnmarshalBinary(b []byte) error {
+	var res DatabaseDetailsExtensions
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

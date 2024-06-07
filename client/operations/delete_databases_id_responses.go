@@ -7,9 +7,12 @@ package operations
 
 import (
 	"fmt"
+	"io"
 
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
+
+	"github.com/pgEdge/terraform-provider-pgedge/models"
 )
 
 // DeleteDatabasesIDReader is a Reader for the DeleteDatabasesID structure.
@@ -26,14 +29,14 @@ func (o *DeleteDatabasesIDReader) ReadResponse(response runtime.ClientResponse, 
 			return nil, err
 		}
 		return result, nil
-	case 401:
-		result := NewDeleteDatabasesIDUnauthorized()
+	case 400:
+		result := NewDeleteDatabasesIDBadRequest()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
 		return nil, result
-	case 404:
-		result := NewDeleteDatabasesIDNotFound()
+	case 401:
+		result := NewDeleteDatabasesIDUnauthorized()
 		if err := result.readResponse(response, consumer, o.formats); err != nil {
 			return nil, err
 		}
@@ -105,6 +108,74 @@ func (o *DeleteDatabasesIDNoContent) readResponse(response runtime.ClientRespons
 	return nil
 }
 
+// NewDeleteDatabasesIDBadRequest creates a DeleteDatabasesIDBadRequest with default headers values
+func NewDeleteDatabasesIDBadRequest() *DeleteDatabasesIDBadRequest {
+	return &DeleteDatabasesIDBadRequest{}
+}
+
+/*
+DeleteDatabasesIDBadRequest describes a response with status code 400, with default header values.
+
+Bad Request
+*/
+type DeleteDatabasesIDBadRequest struct {
+	Payload *models.Error
+}
+
+// IsSuccess returns true when this delete databases Id bad request response has a 2xx status code
+func (o *DeleteDatabasesIDBadRequest) IsSuccess() bool {
+	return false
+}
+
+// IsRedirect returns true when this delete databases Id bad request response has a 3xx status code
+func (o *DeleteDatabasesIDBadRequest) IsRedirect() bool {
+	return false
+}
+
+// IsClientError returns true when this delete databases Id bad request response has a 4xx status code
+func (o *DeleteDatabasesIDBadRequest) IsClientError() bool {
+	return true
+}
+
+// IsServerError returns true when this delete databases Id bad request response has a 5xx status code
+func (o *DeleteDatabasesIDBadRequest) IsServerError() bool {
+	return false
+}
+
+// IsCode returns true when this delete databases Id bad request response a status code equal to that given
+func (o *DeleteDatabasesIDBadRequest) IsCode(code int) bool {
+	return code == 400
+}
+
+// Code gets the status code for the delete databases Id bad request response
+func (o *DeleteDatabasesIDBadRequest) Code() int {
+	return 400
+}
+
+func (o *DeleteDatabasesIDBadRequest) Error() string {
+	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *DeleteDatabasesIDBadRequest) String() string {
+	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdBadRequest  %+v", 400, o.Payload)
+}
+
+func (o *DeleteDatabasesIDBadRequest) GetPayload() *models.Error {
+	return o.Payload
+}
+
+func (o *DeleteDatabasesIDBadRequest) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
+
+	return nil
+}
+
 // NewDeleteDatabasesIDUnauthorized creates a DeleteDatabasesIDUnauthorized with default headers values
 func NewDeleteDatabasesIDUnauthorized() *DeleteDatabasesIDUnauthorized {
 	return &DeleteDatabasesIDUnauthorized{}
@@ -116,6 +187,7 @@ DeleteDatabasesIDUnauthorized describes a response with status code 401, with de
 Unauthorized
 */
 type DeleteDatabasesIDUnauthorized struct {
+	Payload *models.Error
 }
 
 // IsSuccess returns true when this delete databases Id unauthorized response has a 2xx status code
@@ -149,70 +221,25 @@ func (o *DeleteDatabasesIDUnauthorized) Code() int {
 }
 
 func (o *DeleteDatabasesIDUnauthorized) Error() string {
-	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdUnauthorized ", 401)
+	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdUnauthorized  %+v", 401, o.Payload)
 }
 
 func (o *DeleteDatabasesIDUnauthorized) String() string {
-	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdUnauthorized ", 401)
+	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdUnauthorized  %+v", 401, o.Payload)
+}
+
+func (o *DeleteDatabasesIDUnauthorized) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *DeleteDatabasesIDUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	return nil
-}
+	o.Payload = new(models.Error)
 
-// NewDeleteDatabasesIDNotFound creates a DeleteDatabasesIDNotFound with default headers values
-func NewDeleteDatabasesIDNotFound() *DeleteDatabasesIDNotFound {
-	return &DeleteDatabasesIDNotFound{}
-}
-
-/*
-DeleteDatabasesIDNotFound describes a response with status code 404, with default header values.
-
-Database not found
-*/
-type DeleteDatabasesIDNotFound struct {
-}
-
-// IsSuccess returns true when this delete databases Id not found response has a 2xx status code
-func (o *DeleteDatabasesIDNotFound) IsSuccess() bool {
-	return false
-}
-
-// IsRedirect returns true when this delete databases Id not found response has a 3xx status code
-func (o *DeleteDatabasesIDNotFound) IsRedirect() bool {
-	return false
-}
-
-// IsClientError returns true when this delete databases Id not found response has a 4xx status code
-func (o *DeleteDatabasesIDNotFound) IsClientError() bool {
-	return true
-}
-
-// IsServerError returns true when this delete databases Id not found response has a 5xx status code
-func (o *DeleteDatabasesIDNotFound) IsServerError() bool {
-	return false
-}
-
-// IsCode returns true when this delete databases Id not found response a status code equal to that given
-func (o *DeleteDatabasesIDNotFound) IsCode(code int) bool {
-	return code == 404
-}
-
-// Code gets the status code for the delete databases Id not found response
-func (o *DeleteDatabasesIDNotFound) Code() int {
-	return 404
-}
-
-func (o *DeleteDatabasesIDNotFound) Error() string {
-	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdNotFound ", 404)
-}
-
-func (o *DeleteDatabasesIDNotFound) String() string {
-	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdNotFound ", 404)
-}
-
-func (o *DeleteDatabasesIDNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }
@@ -228,6 +255,7 @@ DeleteDatabasesIDInternalServerError describes a response with status code 500, 
 Internal Server Error
 */
 type DeleteDatabasesIDInternalServerError struct {
+	Payload *models.Error
 }
 
 // IsSuccess returns true when this delete databases Id internal server error response has a 2xx status code
@@ -261,14 +289,25 @@ func (o *DeleteDatabasesIDInternalServerError) Code() int {
 }
 
 func (o *DeleteDatabasesIDInternalServerError) Error() string {
-	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdInternalServerError ", 500)
+	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdInternalServerError  %+v", 500, o.Payload)
 }
 
 func (o *DeleteDatabasesIDInternalServerError) String() string {
-	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdInternalServerError ", 500)
+	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdInternalServerError  %+v", 500, o.Payload)
+}
+
+func (o *DeleteDatabasesIDInternalServerError) GetPayload() *models.Error {
+	return o.Payload
 }
 
 func (o *DeleteDatabasesIDInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
+
+	o.Payload = new(models.Error)
+
+	// response payload
+	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
+		return err
+	}
 
 	return nil
 }
