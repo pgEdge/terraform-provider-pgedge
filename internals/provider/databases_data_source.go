@@ -53,14 +53,14 @@ type DatabasesDataSourceModel struct {
 }
 
 type DatabaseDetails struct {
-	ID            types.String `tfsdk:"id"`
-	Name          types.String `tfsdk:"name"`
-	Domain        types.String `tfsdk:"domain"`
-	CreatedAt     types.String `tfsdk:"created_at"`
-	UpdatedAt     types.String `tfsdk:"updated_at"`
-	Status        types.String `tfsdk:"status"`
-	ClusterID     types.String `tfsdk:"cluster_id"`
-	Nodes         types.List   `tfsdk:"nodes"`
+	ID        types.String `tfsdk:"id"`
+	Name      types.String `tfsdk:"name"`
+	Domain    types.String `tfsdk:"domain"`
+	CreatedAt types.String `tfsdk:"created_at"`
+	UpdatedAt types.String `tfsdk:"updated_at"`
+	Status    types.String `tfsdk:"status"`
+	ClusterID types.String `tfsdk:"cluster_id"`
+	// Nodes         types.List   `tfsdk:"nodes"`
 	Options       types.List   `tfsdk:"options"`
 	PgVersion     types.String `tfsdk:"pg_version"`
 	StorageUsed   types.Int64  `tfsdk:"storage_used"`
@@ -730,7 +730,7 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 	for _, db := range databases {
 		var database DatabaseDetails
-		var nodes []attr.Value
+		// var nodes []attr.Value
 		database.ID = types.StringValue(db.ID.String())
 		database.Name = types.StringValue(strings.Trim(strings.ToLower(db.Name), " "))
 		database.Domain = types.StringValue(db.Domain)
@@ -739,94 +739,94 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		database.Status = types.StringValue(db.Status)
 		database.ClusterID = types.StringValue(db.ClusterID.String())
 
-		for _, node := range db.Nodes {
-			nodeConnectionValue, _ := types.ObjectValue(NodeConnectionType, map[string]attr.Value{
-				"database":            types.StringValue(node.Connection.Database),
-				"host":                types.StringValue(node.Connection.Host),
-				"password":            types.StringValue(node.Connection.Password),
-				"port":                types.Int64Value(node.Connection.Port),
-				"username":            types.StringValue(node.Connection.Username),
-				"external_ip_address": types.StringValue(node.Connection.ExternalIPAddress),
-				"internal_ip_address": types.StringValue(node.Connection.InternalIPAddress),
-				"internal_host":       types.StringValue(node.Connection.InternalHost),
-			})
+		// for _, node := range db.Nodes {
+		// 	nodeConnectionValue, _ := types.ObjectValue(NodeConnectionType, map[string]attr.Value{
+		// 		"database":            types.StringValue(node.Connection.Database),
+		// 		"host":                types.StringValue(node.Connection.Host),
+		// 		"password":            types.StringValue(node.Connection.Password),
+		// 		"port":                types.Int64Value(node.Connection.Port),
+		// 		"username":            types.StringValue(node.Connection.Username),
+		// 		"external_ip_address": types.StringValue(node.Connection.ExternalIPAddress),
+		// 		"internal_ip_address": types.StringValue(node.Connection.InternalIPAddress),
+		// 		"internal_host":       types.StringValue(node.Connection.InternalHost),
+		// 	})
 
-			nodeLocationValue, _ := types.ObjectValue(NodeLocationType, map[string]attr.Value{
-				"code":      types.StringValue(node.Location.Code),
-				"country":   types.StringValue(node.Location.Country),
-				"latitude":  types.Float64Value(node.Location.Latitude),
-				"longitude": types.Float64Value(node.Location.Longitude),
-				"name":      types.StringValue(node.Location.Name),
-				"region":    types.StringValue(node.Location.Region),
-				"region_code": types.StringValue(
-					node.Location.RegionCode,
-				),
-				"timezone": types.StringValue(node.Location.Timezone),
-				"postal_code": types.StringValue(
-					node.Location.PostalCode,
-				),
-				"metro_code": types.StringValue(
-					node.Location.MetroCode,
-				),
-				"city": types.StringValue(
-					node.Location.City,
-				),
-			})
+		// 	nodeLocationValue, _ := types.ObjectValue(NodeLocationType, map[string]attr.Value{
+		// 		"code":      types.StringValue(node.Location.Code),
+		// 		"country":   types.StringValue(node.Location.Country),
+		// 		"latitude":  types.Float64Value(node.Location.Latitude),
+		// 		"longitude": types.Float64Value(node.Location.Longitude),
+		// 		"name":      types.StringValue(node.Location.Name),
+		// 		"region":    types.StringValue(node.Location.Region),
+		// 		"region_code": types.StringValue(
+		// 			node.Location.RegionCode,
+		// 		),
+		// 		"timezone": types.StringValue(node.Location.Timezone),
+		// 		"postal_code": types.StringValue(
+		// 			node.Location.PostalCode,
+		// 		),
+		// 		"metro_code": types.StringValue(
+		// 			node.Location.MetroCode,
+		// 		),
+		// 		"city": types.StringValue(
+		// 			node.Location.City,
+		// 		),
+		// 	})
 
-			var nodeRegionValue attr.Value
-			if node.Region != nil {
-				nodeRegionValue, _ = types.ObjectValue(NodeRegionType, map[string]attr.Value{
-					"active": types.BoolValue(node.Region.Active),
-					"availability_zones": func() attr.Value {
-						var availability_zone []attr.Value
-						for _, region := range node.Region.AvailabilityZones {
-							availability_zone = append(availability_zone, types.StringValue(region))
-						}
-						availabilityZoneList, _ := types.ListValue(types.StringType, availability_zone)
+		// 	var nodeRegionValue attr.Value
+		// 	if node.Region != nil {
+		// 		nodeRegionValue, _ = types.ObjectValue(NodeRegionType, map[string]attr.Value{
+		// 			"active": types.BoolValue(node.Region.Active),
+		// 			"availability_zones": func() attr.Value {
+		// 				var availability_zone []attr.Value
+		// 				for _, region := range node.Region.AvailabilityZones {
+		// 					availability_zone = append(availability_zone, types.StringValue(region))
+		// 				}
+		// 				availabilityZoneList, _ := types.ListValue(types.StringType, availability_zone)
 
-						if availabilityZoneList.IsNull() {
-							return types.ListNull(types.StringType)
-						}
+		// 				if availabilityZoneList.IsNull() {
+		// 					return types.ListNull(types.StringType)
+		// 				}
 
-						return availabilityZoneList
-					}(),
+		// 				return availabilityZoneList
+		// 			}(),
 
-					"cloud":  types.StringValue(node.Region.Cloud),
-					"code":   types.StringValue(node.Region.Code),
-					"name":   types.StringValue(node.Region.Name),
-					"parent": types.StringValue(node.Region.Parent),
-				})
-			} else {
-				nodeRegionValue = types.ObjectNull(NodeRegionType)
-			}
+		// 			"cloud":  types.StringValue(node.Region.Cloud),
+		// 			"code":   types.StringValue(node.Region.Code),
+		// 			"name":   types.StringValue(node.Region.Name),
+		// 			"parent": types.StringValue(node.Region.Parent),
+		// 		})
+		// 	} else {
+		// 		nodeRegionValue = types.ObjectNull(NodeRegionType)
+		// 	}
 
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
+		// 	resp.Diagnostics.Append(diags...)
+		// 	if resp.Diagnostics.HasError() {
+		// 		return
+		// 	}
 
-			nodeValue := map[string]attr.Value{
-				"name":       types.StringValue(node.Name),
-				"connection": nodeConnectionValue,
-				"location":   nodeLocationValue,
-				"region":     nodeRegionValue,
-			}
-			node, diags := types.ObjectValue(NodeType, nodeValue)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			nodes = append(nodes, node)
-		}
+		// 	nodeValue := map[string]attr.Value{
+		// 		"name":       types.StringValue(node.Name),
+		// 		"connection": nodeConnectionValue,
+		// 		"location":   nodeLocationValue,
+		// 		"region":     nodeRegionValue,
+		// 	}
+		// 	node, diags := types.ObjectValue(NodeType, nodeValue)
+		// 	resp.Diagnostics.Append(diags...)
+		// 	if resp.Diagnostics.HasError() {
+		// 		return
+		// 	}
+		// 	nodes = append(nodes, node)
+		// }
 
-		database.Nodes, diags = types.ListValue(types.ObjectType{
-			AttrTypes: NodeType,
-		}, nodes)
+		// database.Nodes, diags = types.ListValue(types.ObjectType{
+		// 	AttrTypes: NodeType,
+		// }, nodes)
 
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+		// resp.Diagnostics.Append(diags...)
+		// if resp.Diagnostics.HasError() {
+		// 	return
+		// }
 
 		var planOptions types.List
 

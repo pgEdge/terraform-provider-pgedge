@@ -101,141 +101,141 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			Computed:    true,
 			Description: "Options for creating the database",
 		},
-		"nodes": schema.ListNestedAttribute{
-			Computed: true,
-			NestedObject: schema.NestedAttributeObject{
-				Attributes: map[string]schema.Attribute{
-					"name": schema.StringAttribute{
-						Computed:    true,
-						Description: "Name of the node",
-					},
-					"connection": schema.SingleNestedAttribute{
-						Computed: true,
-						Attributes: map[string]schema.Attribute{
-							"database": schema.StringAttribute{
-								Computed:    true,
-								Description: "Database of the node",
-							},
-							"host": schema.StringAttribute{
-								Computed:    true,
-								Description: "Host of the node",
-							},
-							"password": schema.StringAttribute{
-								Computed:    true,
-								Sensitive:   true,
-								Description: "Password of the node",
-							},
-							"port": schema.Int64Attribute{
-								Computed:    true,
-								Description: "Port of the node",
-							},
-							"username": schema.StringAttribute{
-								Computed:    true,
-								Description: "Username of the node",
-							},
-							"external_ip_address": schema.StringAttribute{
-								Computed:    true,
-								Description: "External IP of the node",
-							},
-							"internal_ip_address": schema.StringAttribute{
-								Computed:    true,
-								Description: "Internal IP of the node",
-							},
-							"internal_host": schema.StringAttribute{
-								Computed:    true,
-								Description: "Internal Host of the node",
-							},
-						},
-					},
-					"location": schema.SingleNestedAttribute{
-						Computed: true,
-						Attributes: map[string]schema.Attribute{
-							"code": schema.StringAttribute{
-								Computed:    true,
-								Description: "Code of the location",
-							},
-							"country": schema.StringAttribute{
-								Computed:    true,
-								Description: "Country of the location",
-							},
-							"latitude": schema.Float64Attribute{
-								Computed:    true,
-								Description: "Latitude of the location",
-							},
-							"longitude": schema.Float64Attribute{
-								Computed:    true,
-								Description: "Longitude of the location",
-							},
-							"name": schema.StringAttribute{
-								Computed:    true,
-								Description: "Name of the location",
-							},
-							"region": schema.StringAttribute{
-								Computed:    true,
-								Description: "Region of the location",
-							},
-							"region_code": schema.StringAttribute{
-								Computed:    true,
-								Description: "Region code of the location",
-							},
-							"timezone": schema.StringAttribute{
-								Computed:    true,
-								Description: "Timezone of the location",
-							},
-							"postal_code": schema.StringAttribute{
-								Computed:    true,
-								Description: "Postal code of the location",
-							},
-							"metro_code": schema.StringAttribute{
-								Computed:    true,
-								Description: "Metro code of the location",
-							},
-							"city": schema.StringAttribute{
-								Computed:    true,
-								Description: "City of the location",
-							},
-						},
-					},
-					"region": schema.SingleNestedAttribute{
-						Optional: true,
-						Computed: true,
-						Attributes: map[string]schema.Attribute{
-							"active": schema.BoolAttribute{
-								Optional:    true,
-								Computed:    true,
-								Description: "Active status of the region",
-							},
-							"availability_zones": schema.ListAttribute{
-								ElementType: types.StringType,
-								Optional:    true,
-								Computed:    true,
-								Description: "Availability zones of the region",
-							},
-							"cloud": schema.StringAttribute{
-								Optional:    true,
-								Computed:    true,
-								Description: "Cloud provider of the region",
-							},
-							"code": schema.StringAttribute{
-								Optional:    true,
-								Computed:    true,
-								Description: "Code of the region",
-							},
-							"name": schema.StringAttribute{
-								Optional:    true,
-								Computed:    true,
-								Description: "Name of the region",
-							},
-							"parent": schema.StringAttribute{
-								Optional:    true,
-								Computed:    true,
-								Description: "Parent region",
-							},
-						},
-					},
-				},
-			},
-		},
+		// "nodes": schema.ListNestedAttribute{
+		// 	Computed: true,
+		// 	NestedObject: schema.NestedAttributeObject{
+		// 		Attributes: map[string]schema.Attribute{
+		// 			"name": schema.StringAttribute{
+		// 				Computed:    true,
+		// 				Description: "Name of the node",
+		// 			},
+		// 			"connection": schema.SingleNestedAttribute{
+		// 				Computed: true,
+		// 				Attributes: map[string]schema.Attribute{
+		// 					"database": schema.StringAttribute{
+		// 						Computed:    true,
+		// 						Description: "Database of the node",
+		// 					},
+		// 					"host": schema.StringAttribute{
+		// 						Computed:    true,
+		// 						Description: "Host of the node",
+		// 					},
+		// 					"password": schema.StringAttribute{
+		// 						Computed:    true,
+		// 						Sensitive:   true,
+		// 						Description: "Password of the node",
+		// 					},
+		// 					"port": schema.Int64Attribute{
+		// 						Computed:    true,
+		// 						Description: "Port of the node",
+		// 					},
+		// 					"username": schema.StringAttribute{
+		// 						Computed:    true,
+		// 						Description: "Username of the node",
+		// 					},
+		// 					"external_ip_address": schema.StringAttribute{
+		// 						Computed:    true,
+		// 						Description: "External IP of the node",
+		// 					},
+		// 					"internal_ip_address": schema.StringAttribute{
+		// 						Computed:    true,
+		// 						Description: "Internal IP of the node",
+		// 					},
+		// 					"internal_host": schema.StringAttribute{
+		// 						Computed:    true,
+		// 						Description: "Internal Host of the node",
+		// 					},
+		// 				},
+		// 			},
+		// 			"location": schema.SingleNestedAttribute{
+		// 				Computed: true,
+		// 				Attributes: map[string]schema.Attribute{
+		// 					"code": schema.StringAttribute{
+		// 						Computed:    true,
+		// 						Description: "Code of the location",
+		// 					},
+		// 					"country": schema.StringAttribute{
+		// 						Computed:    true,
+		// 						Description: "Country of the location",
+		// 					},
+		// 					"latitude": schema.Float64Attribute{
+		// 						Computed:    true,
+		// 						Description: "Latitude of the location",
+		// 					},
+		// 					"longitude": schema.Float64Attribute{
+		// 						Computed:    true,
+		// 						Description: "Longitude of the location",
+		// 					},
+		// 					"name": schema.StringAttribute{
+		// 						Computed:    true,
+		// 						Description: "Name of the location",
+		// 					},
+		// 					"region": schema.StringAttribute{
+		// 						Computed:    true,
+		// 						Description: "Region of the location",
+		// 					},
+		// 					"region_code": schema.StringAttribute{
+		// 						Computed:    true,
+		// 						Description: "Region code of the location",
+		// 					},
+		// 					"timezone": schema.StringAttribute{
+		// 						Computed:    true,
+		// 						Description: "Timezone of the location",
+		// 					},
+		// 					"postal_code": schema.StringAttribute{
+		// 						Computed:    true,
+		// 						Description: "Postal code of the location",
+		// 					},
+		// 					"metro_code": schema.StringAttribute{
+		// 						Computed:    true,
+		// 						Description: "Metro code of the location",
+		// 					},
+		// 					"city": schema.StringAttribute{
+		// 						Computed:    true,
+		// 						Description: "City of the location",
+		// 					},
+		// 				},
+		// 			},
+		// 			"region": schema.SingleNestedAttribute{
+		// 				Optional: true,
+		// 				Computed: true,
+		// 				Attributes: map[string]schema.Attribute{
+		// 					"active": schema.BoolAttribute{
+		// 						Optional:    true,
+		// 						Computed:    true,
+		// 						Description: "Active status of the region",
+		// 					},
+		// 					"availability_zones": schema.ListAttribute{
+		// 						ElementType: types.StringType,
+		// 						Optional:    true,
+		// 						Computed:    true,
+		// 						Description: "Availability zones of the region",
+		// 					},
+		// 					"cloud": schema.StringAttribute{
+		// 						Optional:    true,
+		// 						Computed:    true,
+		// 						Description: "Cloud provider of the region",
+		// 					},
+		// 					"code": schema.StringAttribute{
+		// 						Optional:    true,
+		// 						Computed:    true,
+		// 						Description: "Code of the region",
+		// 					},
+		// 					"name": schema.StringAttribute{
+		// 						Optional:    true,
+		// 						Computed:    true,
+		// 						Description: "Name of the region",
+		// 					},
+		// 					"parent": schema.StringAttribute{
+		// 						Optional:    true,
+		// 						Computed:    true,
+		// 						Description: "Parent region",
+		// 					},
+		// 				},
+		// 			},
+		// 		},
+		// 	},
+		// },
 		"pg_version": schema.StringAttribute{
 			Computed:    true,
 			Description: "Postgres version of the database",
@@ -330,81 +330,81 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 
 	plan.Options = planOptions
 
-	var nodes []attr.Value
-	for _, node := range database.Nodes {
-		nodeConnectionValue, _ := types.ObjectValue(NodeConnectionType, map[string]attr.Value{
-			"database":            types.StringValue(node.Connection.Database),
-			"host":                types.StringValue(node.Connection.Host),
-			"password":            types.StringValue(node.Connection.Password),
-			"port":                types.Int64Value(node.Connection.Port),
-			"username":            types.StringValue(node.Connection.Username),
-			"external_ip_address": types.StringValue(node.Connection.ExternalIPAddress),
-			"internal_ip_address": types.StringValue(node.Connection.InternalIPAddress),
-			"internal_host":       types.StringValue(node.Connection.InternalHost),
-		})
-		nodeLocationValue, _ := types.ObjectValue(NodeLocationType, map[string]attr.Value{
-			"code":        types.StringValue(node.Location.Code),
-			"country":     types.StringValue(node.Location.Country),
-			"latitude":    types.Float64Value(node.Location.Latitude),
-			"longitude":   types.Float64Value(node.Location.Longitude),
-			"name":        types.StringValue(node.Location.Name),
-			"region":      types.StringValue(node.Location.Region),
-			"region_code": types.StringValue(node.Location.RegionCode),
-		})
+	// var nodes []attr.Value
+	// for _, node := range database.Nodes {
+	// 	nodeConnectionValue, _ := types.ObjectValue(NodeConnectionType, map[string]attr.Value{
+	// 		"database":            types.StringValue(node.Connection.Database),
+	// 		"host":                types.StringValue(node.Connection.Host),
+	// 		"password":            types.StringValue(node.Connection.Password),
+	// 		"port":                types.Int64Value(node.Connection.Port),
+	// 		"username":            types.StringValue(node.Connection.Username),
+	// 		"external_ip_address": types.StringValue(node.Connection.ExternalIPAddress),
+	// 		"internal_ip_address": types.StringValue(node.Connection.InternalIPAddress),
+	// 		"internal_host":       types.StringValue(node.Connection.InternalHost),
+	// 	})
+	// 	nodeLocationValue, _ := types.ObjectValue(NodeLocationType, map[string]attr.Value{
+	// 		"code":        types.StringValue(node.Location.Code),
+	// 		"country":     types.StringValue(node.Location.Country),
+	// 		"latitude":    types.Float64Value(node.Location.Latitude),
+	// 		"longitude":   types.Float64Value(node.Location.Longitude),
+	// 		"name":        types.StringValue(node.Location.Name),
+	// 		"region":      types.StringValue(node.Location.Region),
+	// 		"region_code": types.StringValue(node.Location.RegionCode),
+	// 	})
 
-		var nodeRegionValue attr.Value
-		if node.Region != nil {
-			nodeRegionValue, _ = types.ObjectValue(NodeRegionType, map[string]attr.Value{
-				"active": types.BoolValue(node.Region.Active),
-				"availability_zones": func() attr.Value {
-					var availability_zone []attr.Value
-					for _, region := range node.Region.AvailabilityZones {
-						availability_zone = append(availability_zone, types.StringValue(region))
-					}
-					availabilityZoneList, _ := types.ListValue(types.StringType, availability_zone)
+	// 	var nodeRegionValue attr.Value
+	// 	if node.Region != nil {
+	// 		nodeRegionValue, _ = types.ObjectValue(NodeRegionType, map[string]attr.Value{
+	// 			"active": types.BoolValue(node.Region.Active),
+	// 			"availability_zones": func() attr.Value {
+	// 				var availability_zone []attr.Value
+	// 				for _, region := range node.Region.AvailabilityZones {
+	// 					availability_zone = append(availability_zone, types.StringValue(region))
+	// 				}
+	// 				availabilityZoneList, _ := types.ListValue(types.StringType, availability_zone)
 
-					if availabilityZoneList.IsNull() {
-						return types.ListNull(types.StringType)
-					}
+	// 				if availabilityZoneList.IsNull() {
+	// 					return types.ListNull(types.StringType)
+	// 				}
 
-					return availabilityZoneList
-				}(),
-				"cloud":  types.StringValue(node.Region.Cloud),
-				"code":   types.StringValue(node.Region.Code),
-				"name":   types.StringValue(node.Region.Name),
-				"parent": types.StringValue(node.Region.Parent),
-			})
-		} else {
-			nodeRegionValue = types.ObjectNull(NodeRegionType)
-		}
+	// 				return availabilityZoneList
+	// 			}(),
+	// 			"cloud":  types.StringValue(node.Region.Cloud),
+	// 			"code":   types.StringValue(node.Region.Code),
+	// 			"name":   types.StringValue(node.Region.Name),
+	// 			"parent": types.StringValue(node.Region.Parent),
+	// 		})
+	// 	} else {
+	// 		nodeRegionValue = types.ObjectNull(NodeRegionType)
+	// 	}
 
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+	// 	resp.Diagnostics.Append(diags...)
+	// 	if resp.Diagnostics.HasError() {
+	// 		return
+	// 	}
 
-		nodeValue := map[string]attr.Value{
-			"name":       types.StringValue(node.Name),
-			"connection": nodeConnectionValue,
-			"location":   nodeLocationValue,
-			"region":     nodeRegionValue,
-		}
-		node, diags := types.ObjectValue(NodeType, nodeValue)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		nodes = append(nodes, node)
-	}
+	// 	nodeValue := map[string]attr.Value{
+	// 		"name":       types.StringValue(node.Name),
+	// 		"connection": nodeConnectionValue,
+	// 		"location":   nodeLocationValue,
+	// 		"region":     nodeRegionValue,
+	// 	}
+	// 	node, diags := types.ObjectValue(NodeType, nodeValue)
+	// 	resp.Diagnostics.Append(diags...)
+	// 	if resp.Diagnostics.HasError() {
+	// 		return
+	// 	}
+	// 	nodes = append(nodes, node)
+	// }
 
-	plan.Nodes, diags = types.ListValue(types.ObjectType{
-		AttrTypes: NodeType,
-	}, nodes)
-	resp.Diagnostics.Append(diags...)
+	// plan.Nodes, diags = types.ListValue(types.ObjectType{
+	// 	AttrTypes: NodeType,
+	// }, nodes)
+	// resp.Diagnostics.Append(diags...)
 
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	// if resp.Diagnostics.HasError() {
+	// 	return
+	// }
 
 	// DatabaseExtensionsValue, diags := types.ObjectValue(DatabaseExtensionsType, map[string]attr.Value{
 	// 	"auto_manage": types.BoolValue(database.Extensions.AutoManage),
@@ -497,80 +497,80 @@ func (r *databaseResource) Read(ctx context.Context, req resource.ReadRequest, r
 	stateOptions, diags = types.ListValue(types.StringType, databaseOptionsAttr)
 	resp.Diagnostics.Append(diags...)
 	state.Options = stateOptions
-	var nodes []attr.Value
-	for _, node := range database.Nodes {
-		nodeConnectionValue, _ := types.ObjectValue(NodeConnectionType, map[string]attr.Value{
-			"database":            types.StringValue(node.Connection.Database),
-			"host":                types.StringValue(node.Connection.Host),
-			"password":            types.StringValue(node.Connection.Password),
-			"port":                types.Int64Value(node.Connection.Port),
-			"username":            types.StringValue(node.Connection.Username),
-			"external_ip_address": types.StringValue(node.Connection.ExternalIPAddress),
-			"internal_ip_address": types.StringValue(node.Connection.InternalIPAddress),
-			"internal_host":       types.StringValue(node.Connection.InternalHost),
-		})
-		nodeLocationValue, _ := types.ObjectValue(NodeLocationType, map[string]attr.Value{
-			"code":        types.StringValue(node.Location.Code),
-			"country":     types.StringValue(node.Location.Country),
-			"latitude":    types.Float64Value(node.Location.Latitude),
-			"longitude":   types.Float64Value(node.Location.Longitude),
-			"name":        types.StringValue(node.Location.Name),
-			"region":      types.StringValue(node.Location.Region),
-			"region_code": types.StringValue(node.Location.RegionCode),
-			"timezone":    types.StringValue(node.Location.Timezone),
-			"postal_code": types.StringValue(node.Location.PostalCode),
-			"metro_code":  types.StringValue(node.Location.MetroCode),
-			"city":        types.StringValue(node.Location.City),
-		})
-		var nodeRegionValue attr.Value
-		if node.Region != nil {
-			nodeRegionValue, _ = types.ObjectValue(NodeRegionType, map[string]attr.Value{
-				"active": types.BoolValue(node.Region.Active),
-				"availability_zones": func() attr.Value {
-					var availability_zone []attr.Value
-					for _, region := range node.Region.AvailabilityZones {
-						availability_zone = append(availability_zone, types.StringValue(region))
-					}
-					availabilityZoneList, _ := types.ListValue(types.StringType, availability_zone)
-					if availabilityZoneList.IsNull() {
-						return types.ListNull(types.StringType)
-					}
-					return availabilityZoneList
-				}(),
-				"cloud":  types.StringValue(node.Region.Cloud),
-				"code":   types.StringValue(node.Region.Code),
-				"name":   types.StringValue(node.Region.Name),
-				"parent": types.StringValue(node.Region.Parent),
-			})
-		} else {
-			nodeRegionValue = types.ObjectNull(NodeRegionType)
-		}
+	// var nodes []attr.Value
+	// for _, node := range database.Nodes {
+	// 	nodeConnectionValue, _ := types.ObjectValue(NodeConnectionType, map[string]attr.Value{
+	// 		"database":            types.StringValue(node.Connection.Database),
+	// 		"host":                types.StringValue(node.Connection.Host),
+	// 		"password":            types.StringValue(node.Connection.Password),
+	// 		"port":                types.Int64Value(node.Connection.Port),
+	// 		"username":            types.StringValue(node.Connection.Username),
+	// 		"external_ip_address": types.StringValue(node.Connection.ExternalIPAddress),
+	// 		"internal_ip_address": types.StringValue(node.Connection.InternalIPAddress),
+	// 		"internal_host":       types.StringValue(node.Connection.InternalHost),
+	// 	})
+	// 	nodeLocationValue, _ := types.ObjectValue(NodeLocationType, map[string]attr.Value{
+	// 		"code":        types.StringValue(node.Location.Code),
+	// 		"country":     types.StringValue(node.Location.Country),
+	// 		"latitude":    types.Float64Value(node.Location.Latitude),
+	// 		"longitude":   types.Float64Value(node.Location.Longitude),
+	// 		"name":        types.StringValue(node.Location.Name),
+	// 		"region":      types.StringValue(node.Location.Region),
+	// 		"region_code": types.StringValue(node.Location.RegionCode),
+	// 		"timezone":    types.StringValue(node.Location.Timezone),
+	// 		"postal_code": types.StringValue(node.Location.PostalCode),
+	// 		"metro_code":  types.StringValue(node.Location.MetroCode),
+	// 		"city":        types.StringValue(node.Location.City),
+	// 	})
+	// 	var nodeRegionValue attr.Value
+	// 	if node.Region != nil {
+	// 		nodeRegionValue, _ = types.ObjectValue(NodeRegionType, map[string]attr.Value{
+	// 			"active": types.BoolValue(node.Region.Active),
+	// 			"availability_zones": func() attr.Value {
+	// 				var availability_zone []attr.Value
+	// 				for _, region := range node.Region.AvailabilityZones {
+	// 					availability_zone = append(availability_zone, types.StringValue(region))
+	// 				}
+	// 				availabilityZoneList, _ := types.ListValue(types.StringType, availability_zone)
+	// 				if availabilityZoneList.IsNull() {
+	// 					return types.ListNull(types.StringType)
+	// 				}
+	// 				return availabilityZoneList
+	// 			}(),
+	// 			"cloud":  types.StringValue(node.Region.Cloud),
+	// 			"code":   types.StringValue(node.Region.Code),
+	// 			"name":   types.StringValue(node.Region.Name),
+	// 			"parent": types.StringValue(node.Region.Parent),
+	// 		})
+	// 	} else {
+	// 		nodeRegionValue = types.ObjectNull(NodeRegionType)
+	// 	}
 
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		nodeValue := map[string]attr.Value{
-			"name":       types.StringValue(node.Name),
-			"connection": nodeConnectionValue,
-			"location":   nodeLocationValue,
-			"region":     nodeRegionValue,
-		}
-		node, diags := types.ObjectValue(NodeType, nodeValue)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		nodes = append(nodes, node)
-	}
+	// 	resp.Diagnostics.Append(diags...)
+	// 	if resp.Diagnostics.HasError() {
+	// 		return
+	// 	}
+	// 	nodeValue := map[string]attr.Value{
+	// 		"name":       types.StringValue(node.Name),
+	// 		"connection": nodeConnectionValue,
+	// 		"location":   nodeLocationValue,
+	// 		"region":     nodeRegionValue,
+	// 	}
+	// 	node, diags := types.ObjectValue(NodeType, nodeValue)
+	// 	resp.Diagnostics.Append(diags...)
+	// 	if resp.Diagnostics.HasError() {
+	// 		return
+	// 	}
+	// 	nodes = append(nodes, node)
+	// }
 
-	state.Nodes, diags = types.ListValue(types.ObjectType{
-		AttrTypes: NodeType,
-	}, nodes)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	// state.Nodes, diags = types.ListValue(types.ObjectType{
+	// 	AttrTypes: NodeType,
+	// }, nodes)
+	// resp.Diagnostics.Append(diags...)
+	// if resp.Diagnostics.HasError() {
+	// 	return
+	// }
 
 	// DatabaseExtensionsValue, diags := types.ObjectValue(DatabaseExtensionsType, map[string]attr.Value{
 	// 	"auto_manage": types.BoolValue(database.Extensions.AutoManage),
@@ -693,84 +693,84 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 
 	plan.Options = planOptions
 
-	var nodes []attr.Value
-	for _, node := range database.Nodes {
-		nodeConnectionValue, _ := types.ObjectValue(NodeConnectionType, map[string]attr.Value{
-			"database":            types.StringValue(node.Connection.Database),
-			"host":                types.StringValue(node.Connection.Host),
-			"password":            types.StringValue(node.Connection.Password),
-			"port":                types.Int64Value(node.Connection.Port),
-			"username":            types.StringValue(node.Connection.Username),
-			"external_ip_address": types.StringValue(node.Connection.ExternalIPAddress),
-			"internal_ip_address": types.StringValue(node.Connection.InternalIPAddress),
-			"internal_host":       types.StringValue(node.Connection.InternalHost),
-		})
-		nodeLocationValue, _ := types.ObjectValue(NodeLocationType, map[string]attr.Value{
-			"code":        types.StringValue(node.Location.Code),
-			"country":     types.StringValue(node.Location.Country),
-			"latitude":    types.Float64Value(node.Location.Latitude),
-			"longitude":   types.Float64Value(node.Location.Longitude),
-			"name":        types.StringValue(node.Location.Name),
-			"region":      types.StringValue(node.Location.Region),
-			"region_code": types.StringValue(node.Location.RegionCode),
-			"timezone":    types.StringValue(node.Location.Timezone),
-			"postal_code": types.StringValue(node.Location.PostalCode),
-			"metro_code":  types.StringValue(node.Location.MetroCode),
-			"city":        types.StringValue(node.Location.City),
-		})
-		var nodeRegionValue attr.Value
-		if node.Region != nil {
-			nodeRegionValue, _ = types.ObjectValue(NodeRegionType, map[string]attr.Value{
-				"active": types.BoolValue(node.Region.Active),
-				"availability_zones": func() attr.Value {
-					var availability_zone []attr.Value
-					for _, region := range node.Region.AvailabilityZones {
-						availability_zone = append(availability_zone, types.StringValue(region))
-					}
-					availabilityZoneList, _ := types.ListValue(types.StringType, availability_zone)
+	// var nodes []attr.Value
+	// for _, node := range database.Nodes {
+	// 	nodeConnectionValue, _ := types.ObjectValue(NodeConnectionType, map[string]attr.Value{
+	// 		"database":            types.StringValue(node.Connection.Database),
+	// 		"host":                types.StringValue(node.Connection.Host),
+	// 		"password":            types.StringValue(node.Connection.Password),
+	// 		"port":                types.Int64Value(node.Connection.Port),
+	// 		"username":            types.StringValue(node.Connection.Username),
+	// 		"external_ip_address": types.StringValue(node.Connection.ExternalIPAddress),
+	// 		"internal_ip_address": types.StringValue(node.Connection.InternalIPAddress),
+	// 		"internal_host":       types.StringValue(node.Connection.InternalHost),
+	// 	})
+	// 	nodeLocationValue, _ := types.ObjectValue(NodeLocationType, map[string]attr.Value{
+	// 		"code":        types.StringValue(node.Location.Code),
+	// 		"country":     types.StringValue(node.Location.Country),
+	// 		"latitude":    types.Float64Value(node.Location.Latitude),
+	// 		"longitude":   types.Float64Value(node.Location.Longitude),
+	// 		"name":        types.StringValue(node.Location.Name),
+	// 		"region":      types.StringValue(node.Location.Region),
+	// 		"region_code": types.StringValue(node.Location.RegionCode),
+	// 		"timezone":    types.StringValue(node.Location.Timezone),
+	// 		"postal_code": types.StringValue(node.Location.PostalCode),
+	// 		"metro_code":  types.StringValue(node.Location.MetroCode),
+	// 		"city":        types.StringValue(node.Location.City),
+	// 	})
+	// 	var nodeRegionValue attr.Value
+	// 	if node.Region != nil {
+	// 		nodeRegionValue, _ = types.ObjectValue(NodeRegionType, map[string]attr.Value{
+	// 			"active": types.BoolValue(node.Region.Active),
+	// 			"availability_zones": func() attr.Value {
+	// 				var availability_zone []attr.Value
+	// 				for _, region := range node.Region.AvailabilityZones {
+	// 					availability_zone = append(availability_zone, types.StringValue(region))
+	// 				}
+	// 				availabilityZoneList, _ := types.ListValue(types.StringType, availability_zone)
 
-					if availabilityZoneList.IsNull() {
-						return types.ListNull(types.StringType)
-					}
+	// 				if availabilityZoneList.IsNull() {
+	// 					return types.ListNull(types.StringType)
+	// 				}
 
-					return availabilityZoneList
-				}(),
+	// 				return availabilityZoneList
+	// 			}(),
 
-				"cloud":  types.StringValue(node.Region.Cloud),
-				"code":   types.StringValue(node.Region.Code),
-				"name":   types.StringValue(node.Region.Name),
-				"parent": types.StringValue(node.Region.Parent),
-			})
-		} else {
-			nodeRegionValue = types.ObjectNull(NodeRegionType)
-		}
+	// 			"cloud":  types.StringValue(node.Region.Cloud),
+	// 			"code":   types.StringValue(node.Region.Code),
+	// 			"name":   types.StringValue(node.Region.Name),
+	// 			"parent": types.StringValue(node.Region.Parent),
+	// 		})
+	// 	} else {
+	// 		nodeRegionValue = types.ObjectNull(NodeRegionType)
+	// 	}
 
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		nodeValue := map[string]attr.Value{
-			"name":       types.StringValue(node.Name),
-			"connection": nodeConnectionValue,
-			"location":   nodeLocationValue,
-			"region":     nodeRegionValue,
-		}
-		node, diags := types.ObjectValue(NodeType, nodeValue)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		nodes = append(nodes, node)
-	}
+	// 	resp.Diagnostics.Append(diags...)
+	// 	if resp.Diagnostics.HasError() {
+	// 		return
+	// 	}
+	// 	nodeValue := map[string]attr.Value{
+	// 		"name":       types.StringValue(node.Name),
+	// 		"connection": nodeConnectionValue,
+	// 		"location":   nodeLocationValue,
+	// 		"region":     nodeRegionValue,
+	// 	}
+	// 	node, diags := types.ObjectValue(NodeType, nodeValue)
+	// 	resp.Diagnostics.Append(diags...)
+	// 	if resp.Diagnostics.HasError() {
+	// 		return
+	// 	}
+	// 	nodes = append(nodes, node)
+	// }
 
-	plan.Nodes, diags = types.ListValue(types.ObjectType{
-		AttrTypes: NodeType,
-	}, nodes)
-	resp.Diagnostics.Append(diags...)
+	// plan.Nodes, diags = types.ListValue(types.ObjectType{
+	// 	AttrTypes: NodeType,
+	// }, nodes)
+	// resp.Diagnostics.Append(diags...)
 
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	// if resp.Diagnostics.HasError() {
+	// 	return
+	// }
 
 	// var databaseComponents types.List
 
