@@ -2,11 +2,13 @@ package provider
 
 import (
 	"context"
-	"regexp"
 	"fmt"
+	"regexp"
+
 	// "time"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -61,9 +63,6 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Computed:    true,
 				Description: "ID of the cluster",
 			},
-			// "last_updated": schema.StringAttribute{
-			// 	Computed: true,
-			// },
 			"name": schema.StringAttribute{
 				Required: true,
 				Validators: []validator.String{
@@ -76,11 +75,11 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 			"cloud_account_id": schema.StringAttribute{
 				Required:    true,
-				Description: "Cloud account ID of the cluster",
+				Description: "ID of the target cloud account",
 			},
 			"created_at": schema.StringAttribute{
 				Computed:    true,
-				Description: "Created at of the cluster",
+				Description: "Creation time of the cluster",
 			},
 			"status": schema.StringAttribute{
 				Computed:    true,
@@ -89,63 +88,37 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			"ssh_key_id": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "SSH key ID of the cluster",
+				Description: "ID of the SSH key to add to the cluster nodes",
 			},
-			// "resource_tags": schema.MapAttribute{
-			// 	ElementType: types.StringType,
-			// 	Computed:    true,
-			// },
 			"regions": schema.ListAttribute{
 				ElementType: types.StringType,
-				Optional:    true,
+				Required:    true,
+				Validators: []validator.List{
+					listvalidator.SizeAtLeast(1),
+				},
 			},
 			"node_location": schema.StringAttribute{
 				Optional:    true,
 				Computed:    true,
-				Description: "Node location of the cluster",
-			},
-			"cloud_account": schema.SingleNestedAttribute{
-				Computed: true,
-				Optional: true,
-				Attributes: map[string]schema.Attribute{
-					"id": schema.StringAttribute{
-						Computed:    true,
-						Optional:    true,
-						Description: "Display name of the node",
-					},
-					"name": schema.StringAttribute{
-						Computed:    true,
-						Optional:    true,
-						Description: "IP address of the node",
-					},
-					"type": schema.StringAttribute{
-						Computed:    true,
-						Optional:    true,
-						Description: "Type of the node",
-					},
-				},
+				Description: "Network location for nodes (public or private)",
 			},
 			"firewall_rules": schema.ListNestedAttribute{
 				Optional: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"name": schema.StringAttribute{
-							Optional:    true,
-							Description: "Name of the firewall rule",
-						},
 						"port": schema.Int64Attribute{
-							Optional:    true,
-							Description: "Port for the firewall rule",
+							Required:    true,
+							Description: "Port whose traffic is allowed",
 						},
 						"sources": schema.ListAttribute{
+							Required:    true,
 							ElementType: types.StringType,
-							Optional:    true,
-							Description: "Sources for the firewall rule",
+							Description: "CIDRs and/or IP addresses allowed",
 						},
 					},
 				},
 			},
-			"nodes": ClusterNodeDataSourceType,
+			"nodes": ClusterNodeAttribute,
 			"networks": schema.ListNestedAttribute{
 				Computed: true,
 				Optional: true,
@@ -157,24 +130,23 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 							Description: "Name of the network",
 						},
 						"region": schema.StringAttribute{
-							Optional:    true,
-							Computed:    true,
+							Required:    true,
 							Description: "Region of the network",
 						},
 						"external": schema.BoolAttribute{
 							Optional:    true,
 							Computed:    true,
-							Description: "Is the network external",
+							Description: "Is the network externally defined",
 						},
 						"external_id": schema.StringAttribute{
 							Optional:    true,
 							Computed:    true,
-							Description: "External ID of the network",
+							Description: "ID of the network, if externally defined",
 						},
 						"cidr": schema.StringAttribute{
 							Optional:    true,
 							Computed:    true,
-							Description: "CIDR of the AWS node group",
+							Description: "CIDR range for the network",
 						},
 						"public_subnets": schema.ListAttribute{
 							ElementType: types.StringType,
@@ -200,20 +172,16 @@ func fireWallRulesClusterReq(ctx context.Context, resp *resource.CreateResponse,
 		firewallRuleType FirewallRule
 		sources          []string
 	)
-
 	for _, firewallRule := range firewallRuleReq {
-
 		diags := firewallRule.As(ctx, &firewallRuleType, basetypes.ObjectAsOptions{})
 		resp.Diagnostics.Append(diags...)
 		diags = firewallRuleType.Sources.ElementsAs(ctx, &sources, false)
 		resp.Diagnostics.Append(diags...)
 		firewallRules = append(firewallRules, &models.FirewallRule{
-			Name:    firewallRuleType.Name.ValueString(),
 			Port:    firewallRuleType.Port.ValueInt64(),
 			Sources: sources,
 		})
 	}
-
 	return resp, firewallRules
 }
 
@@ -259,8 +227,7 @@ func nodesClusterReq(ctx context.Context, resp *resource.CreateResponse, nodesRe
 		diags := node.As(ctx, &nodeType, basetypes.ObjectAsOptions{})
 		resp.Diagnostics.Append(diags...)
 		nodes = append(nodes, &models.ClusterNode{
-			Name: nodeType.Name.ValueString(),
-			Image: nodeType.Image.ValueString(),
+			Name:   nodeType.Name.ValueString(),
 			Region: nodeType.Region.ValueString(),
 			AvailabilityZone: func() string {
 				if nodeType.AvailabilityZone.IsUnknown() {
@@ -286,16 +253,6 @@ func nodesClusterReq(ctx context.Context, resp *resource.CreateResponse, nodesRe
 	return resp, nodes
 }
 
-func cloudAccountClusterReq(ctx context.Context, resp *resource.CreateResponse, cloudAccountReq basetypes.ObjectValue) (*resource.CreateResponse, *models.ClusterCreationRequestCloudAccount) {
-	var cloudAccountType CloudAccount
-	diags := cloudAccountReq.As(ctx, &cloudAccountType, basetypes.ObjectAsOptions{})
-	resp.Diagnostics.Append(diags...)
-	return resp, &models.ClusterCreationRequestCloudAccount{
-		ID:   strfmt.UUID(cloudAccountType.ID.ValueString()),
-		Name: cloudAccountType.Name.ValueString(),
-		Type: cloudAccountType.Type.ValueString(),
-	}
-}
 func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan ClusterDetails
 	diags := req.Plan.Get(ctx, &plan)
@@ -308,8 +265,7 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		Name:           plan.Name.ValueString(),
 		CloudAccountID: plan.CloudAccountID.ValueString(),
 		NodeLocation:   plan.NodeLocation.ValueString(),
-		// ResourceTags: ,
-		SSHKeyID: plan.SSHKeyID.ValueString(),
+		SSHKeyID:       plan.SSHKeyID.ValueString(),
 	}
 
 	if plan.Firewall != nil {
@@ -318,14 +274,6 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			return
 		}
 		clusterCreationRequest.FirewallRules = firewallRules
-	}
-
-	if !plan.CloudAccount.IsUnknown() {
-		resp, cloudAccount := cloudAccountClusterReq(ctx, resp, plan.CloudAccount)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		clusterCreationRequest.CloudAccount = cloudAccount
 	}
 
 	if plan.Networks != nil {
@@ -362,18 +310,6 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	plan.CloudAccountID = types.StringValue(createdCluster.CloudAccount.ID)
 	plan.CreatedAt = types.StringValue(createdCluster.CreatedAt.String())
 	plan.Status = types.StringValue(createdCluster.Status)
-	plan.CloudAccount = func() types.Object {
-		cloudAccountElements := map[string]attr.Value{
-			"id":   types.StringValue(createdCluster.CloudAccount.ID),
-			"name": types.StringValue(createdCluster.CloudAccount.Name),
-			"type": types.StringValue(createdCluster.CloudAccount.Type),
-		}
-
-		cloudAccountObjectValue, _ := types.ObjectValue(CloudAccountType, cloudAccountElements)
-		resp.Diagnostics.Append(diags...)
-		return cloudAccountObjectValue
-
-	}()
 	plan.NodeLocation = types.StringValue(createdCluster.NodeLocation)
 	plan.SSHKeyID = types.StringValue(createdCluster.SSHKeyID)
 	plan.Regions = func() types.List {
@@ -382,36 +318,27 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			regions = append(regions, types.StringValue(region))
 		}
 		regionsList, _ := types.ListValue(types.StringType, regions)
-
 		return regionsList
 	}()
 
 	var firewallResp []types.Object
 	for _, firewall := range createdCluster.FirewallRules {
 		var firewallSources []attr.Value
-		firewallName := types.StringValue(firewall.Name)
 		firewallPort := types.Int64Value(firewall.Port)
 		for _, source := range firewall.Sources {
 			firewallSources = append(firewallSources, types.StringValue(source))
 		}
-
 		firewallSourceList, diags := types.ListValue(types.StringType, firewallSources)
-
 		resp.Diagnostics.Append(diags...)
-
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
 		firewallElements := map[string]attr.Value{
-			"name":    firewallName,
 			"port":    firewallPort,
 			"sources": firewallSourceList,
 		}
 		firewallObjectValue, diags := types.ObjectValue(FireWallType, firewallElements)
-
 		resp.Diagnostics.Append(diags...)
-
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -432,10 +359,9 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 				for _, publicSubnet := range network.PublicSubnets {
 					publicSubnets = append(publicSubnets, types.StringValue(publicSubnet))
 				}
-
 				publicSubnetList, _ := types.ListValue(types.StringType, publicSubnets)
 				if publicSubnetList.IsNull() {
-				return types.ListNull(types.StringType)
+					return types.ListNull(types.StringType)
 				}
 				return publicSubnetList
 			}(),
@@ -444,14 +370,12 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 				for _, privateSubnet := range network.PrivateSubnets {
 					privateSubnets = append(privateSubnets, types.StringValue(privateSubnet))
 				}
-
 				privateSubnetList, _ := types.ListValue(types.StringType, privateSubnets)
 				if privateSubnetList.IsNull() {
-				return types.ListNull(types.StringType)
+					return types.ListNull(types.StringType)
 				}
 				return privateSubnetList
 			}(),
-
 			"name":        types.StringValue(network.Name),
 			"external":    types.BoolValue(network.External),
 			"external_id": types.StringValue(network.ExternalID),
@@ -473,7 +397,6 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		nodeElements := map[string]attr.Value{
 			"name":              types.StringValue(node.Name),
 			"region":            types.StringValue(node.Region),
-			"image":             types.StringValue(node.Image),
 			"availability_zone": types.StringValue(node.AvailabilityZone),
 			"options": func() types.List {
 				var options []attr.Value
@@ -532,18 +455,6 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 	state.CloudAccountID = types.StringValue(cluster.CloudAccount.ID.String())
 	state.CreatedAt = types.StringValue(cluster.CreatedAt.String())
 	state.Status = types.StringValue(cluster.Status)
-	state.CloudAccount = func() types.Object {
-		cloudAccountElements := map[string]attr.Value{
-			"id":   types.StringValue(cluster.CloudAccount.ID.String()),
-			"name": types.StringValue(cluster.CloudAccount.Name),
-			"type": types.StringValue(cluster.CloudAccount.Type),
-		}
-
-		cloudAccountObjectValue, _ := types.ObjectValue(CloudAccountType, cloudAccountElements)
-		resp.Diagnostics.Append(diags...)
-		return cloudAccountObjectValue
-
-	}()
 	state.NodeLocation = types.StringValue(cluster.NodeLocation)
 	state.SSHKeyID = types.StringValue(cluster.SSHKeyID)
 	state.Regions = func() types.List {
@@ -552,32 +463,27 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 			regions = append(regions, types.StringValue(region))
 		}
 		regionsList, _ := types.ListValue(types.StringType, regions)
-
 		return regionsList
 	}()
 
 	var firewallResp []types.Object
 	for _, firewall := range cluster.FirewallRules {
 		var firewallSources []attr.Value
-		firewallName := types.StringValue(firewall.Name)
 		firewallPort := types.Int64Value(firewall.Port)
 		for _, source := range firewall.Sources {
 			firewallSources = append(firewallSources, types.StringValue(source))
 		}
 		firewallSourcesList, diags := types.ListValue(types.StringType, firewallSources)
 		resp.Diagnostics.Append(diags...)
-
 		if resp.Diagnostics.HasError() {
 			return
 		}
 		firewallElements := map[string]attr.Value{
-			"name":    firewallName,
 			"port":    firewallPort,
 			"sources": firewallSourcesList,
 		}
 		firewallObjectValue, diags := types.ObjectValue(FireWallType, firewallElements)
 		resp.Diagnostics.Append(diags...)
-
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -643,7 +549,6 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 				return optionsList
 			}(),
 			"region": types.StringValue(node.Region),
-			"image":  types.StringValue(node.Image),
 		}
 		nodeObjectValue, diags := types.ObjectValue(ClusterNodeTypes, nodeElements)
 		resp.Diagnostics.Append(diags...)
@@ -711,7 +616,6 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 			}
 			return regions
 		}(),
-		// ResourceTags: ,
 		SSHKeyID: plan.SSHKeyID.ValueString(),
 	}
 
@@ -726,18 +630,6 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	plan.CloudAccountID = types.StringValue(updatedCluster.CloudAccount.ID.String())
 	plan.CreatedAt = types.StringValue(updatedCluster.CreatedAt.String())
 	plan.Status = types.StringValue(updatedCluster.Status)
-	plan.CloudAccount = func() types.Object {
-		cloudAccountElements := map[string]attr.Value{
-			"id":   types.StringValue(updatedCluster.CloudAccount.ID.String()),
-			"name": types.StringValue(updatedCluster.CloudAccount.Name),
-			"type": types.StringValue(updatedCluster.CloudAccount.Type),
-		}
-
-		cloudAccountObjectValue, _ := types.ObjectValue(CloudAccountType, cloudAccountElements)
-		resp.Diagnostics.Append(diags...)
-		return cloudAccountObjectValue
-
-	}()
 	plan.NodeLocation = types.StringValue(updatedCluster.NodeLocation)
 	plan.SSHKeyID = types.StringValue(updatedCluster.SSHKeyID)
 	plan.Regions = func() types.List {
@@ -753,29 +645,21 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	var firewallResp []types.Object
 	for _, firewall := range updatedCluster.FirewallRules {
 		var firewallSources []attr.Value
-		firewallName := types.StringValue(firewall.Name)
 		firewallPort := types.Int64Value(firewall.Port)
 		for _, source := range firewall.Sources {
 			firewallSources = append(firewallSources, types.StringValue(source))
 		}
-
 		firewallSourceList, diags := types.ListValue(types.StringType, firewallSources)
-
 		resp.Diagnostics.Append(diags...)
-
 		if resp.Diagnostics.HasError() {
 			return
 		}
-
 		firewallElements := map[string]attr.Value{
-			"name":    firewallName,
 			"port":    firewallPort,
 			"sources": firewallSourceList,
 		}
 		firewallObjectValue, diags := types.ObjectValue(FireWallType, firewallElements)
-
 		resp.Diagnostics.Append(diags...)
-
 		if resp.Diagnostics.HasError() {
 			return
 		}
@@ -808,7 +692,7 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 
 				privateSubnetList, _ := types.ListValue(types.StringType, privateSubnets)
 				if privateSubnetList.IsNull() {
-				return types.ListNull(types.StringType)
+					return types.ListNull(types.StringType)
 				}
 				return privateSubnetList
 			}(),
@@ -834,7 +718,6 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		nodeElements := map[string]attr.Value{
 			"name":              types.StringValue(node.Name),
 			"region":            types.StringValue(node.Region),
-			"image":             types.StringValue(node.Image),
 			"availability_zone": types.StringValue(node.AvailabilityZone),
 			"options": func() types.List {
 				var options []attr.Value
