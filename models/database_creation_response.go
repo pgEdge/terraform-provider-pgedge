@@ -7,309 +7,45 @@ package models
 
 import (
 	"context"
-	"strconv"
 
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
-	"github.com/go-openapi/validate"
 )
 
 // DatabaseCreationResponse database creation response
 //
 // swagger:model DatabaseCreationResponse
 type DatabaseCreationResponse struct {
+	Database
+}
 
-	// backups
-	Backups *BackupConfig `json:"backups,omitempty"`
+// UnmarshalJSON unmarshals this object from a JSON structure
+func (m *DatabaseCreationResponse) UnmarshalJSON(raw []byte) error {
+	// AO0
+	var aO0 Database
+	if err := swag.ReadJSON(raw, &aO0); err != nil {
+		return err
+	}
+	m.Database = aO0
 
-	// cluster id
-	// Format: uuid
-	ClusterID strfmt.UUID `json:"cluster_id,omitempty"`
+	return nil
+}
 
-	// components
-	Components []*Component `json:"components"`
+// MarshalJSON marshals this object to a JSON structure
+func (m DatabaseCreationResponse) MarshalJSON() ([]byte, error) {
+	_parts := make([][]byte, 0, 1)
 
-	// created at
-	// Format: date-time
-	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
-
-	// domain
-	Domain string `json:"domain,omitempty"`
-
-	// extensions
-	Extensions *Extensions `json:"extensions,omitempty"`
-
-	// id
-	// Format: uuid
-	ID strfmt.UUID `json:"id,omitempty"`
-
-	// name
-	Name string `json:"name,omitempty"`
-
-	// nodes
-	Nodes []*Node `json:"nodes"`
-
-	// options
-	Options []string `json:"options"`
-
-	// pg version
-	PgVersion string `json:"pg_version,omitempty"`
-
-	// roles
-	Roles []*Role `json:"roles"`
-
-	// status
-	Status string `json:"status,omitempty"`
-
-	// storage used
-	StorageUsed int64 `json:"storage_used,omitempty"`
-
-	// tables
-	Tables []*Table `json:"tables"`
-
-	// updated at
-	// Format: date-time
-	UpdatedAt strfmt.DateTime `json:"updated_at,omitempty"`
+	aO0, err := swag.WriteJSON(m.Database)
+	if err != nil {
+		return nil, err
+	}
+	_parts = append(_parts, aO0)
+	return swag.ConcatJSON(_parts...), nil
 }
 
 // Validate validates this database creation response
 func (m *DatabaseCreationResponse) Validate(formats strfmt.Registry) error {
-	var res []error
-
-	if err := m.validateBackups(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateClusterID(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateComponents(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateCreatedAt(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateExtensions(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateID(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateNodes(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateRoles(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateTables(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateUpdatedAt(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if len(res) > 0 {
-		return errors.CompositeValidationError(res...)
-	}
-	return nil
-}
-
-func (m *DatabaseCreationResponse) validateBackups(formats strfmt.Registry) error {
-	if swag.IsZero(m.Backups) { // not required
-		return nil
-	}
-
-	if m.Backups != nil {
-		if err := m.Backups.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("backups")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("backups")
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (m *DatabaseCreationResponse) validateClusterID(formats strfmt.Registry) error {
-	if swag.IsZero(m.ClusterID) { // not required
-		return nil
-	}
-
-	if err := validate.FormatOf("cluster_id", "body", "uuid", m.ClusterID.String(), formats); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *DatabaseCreationResponse) validateComponents(formats strfmt.Registry) error {
-	if swag.IsZero(m.Components) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.Components); i++ {
-		if swag.IsZero(m.Components[i]) { // not required
-			continue
-		}
-
-		if m.Components[i] != nil {
-			if err := m.Components[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("components" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("components" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-func (m *DatabaseCreationResponse) validateCreatedAt(formats strfmt.Registry) error {
-	if swag.IsZero(m.CreatedAt) { // not required
-		return nil
-	}
-
-	if err := validate.FormatOf("created_at", "body", "date-time", m.CreatedAt.String(), formats); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *DatabaseCreationResponse) validateExtensions(formats strfmt.Registry) error {
-	if swag.IsZero(m.Extensions) { // not required
-		return nil
-	}
-
-	if m.Extensions != nil {
-		if err := m.Extensions.Validate(formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("extensions")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("extensions")
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (m *DatabaseCreationResponse) validateID(formats strfmt.Registry) error {
-	if swag.IsZero(m.ID) { // not required
-		return nil
-	}
-
-	if err := validate.FormatOf("id", "body", "uuid", m.ID.String(), formats); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *DatabaseCreationResponse) validateNodes(formats strfmt.Registry) error {
-	if swag.IsZero(m.Nodes) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.Nodes); i++ {
-		if swag.IsZero(m.Nodes[i]) { // not required
-			continue
-		}
-
-		if m.Nodes[i] != nil {
-			if err := m.Nodes[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("nodes" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("nodes" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-func (m *DatabaseCreationResponse) validateRoles(formats strfmt.Registry) error {
-	if swag.IsZero(m.Roles) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.Roles); i++ {
-		if swag.IsZero(m.Roles[i]) { // not required
-			continue
-		}
-
-		if m.Roles[i] != nil {
-			if err := m.Roles[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("roles" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("roles" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-func (m *DatabaseCreationResponse) validateTables(formats strfmt.Registry) error {
-	if swag.IsZero(m.Tables) { // not required
-		return nil
-	}
-
-	for i := 0; i < len(m.Tables); i++ {
-		if swag.IsZero(m.Tables[i]) { // not required
-			continue
-		}
-
-		if m.Tables[i] != nil {
-			if err := m.Tables[i].Validate(formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("tables" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("tables" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-func (m *DatabaseCreationResponse) validateUpdatedAt(formats strfmt.Registry) error {
-	if swag.IsZero(m.UpdatedAt) { // not required
-		return nil
-	}
-
-	if err := validate.FormatOf("updated_at", "body", "date-time", m.UpdatedAt.String(), formats); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -317,192 +53,13 @@ func (m *DatabaseCreationResponse) validateUpdatedAt(formats strfmt.Registry) er
 func (m *DatabaseCreationResponse) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.contextValidateBackups(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateComponents(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateExtensions(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateNodes(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateRoles(ctx, formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.contextValidateTables(ctx, formats); err != nil {
+	// validation for a type composition with Database
+	if err := m.Database.ContextValidate(ctx, formats); err != nil {
 		res = append(res, err)
 	}
 
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
-	return nil
-}
-
-func (m *DatabaseCreationResponse) contextValidateBackups(ctx context.Context, formats strfmt.Registry) error {
-
-	if m.Backups != nil {
-
-		if swag.IsZero(m.Backups) { // not required
-			return nil
-		}
-
-		if err := m.Backups.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("backups")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("backups")
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (m *DatabaseCreationResponse) contextValidateComponents(ctx context.Context, formats strfmt.Registry) error {
-
-	for i := 0; i < len(m.Components); i++ {
-
-		if m.Components[i] != nil {
-
-			if swag.IsZero(m.Components[i]) { // not required
-				return nil
-			}
-
-			if err := m.Components[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("components" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("components" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-func (m *DatabaseCreationResponse) contextValidateExtensions(ctx context.Context, formats strfmt.Registry) error {
-
-	if m.Extensions != nil {
-
-		if swag.IsZero(m.Extensions) { // not required
-			return nil
-		}
-
-		if err := m.Extensions.ContextValidate(ctx, formats); err != nil {
-			if ve, ok := err.(*errors.Validation); ok {
-				return ve.ValidateName("extensions")
-			} else if ce, ok := err.(*errors.CompositeError); ok {
-				return ce.ValidateName("extensions")
-			}
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (m *DatabaseCreationResponse) contextValidateNodes(ctx context.Context, formats strfmt.Registry) error {
-
-	for i := 0; i < len(m.Nodes); i++ {
-
-		if m.Nodes[i] != nil {
-
-			if swag.IsZero(m.Nodes[i]) { // not required
-				return nil
-			}
-
-			if err := m.Nodes[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("nodes" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("nodes" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-func (m *DatabaseCreationResponse) contextValidateRoles(ctx context.Context, formats strfmt.Registry) error {
-
-	for i := 0; i < len(m.Roles); i++ {
-
-		if m.Roles[i] != nil {
-
-			if swag.IsZero(m.Roles[i]) { // not required
-				return nil
-			}
-
-			if err := m.Roles[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("roles" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("roles" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-func (m *DatabaseCreationResponse) contextValidateTables(ctx context.Context, formats strfmt.Registry) error {
-
-	for i := 0; i < len(m.Tables); i++ {
-
-		if m.Tables[i] != nil {
-
-			if swag.IsZero(m.Tables[i]) { // not required
-				return nil
-			}
-
-			if err := m.Tables[i].ContextValidate(ctx, formats); err != nil {
-				if ve, ok := err.(*errors.Validation); ok {
-					return ve.ValidateName("tables" + "." + strconv.Itoa(i))
-				} else if ce, ok := err.(*errors.CompositeError); ok {
-					return ce.ValidateName("tables" + "." + strconv.Itoa(i))
-				}
-				return err
-			}
-		}
-
-	}
-
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *DatabaseCreationResponse) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *DatabaseCreationResponse) UnmarshalBinary(b []byte) error {
-	var res DatabaseCreationResponse
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
 	return nil
 }
