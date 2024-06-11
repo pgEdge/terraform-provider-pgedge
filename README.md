@@ -19,7 +19,6 @@ terraform {
       source = "pgEdge/pgedge"
     }
   }
-    required_version = ">= 1.1.0"
 }
 ```
 
