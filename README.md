@@ -1,7 +1,6 @@
-<img alt="pgEdge" src="https://pgedge-public-assets.s3.amazonaws.com/product/images/pgedge_mark.svg" width="600px">
+<img alt="pgEdge" src="https://pgedge-public-assets.s3.amazonaws.com/product/images/pgedge_mark.svg" width="100px">
 
-
-# pgEdge Provider
+# pgEdge Terraform Provider
 
 The official Terraform provider for [pgEdge](https://www.pgedge.com/).
 
