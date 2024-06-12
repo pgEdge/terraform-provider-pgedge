@@ -58,31 +58,20 @@ type ClusterDetails struct {
 	CreatedAt      types.String   `tfsdk:"created_at"`
 	Status         types.String   `tfsdk:"status"`
 	SSHKeyID       types.String   `tfsdk:"ssh_key_id"`
-	// LastUpdated 	types.String     `tfsdk:"last_updated"`
-	// ResourceTags   types.Map      `tfsdk:"resource_tags"`
 	Regions        types.List     `tfsdk:"regions"`
 	NodeLocation   types.String   `tfsdk:"node_location"`
-	CloudAccount   types.Object   `tfsdk:"cloud_account"`
 	Firewall       []types.Object `tfsdk:"firewall_rules"`
 	Nodes          []types.Object `tfsdk:"nodes"`
 	Networks       []types.Object `tfsdk:"networks"`
 }
 
-type CloudAccount struct {
-	ID   types.String `tfsdk:"id"`
-	Name types.String `tfsdk:"name"`
-	Type types.String `tfsdk:"type"`
-}
-
 type FirewallRule struct {
-	Name    types.String `tfsdk:"name"`
-	Port    types.Int64  `tfsdk:"port"`
-	Sources types.List   `tfsdk:"sources"`
+	Port    types.Int64 `tfsdk:"port"`
+	Sources types.List  `tfsdk:"sources"`
 }
 
 type ClusterNode struct {
 	Region           types.String `tfsdk:"region"`
-	Image            types.String `tfsdk:"image"`
 	Name             types.String `tfsdk:"name"`
 	AvailabilityZone types.String `tfsdk:"availability_zone"`
 	Options          types.List   `tfsdk:"options"`
@@ -103,20 +92,12 @@ type ClusterNetworks struct {
 }
 
 var (
-	CloudAccountType = map[string]attr.Type{
-		"id":   types.StringType,
-		"name": types.StringType,
-		"type": types.StringType,
-	}
-
 	FireWallType = map[string]attr.Type{
-		"name": types.StringType,
 		"port": types.Int64Type,
 		"sources": types.ListType{
 			ElemType: types.StringType,
 		},
 	}
-
 	NetworksType = map[string]attr.Type{
 		"cidr":            types.StringType,
 		"public_subnets":  types.ListType{ElemType: types.StringType},
@@ -128,7 +109,6 @@ var (
 	}
 	ClusterNodeTypes = map[string]attr.Type{
 		"region":            types.StringType,
-		"image":             types.StringType,
 		"name":              types.StringType,
 		"availability_zone": types.StringType,
 		"options":           types.ListType{ElemType: types.StringType},
@@ -139,56 +119,49 @@ var (
 	}
 )
 
-var ClusterNodeDataSourceType = schema.ListNestedAttribute{
+var ClusterNodeAttribute = schema.ListNestedAttribute{
 	Computed: true,
 	Optional: true,
-
 	NestedObject: schema.NestedAttributeObject{
 		Attributes: map[string]schema.Attribute{
 			"region": schema.StringAttribute{
-				Optional:true,
-				Computed:    true,
-				Description: "Region of the AWS node group",
-			},
-			"image": schema.StringAttribute{
-				Optional:true,
-				Computed:    true,
-				Description: "Image of the AWS node group",
+				Required:    true,
+				Description: "Cloud provider region",
 			},
 			"name": schema.StringAttribute{
-				Optional:true,
+				Optional:    true,
 				Computed:    true,
-				Description: "Name of the AWS node group",
+				Description: "Node name",
 			},
 			"availability_zone": schema.StringAttribute{
-				Optional:true,
+				Optional:    true,
 				Computed:    true,
-				Description: "Availability zone of the AWS node group",
+				Description: "Cloud provider availability zone name",
 			},
 			"options": schema.ListAttribute{
 				ElementType: types.StringType,
-				Optional:true,
+				Optional:    true,
 				Computed:    true,
 			},
 			"volume_size": schema.Int64Attribute{
-				Optional:true,
+				Optional:    true,
 				Computed:    true,
-				Description: "Volume size of the AWS node group",
+				Description: "Volume size of the node data volume",
 			},
 			"volume_iops": schema.Int64Attribute{
-				Optional:true,
+				Optional:    true,
 				Computed:    true,
-				Description: "Volume IOPS of the AWS node group",
+				Description: "Volume IOPS of the node data volume",
 			},
 			"volume_type": schema.StringAttribute{
-				Optional:true,
+				Optional:    true,
 				Computed:    true,
-				Description: "Volume type of the AWS node group",
+				Description: "Volume type of the node data volume",
 			},
 			"instance_type": schema.StringAttribute{
-				Optional:true,
+				Optional:    true,
 				Computed:    true,
-				Description: "Instance type of the AWS node group",
+				Description: "Instance type used for the node",
 			},
 		},
 	},
@@ -245,17 +218,17 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 							Computed: true,
 							Optional: true,
 							Attributes: map[string]schema.Attribute{
-									"id": schema.StringAttribute{
-										Computed:    true,
-										Description: "Display name of the node",
-									},
-									"name": schema.StringAttribute{
-										Computed:    true,
-										Description: "IP address of the node",
-									},
-									"type": schema.StringAttribute{
-										Computed:    true,
-										Description: "Type of the node",
+								"id": schema.StringAttribute{
+									Computed:    true,
+									Description: "Display name of the node",
+								},
+								"name": schema.StringAttribute{
+									Computed:    true,
+									Description: "IP address of the node",
+								},
+								"type": schema.StringAttribute{
+									Computed:    true,
+									Description: "Type of the node",
 								},
 							},
 						},
@@ -279,7 +252,7 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 								},
 							},
 						},
-						"nodes": ClusterNodeDataSourceType,
+						"nodes": ClusterNodeAttribute,
 						"networks": schema.ListNestedAttribute{
 							Computed: true,
 							NestedObject: schema.NestedAttributeObject{
@@ -342,7 +315,6 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 
 	for _, cluster := range clusters {
 		var clusterDetails ClusterDetails
-
 		clusterDetails.ID = types.StringValue(cluster.ID.String())
 		clusterDetails.Name = types.StringValue(cluster.Name)
 		clusterDetails.CloudAccountID = types.StringValue(cluster.CloudAccount.ID.String())
@@ -352,56 +324,30 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 		for _, rule := range cluster.FirewallRules {
 			var firewallRule FirewallRule
 			var firewallSources []attr.Value
-
 			for _, source := range rule.Sources {
 				firewallSources = append(firewallSources, types.StringValue(source))
 			}
-
-			firewallRule.Name = types.StringValue(rule.Name)
 			firewallRule.Port = types.Int64Value(rule.Port)
 			firewallRule.Sources, diags = types.ListValue(types.StringType, firewallSources)
 			resp.Diagnostics.Append(diags...)
-
 			if resp.Diagnostics.HasError() {
 				return
 			}
 			firewallElements := map[string]attr.Value{
-				"name":    types.StringValue(rule.Name),
 				"port":    types.Int64Value(rule.Port),
 				"sources": firewallRule.Sources,
 			}
-
 			firewallObjectValue, diags := types.ObjectValue(FireWallType, firewallElements)
 			resp.Diagnostics.Append(diags...)
-
 			if resp.Diagnostics.HasError() {
 				return
 			}
 			clusterDetails.Firewall = append(clusterDetails.Firewall, firewallObjectValue)
 		}
 
-		var cloudAccount CloudAccount
-		cloudAccount.ID = types.StringValue(cluster.CloudAccount.ID.String())
-		cloudAccount.Name = types.StringValue(cluster.CloudAccount.Name)
-		cloudAccount.Type = types.StringValue(cluster.CloudAccount.Type)
-
-		cloudAccountMap := map[string]attr.Value{
-			"id":   cloudAccount.ID,
-			"name": cloudAccount.Name,
-			"type": cloudAccount.Type,
-		}
-		cloudAccountValue, diags := types.ObjectValue(CloudAccountType, cloudAccountMap)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		clusterDetails.CloudAccount = cloudAccountValue
-
 		for _, node := range cluster.Nodes {
 			var clusterNode ClusterNode
 			clusterNode.Region = types.StringValue(node.Region)
-			clusterNode.Image = types.StringValue(node.Image)
 			clusterNode.Name = types.StringValue(node.Name)
 			clusterNode.AvailabilityZone = types.StringValue(node.AvailabilityZone)
 
@@ -422,7 +368,6 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 
 			nodeMap := map[string]attr.Value{
 				"region":            clusterNode.Region,
-				"image":             clusterNode.Image,
 				"name":              clusterNode.Name,
 				"availability_zone": clusterNode.AvailabilityZone,
 				"options":           clusterNode.Options,

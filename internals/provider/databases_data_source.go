@@ -60,25 +60,25 @@ type DatabaseDetails struct {
 	UpdatedAt types.String `tfsdk:"updated_at"`
 	Status    types.String `tfsdk:"status"`
 	ClusterID types.String `tfsdk:"cluster_id"`
-	Nodes     types.List   `tfsdk:"nodes"`
-	Options   types.List   `tfsdk:"options"`
-	// Backups     types.Object `tfsdk:"backups"`
-	Components  types.List   `tfsdk:"components"`
-	Extensions  types.Object `tfsdk:"extensions"`
-	PgVersion   types.String `tfsdk:"pg_version"`
-	Roles       types.List   `tfsdk:"roles"`
-	Tables      types.List   `tfsdk:"tables"`
-	StorageUsed types.Int64  `tfsdk:"storage_used"`
+	// Nodes         types.List   `tfsdk:"nodes"`
+	Options       types.List   `tfsdk:"options"`
+	PgVersion     types.String `tfsdk:"pg_version"`
+	StorageUsed   types.Int64  `tfsdk:"storage_used"`
 	ConfigVersion types.String `tfsdk:"config_version"`
+
+	// Backups     types.Object `tfsdk:"backups"`
+	// Components types.List   `tfsdk:"components"`
+	// Extensions types.Object `tfsdk:"extensions"`
+	// Roles         types.List   `tfsdk:"roles"`
+	// Tables        types.List   `tfsdk:"tables"`
 }
 
 type Node struct {
-	Name                string                  `tfsdk:"name"`
-	Connection          Connection              `tfsdk:"connection"`
-	Location            Location                `tfsdk:"location"`
-	DistanceMeasurement NodeDistanceMeasurement `tfsdk:"distance_measurement"`
-	Region              NodeRegion              `tfsdk:"region"`
-	Extensions          NodeExtensions          `tfsdk:"extensions"`
+	Name       string         `tfsdk:"name"`
+	Connection Connection     `tfsdk:"connection"`
+	Location   Location       `tfsdk:"location"`
+	Region     NodeRegion     `tfsdk:"region"`
+	Extensions NodeExtensions `tfsdk:"extensions"`
 }
 
 type NodeExtensions struct {
@@ -91,13 +91,6 @@ type NodeExtensionsErrors struct {
 	Enim3b    string `tfsdk:"enim3b"`
 	Laborumd  string `tfsdk:"laborum_d"`
 	Mollit267 string `tfsdk:"mollit267"`
-}
-
-type NodeDistanceMeasurement struct {
-	Distance      float64 `tfsdk:"distance"`
-	FromLatitude  float64 `tfsdk:"from_latitude"`
-	FromLongitude float64 `tfsdk:"from_longitude"`
-	Unit          string  `tfsdk:"unit"`
 }
 
 type NodeRegion struct {
@@ -254,64 +247,23 @@ var NodeLocationType = map[string]attr.Type{
 	"longitude":   types.Float64Type,
 	"name":        types.StringType,
 	"region":      types.StringType,
-	"timezone":    types.StringType,
 	"region_code": types.StringType,
-	"postal_code": types.StringType,
-	"metro_code":  types.StringType,
-	"city":        types.StringType,
 }
 
 var NodeRegionType = map[string]attr.Type{
-	"active": types.BoolType,
-	"availability_zones": types.ListType{
-		ElemType: types.StringType,
-	},
-	"cloud":  types.StringType,
-	"code":   types.StringType,
-	"name":   types.StringType,
-	"parent": types.StringType,
-}
-
-var NodeDistanceMeasurementType = map[string]attr.Type{
-	"distance":       types.Float64Type,
-	"from_latitude":  types.Float64Type,
-	"from_longitude": types.Float64Type,
-	"unit":           types.StringType,
-}
-
-var NodeExtensionsType = map[string]attr.Type{
-	"errors": types.ObjectType{
-		AttrTypes: NodeExtensionsErrorsType,
-	},
-	"installed": types.ListType{
-		ElemType: types.StringType,
-	},
-}
-
-var NodeExtensionsErrorsType = map[string]attr.Type{
-	"anim9ef":   types.StringType,
-	"enim3b":    types.StringType,
-	"laborumd":  types.StringType,
-	"mollit267": types.StringType,
+	"active":             types.BoolType,
+	"availability_zones": types.ListType{ElemType: types.StringType},
+	"cloud":              types.StringType,
+	"code":               types.StringType,
+	"name":               types.StringType,
+	"parent":             types.StringType,
 }
 
 var NodeType = map[string]attr.Type{
-	"name": types.StringType,
-	"connection": types.ObjectType{
-		AttrTypes: NodeConnectionType,
-	},
-	"location": types.ObjectType{
-		AttrTypes: NodeLocationType,
-	},
-	"region": types.ObjectType{
-		AttrTypes: NodeRegionType,
-	},
-	"distance_measurement": types.ObjectType{
-		AttrTypes: NodeDistanceMeasurementType,
-	},
-	"extensions": types.ObjectType{
-		AttrTypes: NodeExtensionsType,
-	},
+	"name":       types.StringType,
+	"connection": types.ObjectType{AttrTypes: NodeConnectionType},
+	"location":   types.ObjectType{AttrTypes: NodeLocationType},
+	"region":     types.ObjectType{AttrTypes: NodeRegionType},
 }
 
 func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -778,7 +730,7 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 	for _, db := range databases {
 		var database DatabaseDetails
-		var nodes []attr.Value
+		// var nodes []attr.Value
 		database.ID = types.StringValue(db.ID.String())
 		database.Name = types.StringValue(strings.Trim(strings.ToLower(db.Name), " "))
 		database.Domain = types.StringValue(db.Domain)
@@ -787,158 +739,94 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		database.Status = types.StringValue(db.Status)
 		database.ClusterID = types.StringValue(db.ClusterID.String())
 
-		for _, node := range db.Nodes {
-			nodeConnectionValue, _ := types.ObjectValue(NodeConnectionType, map[string]attr.Value{
-				"database":            types.StringValue(node.Connection.Database),
-				"host":                types.StringValue(node.Connection.Host),
-				"password":            types.StringValue(node.Connection.Password),
-				"port":                types.Int64Value(node.Connection.Port),
-				"username":            types.StringValue(node.Connection.Username),
-				"external_ip_address": types.StringValue(node.Connection.ExternalIPAddress),
-				"internal_ip_address": types.StringValue(node.Connection.InternalIPAddress),
-				"internal_host":       types.StringValue(node.Connection.InternalHost),
-			})
+		// for _, node := range db.Nodes {
+		// 	nodeConnectionValue, _ := types.ObjectValue(NodeConnectionType, map[string]attr.Value{
+		// 		"database":            types.StringValue(node.Connection.Database),
+		// 		"host":                types.StringValue(node.Connection.Host),
+		// 		"password":            types.StringValue(node.Connection.Password),
+		// 		"port":                types.Int64Value(node.Connection.Port),
+		// 		"username":            types.StringValue(node.Connection.Username),
+		// 		"external_ip_address": types.StringValue(node.Connection.ExternalIPAddress),
+		// 		"internal_ip_address": types.StringValue(node.Connection.InternalIPAddress),
+		// 		"internal_host":       types.StringValue(node.Connection.InternalHost),
+		// 	})
 
-			nodeLocationValue, _ := types.ObjectValue(NodeLocationType, map[string]attr.Value{
-				"code":      types.StringValue(node.Location.Code),
-				"country":   types.StringValue(node.Location.Country),
-				"latitude":  types.Float64Value(node.Location.Latitude),
-				"longitude": types.Float64Value(node.Location.Longitude),
-				"name":      types.StringValue(node.Location.Name),
-				"region":    types.StringValue(node.Location.Region),
-				"region_code": types.StringValue(
-					node.Location.RegionCode,
-				),
-				"timezone": types.StringValue(node.Location.Timezone),
-				"postal_code": types.StringValue(
-					node.Location.PostalCode,
-				),
-				"metro_code": types.StringValue(
-					node.Location.MetroCode,
-				),
-				"city": types.StringValue(
-					node.Location.City,
-				),
-			})
+		// 	nodeLocationValue, _ := types.ObjectValue(NodeLocationType, map[string]attr.Value{
+		// 		"code":      types.StringValue(node.Location.Code),
+		// 		"country":   types.StringValue(node.Location.Country),
+		// 		"latitude":  types.Float64Value(node.Location.Latitude),
+		// 		"longitude": types.Float64Value(node.Location.Longitude),
+		// 		"name":      types.StringValue(node.Location.Name),
+		// 		"region":    types.StringValue(node.Location.Region),
+		// 		"region_code": types.StringValue(
+		// 			node.Location.RegionCode,
+		// 		),
+		// 		"timezone": types.StringValue(node.Location.Timezone),
+		// 		"postal_code": types.StringValue(
+		// 			node.Location.PostalCode,
+		// 		),
+		// 		"metro_code": types.StringValue(
+		// 			node.Location.MetroCode,
+		// 		),
+		// 		"city": types.StringValue(
+		// 			node.Location.City,
+		// 		),
+		// 	})
 
-			var nodeRegionValue attr.Value
-			if node.Region != nil {
-				nodeRegionValue, _ = types.ObjectValue(NodeRegionType, map[string]attr.Value{
-					"active": types.BoolValue(node.Region.Active),
-					"availability_zones": func() attr.Value {
-						var availability_zone []attr.Value
-						for _, region := range node.Region.AvailabilityZones {
-							availability_zone = append(availability_zone, types.StringValue(region))
-						}
-						availabilityZoneList, _ := types.ListValue(types.StringType, availability_zone)
+		// 	var nodeRegionValue attr.Value
+		// 	if node.Region != nil {
+		// 		nodeRegionValue, _ = types.ObjectValue(NodeRegionType, map[string]attr.Value{
+		// 			"active": types.BoolValue(node.Region.Active),
+		// 			"availability_zones": func() attr.Value {
+		// 				var availability_zone []attr.Value
+		// 				for _, region := range node.Region.AvailabilityZones {
+		// 					availability_zone = append(availability_zone, types.StringValue(region))
+		// 				}
+		// 				availabilityZoneList, _ := types.ListValue(types.StringType, availability_zone)
 
-						if availabilityZoneList.IsNull() {
-							return types.ListNull(types.StringType)
-						}
+		// 				if availabilityZoneList.IsNull() {
+		// 					return types.ListNull(types.StringType)
+		// 				}
 
-						return availabilityZoneList
-					}(),
+		// 				return availabilityZoneList
+		// 			}(),
 
-					"cloud":  types.StringValue(node.Region.Cloud),
-					"code":   types.StringValue(node.Region.Code),
-					"name":   types.StringValue(node.Region.Name),
-					"parent": types.StringValue(node.Region.Parent),
-				})
-			} else {
-				nodeRegionValue = types.ObjectNull(NodeRegionType)
-			}
+		// 			"cloud":  types.StringValue(node.Region.Cloud),
+		// 			"code":   types.StringValue(node.Region.Code),
+		// 			"name":   types.StringValue(node.Region.Name),
+		// 			"parent": types.StringValue(node.Region.Parent),
+		// 		})
+		// 	} else {
+		// 		nodeRegionValue = types.ObjectNull(NodeRegionType)
+		// 	}
 
-			var nodeDistanceMeasurementValue attr.Value
-			if node.DistanceMeasurement != nil {
-				nodeDistanceMeasurementValue, _ = types.ObjectValue(NodeDistanceMeasurementType, map[string]attr.Value{
-					"distance":       types.Float64Value(node.DistanceMeasurement.Distance),
-					"from_latitude":  types.Float64Value(node.DistanceMeasurement.FromLatitude),
-					"from_longitude": types.Float64Value(node.DistanceMeasurement.FromLongitude),
-					"unit":           types.StringValue(node.DistanceMeasurement.Unit),
-				})
-			} else {
-				nodeDistanceMeasurementValue = types.ObjectNull(NodeDistanceMeasurementType)
-			}
+		// 	resp.Diagnostics.Append(diags...)
+		// 	if resp.Diagnostics.HasError() {
+		// 		return
+		// 	}
 
-			nodeExtensionsValue, diags := types.ObjectValue(NodeExtensionsType, map[string]attr.Value{
-				"errors": func() types.Object {
-					var NodeExtensionsErrorsValue = map[string]attr.Value{}
-					if node.Extensions != nil {
-						NodeExtensionsErrorsValue = map[string]attr.Value{
-							"anim9ef":   types.StringValue(node.Extensions.Errors.Anim9ef),
-							"enim3b":    types.StringValue(node.Extensions.Errors.Enim3b),
-							"laborumd":  types.StringValue(node.Extensions.Errors.Laborumd),
-							"mollit267": types.StringValue(node.Extensions.Errors.Mollit267),
-						}
-					} else {
-						NodeExtensionsErrorsValue = map[string]attr.Value{
-							"anim9ef":   types.StringValue(""),
-							"enim3b":    types.StringValue(""),
-							"laborumd":  types.StringValue(""),
-							"mollit267": types.StringValue(""),
-						}
-					}
+		// 	nodeValue := map[string]attr.Value{
+		// 		"name":       types.StringValue(node.Name),
+		// 		"connection": nodeConnectionValue,
+		// 		"location":   nodeLocationValue,
+		// 		"region":     nodeRegionValue,
+		// 	}
+		// 	node, diags := types.ObjectValue(NodeType, nodeValue)
+		// 	resp.Diagnostics.Append(diags...)
+		// 	if resp.Diagnostics.HasError() {
+		// 		return
+		// 	}
+		// 	nodes = append(nodes, node)
+		// }
 
-					item, diags := types.ObjectValue(NodeExtensionsErrorsType, NodeExtensionsErrorsValue)
+		// database.Nodes, diags = types.ListValue(types.ObjectType{
+		// 	AttrTypes: NodeType,
+		// }, nodes)
 
-					resp.Diagnostics.Append(diags...)
-
-					if item.IsNull() {
-						return types.ObjectNull(NodeExtensionsErrorsType)
-					}
-
-					return item
-				}(),
-				"installed": func() types.List {
-					var installed []attr.Value
-					if node.Extensions != nil {
-						for _, extension := range node.Extensions.Installed {
-							installed = append(installed, types.StringValue(extension))
-						}
-					} else {
-						installed = append(installed, types.StringValue(""))
-					}
-					installedList, diags := types.ListValue(types.StringType, installed)
-					resp.Diagnostics.Append(diags...)
-					if installedList.IsNull() {
-						return types.ListNull(types.StringType)
-					}
-					return installedList
-				}(),
-			})
-
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			nodeValue := map[string]attr.Value{
-				"name":                 types.StringValue(node.Name),
-				"connection":           nodeConnectionValue,
-				"location":             nodeLocationValue,
-				"region":               nodeRegionValue,
-				"distance_measurement": nodeDistanceMeasurementValue,
-				"extensions":           nodeExtensionsValue,
-			}
-
-			node, diags := types.ObjectValue(NodeType, nodeValue)
-
-			resp.Diagnostics.Append(diags...)
-
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			nodes = append(nodes, node)
-		}
-
-		database.Nodes, diags = types.ListValue(types.ObjectType{
-			AttrTypes: NodeType,
-		}, nodes)
-
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+		// resp.Diagnostics.Append(diags...)
+		// if resp.Diagnostics.HasError() {
+		// 	return
+		// }
 
 		var planOptions types.List
 
@@ -949,251 +837,239 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 		}
 		planOptions, diags = types.ListValue(types.StringType, databaseOptionsAttr)
 		resp.Diagnostics.Append(diags...)
-
 		database.Options = planOptions
 
-		var databaseComponents types.List
+		// var databaseComponents types.List
+		// var databaseComponentsAttr []attr.Value
+		// for _, components := range db.Components {
+		// 	componentsValue, diags := types.ObjectValue(DatabaseComponentsItemsType, map[string]attr.Value{
+		// 		"name":         types.StringValue(components.Name),
+		// 		"id":           types.StringValue(components.ID),
+		// 		"release_date": types.StringValue(components.ReleaseDate),
+		// 		"version":      types.StringValue(components.Version),
+		// 		"status":       types.StringValue(components.Status),
+		// 	})
+		// 	resp.Diagnostics.Append(diags...)
+		// 	if resp.Diagnostics.HasError() {
+		// 		return
+		// 	}
+		// 	databaseComponentsAttr = append(databaseComponentsAttr, componentsValue)
+		// }
+		// databaseComponents, diags = types.ListValue(types.ObjectType{
+		// 	AttrTypes: DatabaseComponentsItemsType,
+		// }, databaseComponentsAttr)
+		// resp.Diagnostics.Append(diags...)
+		// if resp.Diagnostics.HasError() {
+		// 	return
+		// }
+		// database.Components = databaseComponents
+		// var databaseRoles types.List
+		// var databaseRolesAttr []attr.Value
+		// for _, role := range db.Roles {
+		// 	var rolesValue types.Object
+		// 	if role != nil {
+		// 		rolesValue, diags = types.ObjectValue(DatabaseRolesItemsType, map[string]attr.Value{
+		// 			"bypass_rls":       types.BoolValue(role.BypassRls),
+		// 			"connection_limit": types.Int64Value(role.ConnectionLimit),
+		// 			"create_db":        types.BoolValue(role.CreateDb),
+		// 			"create_role":      types.BoolValue(role.CreateRole),
+		// 			"inherit":          types.BoolValue(role.Inherit),
+		// 			"login":            types.BoolValue(role.Login),
+		// 			"name":             types.StringValue(role.Name),
+		// 			"replication":      types.BoolValue(role.Replication),
+		// 			"superuser":        types.BoolValue(role.Superuser),
+		// 		})
 
-		var databaseComponentsAttr []attr.Value
+		// 		resp.Diagnostics.Append(diags...)
+		// 		if resp.Diagnostics.HasError() {
+		// 			return
+		// 		}
+		// 	} else {
+		// 		rolesValue = types.ObjectNull(DatabaseRolesItemsType)
+		// 	}
 
-		for _, components := range db.Components {
-			componentsValue, diags := types.ObjectValue(DatabaseComponentsItemsType, map[string]attr.Value{
-				"name":         types.StringValue(components.Name),
-				"id":           types.StringValue(components.ID),
-				"release_date": types.StringValue(components.ReleaseDate),
-				"version":      types.StringValue(components.Version),
-				"status":       types.StringValue(components.Status),
-			})
+		// 	databaseRolesAttr = append(databaseRolesAttr, rolesValue)
+		// }
 
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
+		// databaseRoles, diags = types.ListValue(types.ObjectType{
+		// 	AttrTypes: DatabaseRolesItemsType,
+		// }, databaseRolesAttr)
 
-			databaseComponentsAttr = append(databaseComponentsAttr, componentsValue)
-		}
+		// resp.Diagnostics.Append(diags...)
+		// if resp.Diagnostics.HasError() {
+		// 	return
+		// }
 
-		databaseComponents, diags = types.ListValue(types.ObjectType{
-			AttrTypes: DatabaseComponentsItemsType,
-		}, databaseComponentsAttr)
+		// database.Roles = databaseRoles
 
-		resp.Diagnostics.Append(diags...)
+		// var databaseTables types.List
 
-		if resp.Diagnostics.HasError() {
-			return
-		}
+		// var databaseTablesAttr []attr.Value
 
-		database.Components = databaseComponents
+		// if db.Tables != nil {
+		// 	for _, table := range db.Tables {
+		// 		var tableColumns types.List
 
-		var databaseRoles types.List
+		// 		var tableColumnsAttr []attr.Value
 
-		var databaseRolesAttr []attr.Value
+		// 		for _, column := range table.Columns {
+		// 			DatabaseTablesItemsColumnsItemsValue, diags := types.ObjectValue(DatabaseTablesItemsColumnsItemsType, map[string]attr.Value{
+		// 				"name":             types.StringValue(column.Name),
+		// 				"default":          types.StringValue(column.Default),
+		// 				"is_nullable":      types.BoolValue(column.IsNullable),
+		// 				"data_type":        types.StringValue(column.DataType),
+		// 				"is_primary_key":   types.BoolValue(column.IsPrimaryKey),
+		// 				"ordinal_position": types.Int64Value(column.OrdinalPosition),
+		// 			})
 
-		for _, role := range db.Roles {
-			var rolesValue types.Object
-			if role != nil {
-				rolesValue, diags = types.ObjectValue(DatabaseRolesItemsType, map[string]attr.Value{
-					"bypass_rls":       types.BoolValue(role.BypassRls),
-					"connection_limit": types.Int64Value(role.ConnectionLimit),
-					"create_db":        types.BoolValue(role.CreateDb),
-					"create_role":      types.BoolValue(role.CreateRole),
-					"inherit":          types.BoolValue(role.Inherit),
-					"login":            types.BoolValue(role.Login),
-					"name":             types.StringValue(role.Name),
-					"replication":      types.BoolValue(role.Replication),
-					"superuser":        types.BoolValue(role.Superuser),
-				})
+		// 			resp.Diagnostics.Append(diags...)
+		// 			if resp.Diagnostics.HasError() {
+		// 				return
+		// 			}
 
-				resp.Diagnostics.Append(diags...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
-			} else {
-				rolesValue = types.ObjectNull(DatabaseRolesItemsType)
-			}
+		// 			tableColumnsAttr = append(tableColumnsAttr, DatabaseTablesItemsColumnsItemsValue)
+		// 		}
 
-			databaseRolesAttr = append(databaseRolesAttr, rolesValue)
-		}
+		// 		tableColumns, diags = types.ListValue(types.ObjectType{
+		// 			AttrTypes: DatabaseTablesItemsColumnsItemsType,
+		// 		}, tableColumnsAttr)
 
-		databaseRoles, diags = types.ListValue(types.ObjectType{
-			AttrTypes: DatabaseRolesItemsType,
-		}, databaseRolesAttr)
+		// 		resp.Diagnostics.Append(diags...)
+		// 		if resp.Diagnostics.HasError() {
+		// 			return
+		// 		}
 
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+		// 		var tableStatus types.List
 
-		database.Roles = databaseRoles
+		// 		var tableStatusAttr []attr.Value
 
-		var databaseTables types.List
+		// 		for _, status := range table.Status {
+		// 			DatabaseTablesItemsStatusItemsValue, diags := types.ObjectValue(DatabaseTablesItemsStatusItemsType, map[string]attr.Value{
+		// 				"aligned":     types.BoolValue(status.Aligned),
+		// 				"node_name":   types.StringValue(status.NodeName),
+		// 				"present":     types.BoolValue(status.Present),
+		// 				"replicating": types.BoolValue(status.Replicating),
+		// 			})
 
-		var databaseTablesAttr []attr.Value
+		// 			resp.Diagnostics.Append(diags...)
+		// 			if resp.Diagnostics.HasError() {
+		// 				return
+		// 			}
 
-		if db.Tables != nil {
-			for _, table := range db.Tables {
-				var tableColumns types.List
+		// 			tableStatusAttr = append(tableStatusAttr, DatabaseTablesItemsStatusItemsValue)
+		// 		}
 
-				var tableColumnsAttr []attr.Value
+		// 		tableStatus, diags = types.ListValue(types.ObjectType{
+		// 			AttrTypes: DatabaseTablesItemsStatusItemsType,
+		// 		}, tableStatusAttr)
 
-				for _, column := range table.Columns {
-					DatabaseTablesItemsColumnsItemsValue, diags := types.ObjectValue(DatabaseTablesItemsColumnsItemsType, map[string]attr.Value{
-						"name":             types.StringValue(column.Name),
-						"default":          types.StringValue(column.Default),
-						"is_nullable":      types.BoolValue(column.IsNullable),
-						"data_type":        types.StringValue(column.DataType),
-						"is_primary_key":   types.BoolValue(column.IsPrimaryKey),
-						"ordinal_position": types.Int64Value(column.OrdinalPosition),
-					})
+		// 		resp.Diagnostics.Append(diags...)
+		// 		if resp.Diagnostics.HasError() {
+		// 			return
+		// 		}
 
-					resp.Diagnostics.Append(diags...)
-					if resp.Diagnostics.HasError() {
-						return
-					}
+		// 		DatabaseTablesItemsValue, diags := types.ObjectValue(DatabaseTablesItemsType, map[string]attr.Value{
+		// 			"columns": tableColumns,
+		// 			"schema":  types.StringValue(table.Schema),
+		// 			"primary_key": func() types.List {
 
-					tableColumnsAttr = append(tableColumnsAttr, DatabaseTablesItemsColumnsItemsValue)
-				}
+		// 				var primaryKey types.List
 
-				tableColumns, diags = types.ListValue(types.ObjectType{
-					AttrTypes: DatabaseTablesItemsColumnsItemsType,
-				}, tableColumnsAttr)
+		// 				var primaryKeyAttr []attr.Value
 
-				resp.Diagnostics.Append(diags...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
+		// 				for _, pk := range table.PrimaryKey {
+		// 					primaryKeyAttr = append(primaryKeyAttr, types.StringValue(pk))
+		// 				}
 
-				var tableStatus types.List
+		// 				primaryKey, diags = types.ListValue(types.StringType, primaryKeyAttr)
 
-				var tableStatusAttr []attr.Value
+		// 				resp.Diagnostics.Append(diags...)
+		// 				return primaryKey
+		// 			}(),
+		// 			"replication_sets": func() types.List {
+		// 				var replicationSets types.List
 
-				for _, status := range table.Status {
-					DatabaseTablesItemsStatusItemsValue, diags := types.ObjectValue(DatabaseTablesItemsStatusItemsType, map[string]attr.Value{
-						"aligned":     types.BoolValue(status.Aligned),
-						"node_name":   types.StringValue(status.NodeName),
-						"present":     types.BoolValue(status.Present),
-						"replicating": types.BoolValue(status.Replicating),
-					})
+		// 				var replicationSetsAttr []attr.Value
 
-					resp.Diagnostics.Append(diags...)
-					if resp.Diagnostics.HasError() {
-						return
-					}
+		// 				for _, rs := range table.ReplicationSets {
+		// 					replicationSetsAttr = append(replicationSetsAttr, types.StringValue(rs))
+		// 				}
 
-					tableStatusAttr = append(tableStatusAttr, DatabaseTablesItemsStatusItemsValue)
-				}
+		// 				replicationSets, diags = types.ListValue(types.StringType, replicationSetsAttr)
 
-				tableStatus, diags = types.ListValue(types.ObjectType{
-					AttrTypes: DatabaseTablesItemsStatusItemsType,
-				}, tableStatusAttr)
+		// 				resp.Diagnostics.Append(diags...)
+		// 				return replicationSets
+		// 			}(),
+		// 			"name":   types.StringValue(table.Name),
+		// 			"status": tableStatus,
+		// 		})
 
-				resp.Diagnostics.Append(diags...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
+		// 		resp.Diagnostics.Append(diags...)
+		// 		if resp.Diagnostics.HasError() {
+		// 			return
+		// 		}
 
-				DatabaseTablesItemsValue, diags := types.ObjectValue(DatabaseTablesItemsType, map[string]attr.Value{
-					"columns": tableColumns,
-					"schema":  types.StringValue(table.Schema),
-					"primary_key": func() types.List {
+		// 		databaseTablesAttr = append(databaseTablesAttr, DatabaseTablesItemsValue)
+		// 	}
 
-						var primaryKey types.List
+		// 	databaseTables, diags = types.ListValue(types.ObjectType{
+		// 		AttrTypes: DatabaseTablesItemsType,
+		// 	}, databaseTablesAttr)
 
-						var primaryKeyAttr []attr.Value
+		// 	resp.Diagnostics.Append(diags...)
+		// 	if resp.Diagnostics.HasError() {
+		// 		return
+		// 	}
+		// } else {
+		// 	databaseTables = types.ListNull(types.ObjectType{
+		// 		AttrTypes: DatabaseTablesItemsType,
+		// 	})
+		// }
 
-						for _, pk := range table.PrimaryKey {
-							primaryKeyAttr = append(primaryKeyAttr, types.StringValue(pk))
-						}
+		// database.Tables = databaseTables
 
-						primaryKey, diags = types.ListValue(types.StringType, primaryKeyAttr)
+		// DatabaseExtensionsValue, diags := types.ObjectValue(DatabaseExtensionsType, map[string]attr.Value{
+		// 	"auto_manage": types.BoolValue(db.Extensions.AutoManage),
+		// 	"available": func() types.List {
+		// 		var available []attr.Value
+		// 		if db.Extensions.Available != nil {
+		// 			for _, extension := range db.Extensions.Available {
+		// 				available = append(available, types.StringValue(extension))
+		// 			}
+		// 		} else {
+		// 			available = append(available, types.StringValue(""))
+		// 		}
+		// 		availableList, diags := types.ListValue(types.StringType, available)
+		// 		resp.Diagnostics.Append(diags...)
+		// 		if availableList.IsNull() {
+		// 			return types.ListNull(types.StringType)
+		// 		}
+		// 		return availableList
+		// 	}(),
+		// 	"requested": func() types.List {
+		// 		var requested []attr.Value
+		// 		if db.Extensions.Requested != nil {
+		// 			for _, extension := range db.Extensions.Requested {
+		// 				requested = append(requested, types.StringValue(extension))
+		// 			}
+		// 		} else {
+		// 			requested = append(requested, types.StringValue(""))
+		// 		}
+		// 		requestedList, diags := types.ListValue(types.StringType, requested)
+		// 		resp.Diagnostics.Append(diags...)
+		// 		if requestedList.IsNull() {
+		// 			return types.ListNull(types.StringType)
+		// 		}
+		// 		return requestedList
+		// 	}(),
+		// })
 
-						resp.Diagnostics.Append(diags...)
-						return primaryKey
-					}(),
-					"replication_sets": func() types.List {
-						var replicationSets types.List
+		// resp.Diagnostics.Append(diags...)
+		// if resp.Diagnostics.HasError() {
+		// 	return
+		// }
 
-						var replicationSetsAttr []attr.Value
-
-						for _, rs := range table.ReplicationSets {
-							replicationSetsAttr = append(replicationSetsAttr, types.StringValue(rs))
-						}
-
-						replicationSets, diags = types.ListValue(types.StringType, replicationSetsAttr)
-
-						resp.Diagnostics.Append(diags...)
-						return replicationSets
-					}(),
-					"name":   types.StringValue(table.Name),
-					"status": tableStatus,
-				})
-
-				resp.Diagnostics.Append(diags...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
-
-				databaseTablesAttr = append(databaseTablesAttr, DatabaseTablesItemsValue)
-			}
-
-			databaseTables, diags = types.ListValue(types.ObjectType{
-				AttrTypes: DatabaseTablesItemsType,
-			}, databaseTablesAttr)
-
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-		} else {
-			databaseTables = types.ListNull(types.ObjectType{
-				AttrTypes: DatabaseTablesItemsType,
-			})
-		}
-
-		database.Tables = databaseTables
-
-		DatabaseExtensionsValue, diags := types.ObjectValue(DatabaseExtensionsType, map[string]attr.Value{
-			"auto_manage": types.BoolValue(db.Extensions.AutoManage),
-			"available": func() types.List {
-				var available []attr.Value
-				if db.Extensions.Available != nil {
-					for _, extension := range db.Extensions.Available {
-						available = append(available, types.StringValue(extension))
-					}
-				} else {
-					available = append(available, types.StringValue(""))
-				}
-				availableList, diags := types.ListValue(types.StringType, available)
-				resp.Diagnostics.Append(diags...)
-				if availableList.IsNull() {
-					return types.ListNull(types.StringType)
-				}
-				return availableList
-			}(),
-			"requested": func() types.List {
-				var requested []attr.Value
-				if db.Extensions.Requested != nil {
-					for _, extension := range db.Extensions.Requested {
-						requested = append(requested, types.StringValue(extension))
-					}
-				} else {
-					requested = append(requested, types.StringValue(""))
-				}
-				requestedList, diags := types.ListValue(types.StringType, requested)
-				resp.Diagnostics.Append(diags...)
-				if requestedList.IsNull() {
-					return types.ListNull(types.StringType)
-				}
-				return requestedList
-			}(),
-		})
-
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-
-		database.Extensions = DatabaseExtensionsValue
+		// database.Extensions = DatabaseExtensionsValue
 		database.PgVersion = types.StringValue(db.PgVersion)
 		database.StorageUsed = types.Int64Value(db.StorageUsed)
 
