@@ -435,8 +435,8 @@ definitions:
         type: string
         format: uuid
       cluster_id:
-        format: uuid
         type: string
+        format: uuid
       name:
         type: string
       status:
@@ -446,200 +446,7 @@ definitions:
       updated_at:
         type: string
       backups:
-        type: object
-        properties:
-          provider:
-            type: string
-          config:
-            type: array
-            items:
-              type: object
-              properties:
-                id:
-                  type: string
-                node_name:
-                  type: string
-                repositories:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                      type:
-                        type: string
-                      base_path:
-                        type: string
-                      namespace:
-                        type: string
-                      retention_full:
-                        type: integer
-                      retention_full_type:
-                        type: string
-                      s3_bucket:
-                        type: string
-                      s3_region:
-                        type: string
-                schedules:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      id:
-                        type: string
-                      type:
-                        type: string
-                      cron_expression:
-                        type: string
-      components:
-        type: array
-        items:
-          type: object
-          properties:
-            id:
-              type: string
-            name:
-              type: string
-            version:
-              type: string
-            release_date:
-              type: string
-            status:
-              type: string
-      domain:
-        type: string
-      extensions:
-        type: object
-        properties:
-          auto_manage:
-            type: boolean
-          available:
-            type: array
-            items:
-              type: string
-          requested:
-            type: array
-            items:
-              type: string
-      nodes:
-        type: array
-        items:
-          $ref: "#/definitions/Node"
-      options:
-        type: array
-        items:
-          type: string
-      pg_version:
-        type: string
-      roles:
-        type: array
-        items:
-          type: object
-          properties:
-            name:
-              type: string
-            connection_limit:
-              type: integer
-            superuser:
-              type: boolean
-            create_role:
-              type: boolean
-            create_db:
-              type: boolean
-            login:
-              type: boolean
-            inherit:
-              type: boolean
-            replication:
-              type: boolean
-            bypass_rls:
-              type: boolean
-      storage_used:
-        type: integer
-      tables:
-        type: array
-        items:
-          type: object
-          properties:
-            schema:
-              type: string
-            name:
-              type: string
-            primary_key:
-              type: array
-              items:
-                type: string
-            replication_sets:
-              type: array
-              items:
-                type: string
-            status:
-              type: array
-              items:
-                type: object
-                properties:
-                  node_name:
-                    type: string
-                  present:
-                    type: boolean
-                  aligned:
-                    type: boolean
-                  replicating:
-                    type: boolean
-            columns:
-              type: array
-              items:
-                type: object
-                properties:
-                  name:
-                    type: string
-                  ordinal_position:
-                    type: integer
-                  data_type:
-                    type: string
-                  default:
-                    type: string
-                  is_nullable:
-                    type: boolean
-                  is_primary_key:
-                    type: boolean
-
-  ReplicationResponse:
-    type: object
-    properties:
-      message:
-        type: string
-      status:
-        type: string
-
-  DatabaseDetails:
-    type: object
-    properties:
-      id:
-        format: uuid
-        type: string
-      cluster_id:
-        format: uuid
-        type: string
-      name:
-        type: string
-      status:
-        type: string
-      created_at:
-        type: string
-        format: date-time
-      updated_at:
-        type: string
-        format: date-time
-      backups:
-        type: object
-        properties:
-          provider:
-            type: string
-          config:
-            type: array
-            items:
-              $ref: "#/definitions/BackupConfig"
+        $ref: "#/definitions/BackupConfig"
       components:
         type: array
         items:
@@ -647,18 +454,7 @@ definitions:
       domain:
         type: string
       extensions:
-        type: object
-        properties:
-          auto_manage:
-            type: boolean
-          available:
-            type: array
-            items:
-              type: string
-          requested:
-            type: array
-            items:
-              type: string
+        $ref: "#/definitions/Extensions"
       nodes:
         type: array
         items:
@@ -679,6 +475,18 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/Table"
+
+  ReplicationResponse:
+    type: object
+    properties:
+      message:
+        type: string
+      status:
+        type: string
+
+  DatabaseDetails:
+    allOf:
+      - $ref: "#/definitions/Database"
 
   DatabaseCreationRequest:
     type: object
@@ -785,55 +593,7 @@ definitions:
         type: string
 
   DatabaseCreationResponse:
-    type: object
-    properties:
-      id:
-        type: string
-        format: uuid
-      cluster_id:
-        type: string
-        format: uuid
-      name:
-        type: string
-      status:
-        type: string
-      created_at:
-        type: string
-        format: date-time
-      updated_at:
-        type: string
-        format: date-time
-      backups:
-        $ref: "#/definitions/BackupConfig"
-      components:
-        type: array
-        items:
-          $ref: "#/definitions/Component"
-      domain:
-        type: string
-      extensions:
-        $ref: "#/definitions/Extensions"
-      nodes:
-        type: array
-        items:
-          $ref: "#/definitions/Node"
-      options:
-        type: array
-        items:
-          type: string
-      pg_version:
-        type: string
-      roles:
-        type: array
-        items:
-          $ref: "#/definitions/Role"
-      storage_used:
-        type: string
-        format: integer
-      tables:
-        type: array
-        items:
-          $ref: "#/definitions/Table"
+    $ref: "#/definitions/Database"
 
   Extensions:
     type: object
