@@ -576,8 +576,8 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 		Domain:      types.StringValue(database.Domain),
 		Status:      types.StringValue(database.Status),
 		ClusterID:   types.StringValue(database.ClusterID.String()),
-		CreatedAt:   types.StringValue(database.CreatedAt.String()),
-		UpdatedAt:   types.StringValue(database.UpdatedAt.String()),
+		CreatedAt:   types.StringValue(database.CreatedAt),
+		UpdatedAt:   types.StringValue(database.UpdatedAt),
 		PgVersion:   types.StringValue(database.PgVersion),
 		StorageUsed: types.Int64Value(int64(database.StorageUsed)),
 	}
@@ -1025,8 +1025,8 @@ func (r *databaseResource) Read(ctx context.Context, req resource.ReadRequest, r
 		Domain:      types.StringValue(database.Domain),
 		Status:      types.StringValue(database.Status),
 		ClusterID:   types.StringValue(database.ClusterID.String()),
-		CreatedAt:   types.StringValue(database.CreatedAt.String()),
-		UpdatedAt:   types.StringValue(database.UpdatedAt.String()),
+		CreatedAt:   types.StringValue(database.CreatedAt),
+		UpdatedAt:   types.StringValue(database.UpdatedAt),
 		PgVersion:   types.StringValue(database.PgVersion),
 		StorageUsed: types.Int64Value(int64(database.StorageUsed)),
 	}
@@ -1502,8 +1502,8 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 		Domain:      types.StringValue(database.Domain),
 		Status:      types.StringValue(database.Status),
 		ClusterID:   types.StringValue(database.ClusterID.String()),
-		CreatedAt:   types.StringValue(database.CreatedAt.String()),
-		UpdatedAt:   types.StringValue(database.UpdatedAt.String()),
+		CreatedAt:   types.StringValue(database.CreatedAt),
+		UpdatedAt:   types.StringValue(database.UpdatedAt),
 		PgVersion:   types.StringValue(database.PgVersion),
 		StorageUsed: types.Int64Value(int64(database.StorageUsed)),
 	}
