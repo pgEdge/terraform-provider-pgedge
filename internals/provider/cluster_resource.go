@@ -313,9 +313,10 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	plan.NodeLocation = types.StringValue(createdCluster.NodeLocation)
 	plan.SSHKeyID = types.StringValue(createdCluster.SSHKeyID)
 	plan.Regions = func() types.List {
-		var regions []attr.Value
-		for _, region := range createdCluster.Regions {
-			regions = append(regions, types.StringValue(region))
+		// reverse set of regions
+		regions := make([]attr.Value, len(createdCluster.Regions))
+		for i, region := range createdCluster.Regions {
+			regions[len(createdCluster.Regions)-i] = types.StringValue(region)
 		}
 		regionsList, _ := types.ListValue(types.StringType, regions)
 		return regionsList
