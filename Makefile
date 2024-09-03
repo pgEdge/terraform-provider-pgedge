@@ -13,7 +13,23 @@ test:
 docs:
 	go generate ./...
 
-# Run swagger generate
-.PHONY: swagger
-swagger:
-	swagger generate client -f swagger.yaml -c client
+PYTHON?=python3
+
+# Install dependencies
+.PHONY: install
+install:
+	go install github.com/go-swagger/go-swagger/cmd/swagger@latest
+
+.PHONY: validate
+validate:
+	swagger validate client/swagger/swagger.yaml 
+
+# Merge OpenAPI specification files
+.PHONY: merge-openapi-specs
+merge-openapi-specs:
+	$(PYTHON) client/swagger/specmerge.py client/swagger/main.yaml > client/swagger/swagger.yaml
+
+# Generate api client
+.PHONY: generate-swagger-client
+generate-client: merge-openapi-specs
+	swagger generate client -f client/swagger/swagger.yaml -c client
