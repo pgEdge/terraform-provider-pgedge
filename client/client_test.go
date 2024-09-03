@@ -5,14 +5,14 @@ import (
 	"testing"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/pgEdge/terraform-provider-pgedge/models"
+	"github.com/pgEdge/terraform-provider-pgedge/client/models"
 	"github.com/stretchr/testify/assert"
 )
 
 const (
-	BaseUrl      = "" //your base url here
-	ClientID     = "" //your client id here
-	ClientSecret = "" //your client secret here
+	BaseUrl        = "" //your base url here
+	ClientID       = "" //your client id here
+	ClientSecret   = "" //your client secret here
 	CloudAccountID = "" //your cloud account id here
 )
 
@@ -20,7 +20,6 @@ var (
 	AccessToken *string
 	DatabaseID  *strfmt.UUID
 	ClusterID   *strfmt.UUID
-
 )
 
 func TestOAuthToken(t *testing.T) {
@@ -38,37 +37,37 @@ func TestCreateCluster(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
 	request := &models.ClusterCreationRequest{
-		Name: "n3",
+		Name:           "n3",
 		CloudAccountID: CloudAccountID,
-		Regions: []string{"us-east-2"},
+		Regions:        []string{"us-east-2"},
 		Nodes: []*models.ClusterNode{
 			{
-				Name: "n1",
-				Region: "us-east-2",
-				Image: "postgres",
-				InstanceType: "t4g.small",
+				Name:             "n1",
+				Region:           "us-east-2",
+				Image:            "postgres",
+				InstanceType:     "t4g.small",
 				AvailabilityZone: "us-east-2a",
-				VolumeType: "gp2",
+				VolumeType:       "gp2",
 			},
 		},
 		Networks: []*models.Network{
 			{
-				Region: "us-east-2",
-				Cidr: "10.1.0.0/16",
+				Region:        "us-east-2",
+				Cidr:          "10.1.0.0/16",
 				PublicSubnets: []string{"10.1.0.0/24"},
 			},
 		},
 		FirewallRules: []*models.FirewallRule{
 			{
-				Name: "postgres",
-				Port: 5432,
+				Name:    "postgres",
+				Port:    5432,
 				Sources: []string{"0.0.0.0/0"},
 			},
 		},
-		ResourceTags: map[string]string {
+		ResourceTags: map[string]string{
 			"key": "value",
 		},
-		}
+	}
 
 	cluster, err := client.CreateCluster(context.Background(), request)
 	ClusterID = &cluster.ID
@@ -83,46 +82,46 @@ func TestGetCluster(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestUpdateCluster(t *testing.T){
+func TestUpdateCluster(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
 	request := &models.ClusterUpdateRequest{
 		Regions: []string{"us-east-2"},
 		Nodes: []*models.ClusterNode{
 			{
-				Name: "n1",
-				Region: "us-east-2",
-				Image: "postgres",
-				InstanceType: "t4g.small",
+				Name:             "n1",
+				Region:           "us-east-2",
+				Image:            "postgres",
+				InstanceType:     "t4g.small",
 				AvailabilityZone: "us-east-2a",
-				VolumeType: "gp2",
+				VolumeType:       "gp2",
 			},
 			{
-				Name: "n2",
-				Region: "us-east-1",
-				Image: "postgres",
-				InstanceType: "t4g.small",
+				Name:             "n2",
+				Region:           "us-east-1",
+				Image:            "postgres",
+				InstanceType:     "t4g.small",
 				AvailabilityZone: "us-east-2a",
-				VolumeType: "gp2",
+				VolumeType:       "gp2",
 			},
 		},
 		Networks: []*models.Network{
 			{
-				Region: "us-east-2",
-				Cidr: "10.1.0.0/16",
+				Region:        "us-east-2",
+				Cidr:          "10.1.0.0/16",
 				PublicSubnets: []string{"10.1.0.0/24"},
 			},
 		},
 		FirewallRules: []*models.FirewallRule{
 			{
-				Name: "postgres",
-				Port: 5432,
+				Name:    "postgres",
+				Port:    5432,
 				Sources: []string{"0.0.0.0/0"},
 			},
 		},
-		}
+	}
 
-	cluster, err := client.UpdateCluster(context.Background(),*ClusterID, request)
+	cluster, err := client.UpdateCluster(context.Background(), *ClusterID, request)
 	ClusterID = &cluster.ID
 
 	assert.Nil(t, err)
@@ -165,7 +164,7 @@ func TestUpdateDatabase(t *testing.T) {
 		},
 	}
 
-	database, err := client.UpdateDatabase(context.Background(),*DatabaseID, request)
+	database, err := client.UpdateDatabase(context.Background(), *DatabaseID, request)
 	DatabaseID = &database.ID
 
 	assert.Nil(t, err)
@@ -193,7 +192,6 @@ func TestDeleteDatabase(t *testing.T) {
 
 	assert.Nil(t, err)
 }
-
 
 func TestDeleteCluster(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)

@@ -32,4 +32,5 @@ merge-openapi-specs:
 # Generate api client
 .PHONY: generate-swagger-client
 generate-client: merge-openapi-specs
-	swagger generate client -f client/swagger/swagger.yaml -c client
+	swagger generate client -f client/swagger/swagger.yaml -c client --skip-models
+	swagger generate model -f client/swagger/swagger.yaml -t client
