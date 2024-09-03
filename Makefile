@@ -30,7 +30,7 @@ merge-openapi-specs:
 	$(PYTHON) client/swagger/specmerge.py client/swagger/main.yaml > client/swagger/swagger.yaml
 
 # Generate api client
-.PHONY: generate-swagger-client
+.PHONY: generate-api-client
 generate-client: merge-openapi-specs
-	swagger generate client -f client/swagger/swagger.yaml -c client --skip-models
 	swagger generate model -f client/swagger/swagger.yaml -t client
+	swagger generate client -f client/swagger/swagger.yaml -c client --existing-models=github.com/pgEdge/terraform-provider-pgedge/client/models --skip-models
