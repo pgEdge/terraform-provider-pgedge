@@ -6,6 +6,7 @@ package operations
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -97,11 +98,13 @@ func (o *PatchDatabasesIDOK) Code() int {
 }
 
 func (o *PatchDatabasesIDOK) Error() string {
-	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdOK %s", 200, payload)
 }
 
 func (o *PatchDatabasesIDOK) String() string {
-	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdOK %s", 200, payload)
 }
 
 func (o *PatchDatabasesIDOK) GetPayload() *models.DatabaseDetails {
@@ -165,11 +168,13 @@ func (o *PatchDatabasesIDBadRequest) Code() int {
 }
 
 func (o *PatchDatabasesIDBadRequest) Error() string {
-	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdBadRequest %s", 400, payload)
 }
 
 func (o *PatchDatabasesIDBadRequest) String() string {
-	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdBadRequest %s", 400, payload)
 }
 
 func (o *PatchDatabasesIDBadRequest) GetPayload() *models.Error {
@@ -233,11 +238,13 @@ func (o *PatchDatabasesIDUnauthorized) Code() int {
 }
 
 func (o *PatchDatabasesIDUnauthorized) Error() string {
-	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdUnauthorized %s", 401, payload)
 }
 
 func (o *PatchDatabasesIDUnauthorized) String() string {
-	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdUnauthorized %s", 401, payload)
 }
 
 func (o *PatchDatabasesIDUnauthorized) GetPayload() *models.Error {
@@ -301,11 +308,13 @@ func (o *PatchDatabasesIDInternalServerError) Code() int {
 }
 
 func (o *PatchDatabasesIDInternalServerError) Error() string {
-	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdInternalServerError %s", 500, payload)
 }
 
 func (o *PatchDatabasesIDInternalServerError) String() string {
-	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdInternalServerError %s", 500, payload)
 }
 
 func (o *PatchDatabasesIDInternalServerError) GetPayload() *models.Error {

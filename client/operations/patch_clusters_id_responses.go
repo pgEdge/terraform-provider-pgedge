@@ -6,6 +6,7 @@ package operations
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -97,11 +98,13 @@ func (o *PatchClustersIDOK) Code() int {
 }
 
 func (o *PatchClustersIDOK) Error() string {
-	return fmt.Sprintf("[PATCH /clusters/{id}][%d] patchClustersIdOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PATCH /clusters/{id}][%d] patchClustersIdOK %s", 200, payload)
 }
 
 func (o *PatchClustersIDOK) String() string {
-	return fmt.Sprintf("[PATCH /clusters/{id}][%d] patchClustersIdOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PATCH /clusters/{id}][%d] patchClustersIdOK %s", 200, payload)
 }
 
 func (o *PatchClustersIDOK) GetPayload() *models.ClusterDetails {
@@ -165,11 +168,13 @@ func (o *PatchClustersIDBadRequest) Code() int {
 }
 
 func (o *PatchClustersIDBadRequest) Error() string {
-	return fmt.Sprintf("[PATCH /clusters/{id}][%d] patchClustersIdBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PATCH /clusters/{id}][%d] patchClustersIdBadRequest %s", 400, payload)
 }
 
 func (o *PatchClustersIDBadRequest) String() string {
-	return fmt.Sprintf("[PATCH /clusters/{id}][%d] patchClustersIdBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PATCH /clusters/{id}][%d] patchClustersIdBadRequest %s", 400, payload)
 }
 
 func (o *PatchClustersIDBadRequest) GetPayload() *models.Error {
@@ -233,11 +238,13 @@ func (o *PatchClustersIDUnauthorized) Code() int {
 }
 
 func (o *PatchClustersIDUnauthorized) Error() string {
-	return fmt.Sprintf("[PATCH /clusters/{id}][%d] patchClustersIdUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PATCH /clusters/{id}][%d] patchClustersIdUnauthorized %s", 401, payload)
 }
 
 func (o *PatchClustersIDUnauthorized) String() string {
-	return fmt.Sprintf("[PATCH /clusters/{id}][%d] patchClustersIdUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PATCH /clusters/{id}][%d] patchClustersIdUnauthorized %s", 401, payload)
 }
 
 func (o *PatchClustersIDUnauthorized) GetPayload() *models.Error {
@@ -301,11 +308,13 @@ func (o *PatchClustersIDInternalServerError) Code() int {
 }
 
 func (o *PatchClustersIDInternalServerError) Error() string {
-	return fmt.Sprintf("[PATCH /clusters/{id}][%d] patchClustersIdInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PATCH /clusters/{id}][%d] patchClustersIdInternalServerError %s", 500, payload)
 }
 
 func (o *PatchClustersIDInternalServerError) String() string {
-	return fmt.Sprintf("[PATCH /clusters/{id}][%d] patchClustersIdInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[PATCH /clusters/{id}][%d] patchClustersIdInternalServerError %s", 500, payload)
 }
 
 func (o *PatchClustersIDInternalServerError) GetPayload() *models.Error {
