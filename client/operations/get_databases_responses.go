@@ -6,6 +6,7 @@ package operations
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -97,11 +98,13 @@ func (o *GetDatabasesOK) Code() int {
 }
 
 func (o *GetDatabasesOK) Error() string {
-	return fmt.Sprintf("[GET /databases][%d] getDatabasesOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /databases][%d] getDatabasesOK %s", 200, payload)
 }
 
 func (o *GetDatabasesOK) String() string {
-	return fmt.Sprintf("[GET /databases][%d] getDatabasesOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /databases][%d] getDatabasesOK %s", 200, payload)
 }
 
 func (o *GetDatabasesOK) GetPayload() []*models.Database {
@@ -163,11 +166,13 @@ func (o *GetDatabasesBadRequest) Code() int {
 }
 
 func (o *GetDatabasesBadRequest) Error() string {
-	return fmt.Sprintf("[GET /databases][%d] getDatabasesBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /databases][%d] getDatabasesBadRequest %s", 400, payload)
 }
 
 func (o *GetDatabasesBadRequest) String() string {
-	return fmt.Sprintf("[GET /databases][%d] getDatabasesBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /databases][%d] getDatabasesBadRequest %s", 400, payload)
 }
 
 func (o *GetDatabasesBadRequest) GetPayload() *models.Error {
@@ -231,11 +236,13 @@ func (o *GetDatabasesUnauthorized) Code() int {
 }
 
 func (o *GetDatabasesUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /databases][%d] getDatabasesUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /databases][%d] getDatabasesUnauthorized %s", 401, payload)
 }
 
 func (o *GetDatabasesUnauthorized) String() string {
-	return fmt.Sprintf("[GET /databases][%d] getDatabasesUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /databases][%d] getDatabasesUnauthorized %s", 401, payload)
 }
 
 func (o *GetDatabasesUnauthorized) GetPayload() *models.Error {
@@ -299,11 +306,13 @@ func (o *GetDatabasesInternalServerError) Code() int {
 }
 
 func (o *GetDatabasesInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /databases][%d] getDatabasesInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /databases][%d] getDatabasesInternalServerError %s", 500, payload)
 }
 
 func (o *GetDatabasesInternalServerError) String() string {
-	return fmt.Sprintf("[GET /databases][%d] getDatabasesInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /databases][%d] getDatabasesInternalServerError %s", 500, payload)
 }
 
 func (o *GetDatabasesInternalServerError) GetPayload() *models.Error {

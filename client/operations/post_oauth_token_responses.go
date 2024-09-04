@@ -7,6 +7,7 @@ package operations
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -91,11 +92,13 @@ func (o *PostOauthTokenOK) Code() int {
 }
 
 func (o *PostOauthTokenOK) Error() string {
-	return fmt.Sprintf("[POST /oauth/token][%d] postOauthTokenOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /oauth/token][%d] postOauthTokenOK %s", 200, payload)
 }
 
 func (o *PostOauthTokenOK) String() string {
-	return fmt.Sprintf("[POST /oauth/token][%d] postOauthTokenOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /oauth/token][%d] postOauthTokenOK %s", 200, payload)
 }
 
 func (o *PostOauthTokenOK) GetPayload() *PostOauthTokenOKBody {
@@ -159,11 +162,13 @@ func (o *PostOauthTokenBadRequest) Code() int {
 }
 
 func (o *PostOauthTokenBadRequest) Error() string {
-	return fmt.Sprintf("[POST /oauth/token][%d] postOauthTokenBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /oauth/token][%d] postOauthTokenBadRequest %s", 400, payload)
 }
 
 func (o *PostOauthTokenBadRequest) String() string {
-	return fmt.Sprintf("[POST /oauth/token][%d] postOauthTokenBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /oauth/token][%d] postOauthTokenBadRequest %s", 400, payload)
 }
 
 func (o *PostOauthTokenBadRequest) GetPayload() *PostOauthTokenBadRequestBody {
@@ -227,11 +232,13 @@ func (o *PostOauthTokenInternalServerError) Code() int {
 }
 
 func (o *PostOauthTokenInternalServerError) Error() string {
-	return fmt.Sprintf("[POST /oauth/token][%d] postOauthTokenInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /oauth/token][%d] postOauthTokenInternalServerError %s", 500, payload)
 }
 
 func (o *PostOauthTokenInternalServerError) String() string {
-	return fmt.Sprintf("[POST /oauth/token][%d] postOauthTokenInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /oauth/token][%d] postOauthTokenInternalServerError %s", 500, payload)
 }
 
 func (o *PostOauthTokenInternalServerError) GetPayload() *PostOauthTokenInternalServerErrorBody {

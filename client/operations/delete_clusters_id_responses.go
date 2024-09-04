@@ -6,6 +6,7 @@ package operations
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
@@ -96,11 +97,11 @@ func (o *DeleteClustersIDNoContent) Code() int {
 }
 
 func (o *DeleteClustersIDNoContent) Error() string {
-	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdNoContent ", 204)
+	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdNoContent", 204)
 }
 
 func (o *DeleteClustersIDNoContent) String() string {
-	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdNoContent ", 204)
+	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdNoContent", 204)
 }
 
 func (o *DeleteClustersIDNoContent) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -153,11 +154,13 @@ func (o *DeleteClustersIDBadRequest) Code() int {
 }
 
 func (o *DeleteClustersIDBadRequest) Error() string {
-	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdBadRequest %s", 400, payload)
 }
 
 func (o *DeleteClustersIDBadRequest) String() string {
-	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdBadRequest %s", 400, payload)
 }
 
 func (o *DeleteClustersIDBadRequest) GetPayload() *models.Error {
@@ -221,11 +224,13 @@ func (o *DeleteClustersIDUnauthorized) Code() int {
 }
 
 func (o *DeleteClustersIDUnauthorized) Error() string {
-	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdUnauthorized %s", 401, payload)
 }
 
 func (o *DeleteClustersIDUnauthorized) String() string {
-	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdUnauthorized %s", 401, payload)
 }
 
 func (o *DeleteClustersIDUnauthorized) GetPayload() *models.Error {
@@ -289,11 +294,13 @@ func (o *DeleteClustersIDInternalServerError) Code() int {
 }
 
 func (o *DeleteClustersIDInternalServerError) Error() string {
-	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdInternalServerError %s", 500, payload)
 }
 
 func (o *DeleteClustersIDInternalServerError) String() string {
-	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /clusters/{id}][%d] deleteClustersIdInternalServerError %s", 500, payload)
 }
 
 func (o *DeleteClustersIDInternalServerError) GetPayload() *models.Error {
