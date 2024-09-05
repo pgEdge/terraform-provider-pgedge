@@ -13,13 +13,13 @@ const (
 	BaseUrl        = "" //your base url here
 	ClientID       = "" //your client id here
 	ClientSecret   = "" //your client secret here
-	CloudAccountID = "" //your cloud account id here
 )
 
 var (
 	AccessToken *string
 	DatabaseID  *strfmt.UUID
 	ClusterID   *strfmt.UUID
+	CloudAccountID *strfmt.UUID
 )
 
 func TestOAuthToken(t *testing.T) {
@@ -38,7 +38,7 @@ func TestCreateCluster(t *testing.T) {
 
 	request := &models.ClusterCreationRequest{
 		Name:           "n3",
-		CloudAccountID: CloudAccountID,
+		CloudAccountID: CloudAccountID.String(),
 		Regions:        []string{"us-east-2"},
 		Nodes: []*models.ClusterNode{
 			{
@@ -199,4 +199,61 @@ func TestDeleteCluster(t *testing.T) {
 	err := client.DeleteCluster(context.Background(), strfmt.UUID(*ClusterID))
 
 	assert.Nil(t, err)
+}
+
+
+func TestGetCloudAccounts(t *testing.T) {
+	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+	accounts, err := client.GetCloudAccounts(context.Background())
+
+	assert.Nil(t, err)
+	assert.NotEmpty(t, accounts)
+}
+
+func TestCreateCloudAccount(t *testing.T) {
+	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+
+	accountType := "aws"
+	request := &models.CreateCloudAccountInput{
+		Name: "TestAccount",
+		Type: &accountType,
+		Credentials: map[string]interface{}{
+			"role_arn": "",
+		},
+	}
+
+
+
+	account, err := client.CreateCloudAccount(context.Background(), request)
+	CloudAccountID = account.ID
+
+	assert.Nil(t, err)
+	assert.NotNil(t, account)
+	assert.Equal(t, "TestAccount", *account.Name)
+}
+
+func TestGetCloudAccount(t *testing.T) {
+	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+	account, err := client.GetCloudAccount(context.Background(), *CloudAccountID)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, account)
+	assert.Equal(t, CloudAccountID.String(), account.ID.String())
+}
+
+func TestDeleteCloudAccount(t *testing.T) {
+	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+
+	err := client.DeleteCloudAccount(context.Background(), *CloudAccountID)
+
+	assert.Nil(t, err)
+
+}
+
+func TestGetDeletedCloudAccount(t *testing.T) {
+	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+	_, err := client.GetCloudAccount(context.Background(), *CloudAccountID)
+
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "404")
 }

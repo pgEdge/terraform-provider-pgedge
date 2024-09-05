@@ -28,7 +28,8 @@ type CloudAccount struct {
 
 	// id
 	// Required: true
-	ID *string `json:"id"`
+	// Format: uuid
+	ID *strfmt.UUID `json:"id"`
 
 	// name
 	// Required: true
@@ -93,6 +94,10 @@ func (m *CloudAccount) validateCreatedAt(formats strfmt.Registry) error {
 func (m *CloudAccount) validateID(formats strfmt.Registry) error {
 
 	if err := validate.Required("id", "body", m.ID); err != nil {
+		return err
+	}
+
+	if err := validate.FormatOf("id", "body", "uuid", m.ID.String(), formats); err != nil {
 		return err
 	}
 

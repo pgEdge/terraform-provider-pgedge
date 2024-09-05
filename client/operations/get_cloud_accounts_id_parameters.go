@@ -69,8 +69,10 @@ type GetCloudAccountsIDParams struct {
 	/* ID.
 
 	   ID of the cloud account to retrieve.
+
+	   Format: uuid
 	*/
-	ID string
+	ID strfmt.UUID
 
 	timeout    time.Duration
 	Context    context.Context
@@ -137,13 +139,13 @@ func (o *GetCloudAccountsIDParams) SetAuthorization(authorization string) {
 }
 
 // WithID adds the id to the get cloud accounts ID params
-func (o *GetCloudAccountsIDParams) WithID(id string) *GetCloudAccountsIDParams {
+func (o *GetCloudAccountsIDParams) WithID(id strfmt.UUID) *GetCloudAccountsIDParams {
 	o.SetID(id)
 	return o
 }
 
 // SetID adds the id to the get cloud accounts ID params
-func (o *GetCloudAccountsIDParams) SetID(id string) {
+func (o *GetCloudAccountsIDParams) SetID(id strfmt.UUID) {
 	o.ID = id
 }
 
@@ -161,7 +163,7 @@ func (o *GetCloudAccountsIDParams) WriteToRequest(r runtime.ClientRequest, reg s
 	}
 
 	// path param id
-	if err := r.SetPathParam("id", o.ID); err != nil {
+	if err := r.SetPathParam("id", o.ID.String()); err != nil {
 		return err
 	}
 

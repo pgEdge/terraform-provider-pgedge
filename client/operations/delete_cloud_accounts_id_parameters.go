@@ -69,8 +69,10 @@ type DeleteCloudAccountsIDParams struct {
 	/* ID.
 
 	   ID of the cloud account to offboard.
+
+	   Format: uuid
 	*/
-	ID string
+	ID strfmt.UUID
 
 	timeout    time.Duration
 	Context    context.Context
@@ -137,13 +139,13 @@ func (o *DeleteCloudAccountsIDParams) SetAuthorization(authorization string) {
 }
 
 // WithID adds the id to the delete cloud accounts ID params
-func (o *DeleteCloudAccountsIDParams) WithID(id string) *DeleteCloudAccountsIDParams {
+func (o *DeleteCloudAccountsIDParams) WithID(id strfmt.UUID) *DeleteCloudAccountsIDParams {
 	o.SetID(id)
 	return o
 }
 
 // SetID adds the id to the delete cloud accounts ID params
-func (o *DeleteCloudAccountsIDParams) SetID(id string) {
+func (o *DeleteCloudAccountsIDParams) SetID(id strfmt.UUID) {
 	o.ID = id
 }
 
@@ -161,7 +163,7 @@ func (o *DeleteCloudAccountsIDParams) WriteToRequest(r runtime.ClientRequest, re
 	}
 
 	// path param id
-	if err := r.SetPathParam("id", o.ID); err != nil {
+	if err := r.SetPathParam("id", o.ID.String()); err != nil {
 		return err
 	}
 

@@ -46,6 +46,7 @@ definitions:
       description:
         type: string
       id:
+        format: uuid
         type: string
       name:
         type: string
@@ -959,6 +960,7 @@ paths:
         required: true
         type: string
       - description: ID of the cloud account to offboard.
+        format: uuid
         in: path
         name: id
         required: true
@@ -984,6 +986,7 @@ paths:
         required: true
         type: string
       - description: ID of the cloud account to retrieve.
+        format: uuid
         in: path
         name: id
         required: true
