@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github.com/go-openapi/strfmt"
@@ -9,10 +10,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const (
-	BaseUrl        = "" //your base url here
-	ClientID       = "" //your client id here
-	ClientSecret   = "" //your client secret here
+var (
+	BaseUrl        = os.Getenv("PGEDGE_BASE_URL") //your base url here
+	ClientID       = os.Getenv("PGEDGE_CLIENT_ID") //your client id here
+	ClientSecret   = os.Getenv("PGEDGE_CLIENT_SECRET") //your client secret here
 )
 
 var (
@@ -218,11 +219,9 @@ func TestCreateCloudAccount(t *testing.T) {
 		Name: "TestAccount",
 		Type: &accountType,
 		Credentials: map[string]interface{}{
-			"role_arn": "",
+			"role_arn": os.Getenv("PGEDGE_ROLE_ARN"), //your role arn here
 		},
 	}
-
-
 
 	account, err := client.CreateCloudAccount(context.Background(), request)
 	CloudAccountID = account.ID

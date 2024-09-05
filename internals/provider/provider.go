@@ -131,6 +131,7 @@ func (p *PgEdgeProvider) Resources(ctx context.Context) []func() resource.Resour
 	return []func() resource.Resource{
 		NewDatabaseResource,
 		NewClusterResource,
+		cloudaccount.NewCloudAccountResource,
 	}
 }
 
