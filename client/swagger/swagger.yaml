@@ -1,4 +1,29 @@
 definitions:
+  AwsCredentials:
+    properties:
+      role_arn:
+        type: string
+    required:
+    - role_arn
+    type: object
+  AzureCredentials:
+    properties:
+      client_id:
+        type: string
+      client_secret:
+        type: string
+      resource_group:
+        type: string
+      subscription_id:
+        type: string
+      tenant_id:
+        type: string
+    required:
+    - tenant_id
+    - subscription_id
+    - client_id
+    - client_secret
+    type: object
   BackupConfig:
     properties:
       id:
@@ -13,6 +38,31 @@ definitions:
         items:
           $ref: '#/definitions/Schedule'
         type: array
+    type: object
+  CloudAccount:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      properties:
+        additionalProperties: true
+        type: object
+      type:
+        type: string
+      updated_at:
+        type: string
+    required:
+    - id
+    - created_at
+    - updated_at
+    - name
+    - type
+    - properties
     type: object
   ClusterCreationRequest:
     properties:
@@ -223,6 +273,21 @@ definitions:
         type: string
       version:
         type: string
+    type: object
+  CreateCloudAccountInput:
+    properties:
+      credentials:
+        additionalProperties: true
+        type: object
+      description:
+        type: string
+      name:
+        type: string
+      type:
+        type: string
+    required:
+    - type
+    - credentials
     type: object
   Database:
     properties:
@@ -608,6 +673,19 @@ definitions:
           type: string
         type: array
     type: object
+  GoogleCredentials:
+    properties:
+      project_id:
+        type: string
+      provider:
+        type: string
+      service_account:
+        type: string
+    required:
+    - project_id
+    - service_account
+    - provider
+    type: object
   Network:
     properties:
       cidr:
@@ -818,6 +896,112 @@ info:
   title: pgEdge API
   version: 1.0.0
 paths:
+  /cloud-accounts:
+    get:
+      description: Lists cloud accounts known to pgEdge.
+      parameters:
+      - format: Bearer {access_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        '200':
+          description: List cloud accounts response
+          schema:
+            items:
+              $ref: '#/definitions/CloudAccount'
+            type: array
+        '400':
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Lists cloud accounts known to pgEdge.
+    post:
+      description: Onboard a new cloud account.
+      parameters:
+      - format: Bearer {access_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: The cloud account details.
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateCloudAccountInput'
+      responses:
+        '200':
+          description: Response containing the cloud account details.
+          schema:
+            $ref: '#/definitions/CloudAccount'
+        '400':
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Onboard a new cloud account.
+  /cloud-accounts/{id}:
+    delete:
+      description: Offboard a cloud account.
+      parameters:
+      - format: Bearer {access_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of the cloud account to offboard.
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        '204':
+          description: Empty response indicating that the cloud account was offboarded.
+        '400':
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Offboard a cloud account.
+    get:
+      description: Retrieve a cloud account.
+      parameters:
+      - format: Bearer {access_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of the cloud account to retrieve.
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Response containing the cloud account details.
+          schema:
+            $ref: '#/definitions/CloudAccount'
+        '400':
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Retrieve a cloud account.
   /clusters:
     get:
       description: Retrieve a list of clusters with optional limit and offset

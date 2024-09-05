@@ -1,0 +1,187 @@
+paths:
+  /cloud-accounts:
+    get:
+      summary: Lists cloud accounts known to pgEdge.
+      description: Lists cloud accounts known to pgEdge.
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+      responses:
+        "200":
+          description: List cloud accounts response
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/CloudAccount"
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: "#/definitions/Error"
+    post:
+      summary: Onboard a new cloud account.
+      description: Onboard a new cloud account.
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+        - in: body
+          name: body
+          description: The cloud account details.
+          required: true
+          schema:
+            $ref: "#/definitions/CreateCloudAccountInput"
+      responses:
+        "200":
+          description: Response containing the cloud account details.
+          schema:
+            $ref: "#/definitions/CloudAccount"
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: "#/definitions/Error"
+  /cloud-accounts/{id}:
+    get:
+      summary: Retrieve a cloud account.
+      description: Retrieve a cloud account.
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+        - name: id
+          in: path
+          description: ID of the cloud account to retrieve.
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Response containing the cloud account details.
+          schema:
+            $ref: "#/definitions/CloudAccount"
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: "#/definitions/Error"
+    delete:
+      summary: Offboard a cloud account.
+      description: Offboard a cloud account.
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+        - name: id
+          in: path
+          description: ID of the cloud account to offboard.
+          required: true
+          type: string
+      responses:
+        "204":
+          description: Empty response indicating that the cloud account was offboarded.
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: "#/definitions/Error"
+
+definitions:
+  AwsCredentials:
+    type: object
+    required:
+      - role_arn
+    properties:
+      role_arn:
+        type: string
+  AzureCredentials:
+    type: object
+    required:
+      - tenant_id
+      - subscription_id
+      - client_id
+      - client_secret
+    properties:
+      tenant_id:
+        type: string
+      subscription_id:
+        type: string
+      client_id:
+        type: string
+      client_secret:
+        type: string
+      resource_group:
+        type: string
+  GoogleCredentials:
+    type: object
+    required:
+      - project_id
+      - service_account
+      - provider
+    properties:
+      project_id:
+        type: string
+      service_account:
+        type: string
+      provider:
+        type: string
+  CloudAccount:
+    type: object
+    required:
+      - id
+      - created_at
+      - updated_at
+      - name
+      - type
+      - properties
+    properties:
+      id:
+        type: string
+      created_at:
+        type: string
+      updated_at:
+        type: string
+      name:
+        type: string
+      description:
+        type: string
+      type:
+        type: string
+      properties:
+        type: object
+        additionalProperties: true
+  CreateCloudAccountInput:
+    type: object
+    required:
+      - type
+      - credentials
+    properties:
+      name:
+        type: string
+      description:
+        type: string
+      type:
+        type: string
+      credentials:
+        type: object
+        additionalProperties: true
