@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/pgEdge/terraform-provider-pgedge/client"
+	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/cloud-account"
 )
 
 var _ provider.Provider = &PgEdgeProvider{}
@@ -137,5 +138,6 @@ func (p *PgEdgeProvider) DataSources(ctx context.Context) []func() datasource.Da
 	return []func() datasource.DataSource{
 		NewDatabasesDataSource,
 		NewClustersDataSource,
+		cloudaccount.NewCloudAccountsDataSource,
 	}
 }
