@@ -6,13 +6,14 @@ package operations
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/pgEdge/terraform-provider-pgedge/models"
+	"github.com/pgEdge/terraform-provider-pgedge/client/models"
 )
 
 // PostDatabasesReader is a Reader for the PostDatabases structure.
@@ -97,11 +98,13 @@ func (o *PostDatabasesOK) Code() int {
 }
 
 func (o *PostDatabasesOK) Error() string {
-	return fmt.Sprintf("[POST /databases][%d] postDatabasesOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /databases][%d] postDatabasesOK %s", 200, payload)
 }
 
 func (o *PostDatabasesOK) String() string {
-	return fmt.Sprintf("[POST /databases][%d] postDatabasesOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /databases][%d] postDatabasesOK %s", 200, payload)
 }
 
 func (o *PostDatabasesOK) GetPayload() *models.DatabaseCreationResponse {
@@ -165,11 +168,13 @@ func (o *PostDatabasesBadRequest) Code() int {
 }
 
 func (o *PostDatabasesBadRequest) Error() string {
-	return fmt.Sprintf("[POST /databases][%d] postDatabasesBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /databases][%d] postDatabasesBadRequest %s", 400, payload)
 }
 
 func (o *PostDatabasesBadRequest) String() string {
-	return fmt.Sprintf("[POST /databases][%d] postDatabasesBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /databases][%d] postDatabasesBadRequest %s", 400, payload)
 }
 
 func (o *PostDatabasesBadRequest) GetPayload() *models.Error {
@@ -233,11 +238,13 @@ func (o *PostDatabasesUnauthorized) Code() int {
 }
 
 func (o *PostDatabasesUnauthorized) Error() string {
-	return fmt.Sprintf("[POST /databases][%d] postDatabasesUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /databases][%d] postDatabasesUnauthorized %s", 401, payload)
 }
 
 func (o *PostDatabasesUnauthorized) String() string {
-	return fmt.Sprintf("[POST /databases][%d] postDatabasesUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /databases][%d] postDatabasesUnauthorized %s", 401, payload)
 }
 
 func (o *PostDatabasesUnauthorized) GetPayload() *models.Error {
@@ -301,11 +308,13 @@ func (o *PostDatabasesInternalServerError) Code() int {
 }
 
 func (o *PostDatabasesInternalServerError) Error() string {
-	return fmt.Sprintf("[POST /databases][%d] postDatabasesInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /databases][%d] postDatabasesInternalServerError %s", 500, payload)
 }
 
 func (o *PostDatabasesInternalServerError) String() string {
-	return fmt.Sprintf("[POST /databases][%d] postDatabasesInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /databases][%d] postDatabasesInternalServerError %s", 500, payload)
 }
 
 func (o *PostDatabasesInternalServerError) GetPayload() *models.Error {

@@ -6,13 +6,14 @@ package operations
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/pgEdge/terraform-provider-pgedge/models"
+	"github.com/pgEdge/terraform-provider-pgedge/client/models"
 )
 
 // DeleteDatabasesIDReader is a Reader for the DeleteDatabasesID structure.
@@ -96,11 +97,11 @@ func (o *DeleteDatabasesIDNoContent) Code() int {
 }
 
 func (o *DeleteDatabasesIDNoContent) Error() string {
-	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdNoContent ", 204)
+	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdNoContent", 204)
 }
 
 func (o *DeleteDatabasesIDNoContent) String() string {
-	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdNoContent ", 204)
+	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdNoContent", 204)
 }
 
 func (o *DeleteDatabasesIDNoContent) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -153,11 +154,13 @@ func (o *DeleteDatabasesIDBadRequest) Code() int {
 }
 
 func (o *DeleteDatabasesIDBadRequest) Error() string {
-	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdBadRequest %s", 400, payload)
 }
 
 func (o *DeleteDatabasesIDBadRequest) String() string {
-	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdBadRequest %s", 400, payload)
 }
 
 func (o *DeleteDatabasesIDBadRequest) GetPayload() *models.Error {
@@ -221,11 +224,13 @@ func (o *DeleteDatabasesIDUnauthorized) Code() int {
 }
 
 func (o *DeleteDatabasesIDUnauthorized) Error() string {
-	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdUnauthorized %s", 401, payload)
 }
 
 func (o *DeleteDatabasesIDUnauthorized) String() string {
-	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdUnauthorized %s", 401, payload)
 }
 
 func (o *DeleteDatabasesIDUnauthorized) GetPayload() *models.Error {
@@ -289,11 +294,13 @@ func (o *DeleteDatabasesIDInternalServerError) Code() int {
 }
 
 func (o *DeleteDatabasesIDInternalServerError) Error() string {
-	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdInternalServerError %s", 500, payload)
 }
 
 func (o *DeleteDatabasesIDInternalServerError) String() string {
-	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdInternalServerError %s", 500, payload)
 }
 
 func (o *DeleteDatabasesIDInternalServerError) GetPayload() *models.Error {

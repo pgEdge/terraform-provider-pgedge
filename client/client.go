@@ -4,14 +4,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/sanity-io/litter"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/sanity-io/litter"
+
 	"github.com/go-openapi/strfmt"
+	"github.com/pgEdge/terraform-provider-pgedge/client/models"
 	"github.com/pgEdge/terraform-provider-pgedge/client/operations"
-	"github.com/pgEdge/terraform-provider-pgedge/models"
 
 	httptransport "github.com/go-openapi/runtime/client"
 )

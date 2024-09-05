@@ -6,13 +6,14 @@ package operations
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/pgEdge/terraform-provider-pgedge/models"
+	"github.com/pgEdge/terraform-provider-pgedge/client/models"
 )
 
 // GetClustersIDReader is a Reader for the GetClustersID structure.
@@ -97,11 +98,13 @@ func (o *GetClustersIDOK) Code() int {
 }
 
 func (o *GetClustersIDOK) Error() string {
-	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdOK %s", 200, payload)
 }
 
 func (o *GetClustersIDOK) String() string {
-	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdOK %s", 200, payload)
 }
 
 func (o *GetClustersIDOK) GetPayload() *models.ClusterDetails {
@@ -165,11 +168,13 @@ func (o *GetClustersIDBadRequest) Code() int {
 }
 
 func (o *GetClustersIDBadRequest) Error() string {
-	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdBadRequest %s", 400, payload)
 }
 
 func (o *GetClustersIDBadRequest) String() string {
-	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdBadRequest  %+v", 400, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdBadRequest %s", 400, payload)
 }
 
 func (o *GetClustersIDBadRequest) GetPayload() *models.Error {
@@ -233,11 +238,13 @@ func (o *GetClustersIDUnauthorized) Code() int {
 }
 
 func (o *GetClustersIDUnauthorized) Error() string {
-	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdUnauthorized %s", 401, payload)
 }
 
 func (o *GetClustersIDUnauthorized) String() string {
-	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdUnauthorized  %+v", 401, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdUnauthorized %s", 401, payload)
 }
 
 func (o *GetClustersIDUnauthorized) GetPayload() *models.Error {
@@ -301,11 +308,13 @@ func (o *GetClustersIDInternalServerError) Code() int {
 }
 
 func (o *GetClustersIDInternalServerError) Error() string {
-	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdInternalServerError %s", 500, payload)
 }
 
 func (o *GetClustersIDInternalServerError) String() string {
-	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdInternalServerError  %+v", 500, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdInternalServerError %s", 500, payload)
 }
 
 func (o *GetClustersIDInternalServerError) GetPayload() *models.Error {

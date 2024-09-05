@@ -6,13 +6,14 @@ package operations
 // Editing this file might prove futile when you re-run the swagger generate command
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 
 	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 
-	"github.com/pgEdge/terraform-provider-pgedge/models"
+	"github.com/pgEdge/terraform-provider-pgedge/client/models"
 )
 
 // PostDatabasesIDReplicateReader is a Reader for the PostDatabasesIDReplicate structure.
@@ -97,11 +98,13 @@ func (o *PostDatabasesIDReplicateOK) Code() int {
 }
 
 func (o *PostDatabasesIDReplicateOK) Error() string {
-	return fmt.Sprintf("[POST /databases/{id}/replicate][%d] postDatabasesIdReplicateOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /databases/{id}/replicate][%d] postDatabasesIdReplicateOK %s", 200, payload)
 }
 
 func (o *PostDatabasesIDReplicateOK) String() string {
-	return fmt.Sprintf("[POST /databases/{id}/replicate][%d] postDatabasesIdReplicateOK  %+v", 200, o.Payload)
+	payload, _ := json.Marshal(o.Payload)
+	return fmt.Sprintf("[POST /databases/{id}/replicate][%d] postDatabasesIdReplicateOK %s", 200, payload)
 }
 
 func (o *PostDatabasesIDReplicateOK) GetPayload() *models.ReplicationResponse {
@@ -164,11 +167,11 @@ func (o *PostDatabasesIDReplicateUnauthorized) Code() int {
 }
 
 func (o *PostDatabasesIDReplicateUnauthorized) Error() string {
-	return fmt.Sprintf("[POST /databases/{id}/replicate][%d] postDatabasesIdReplicateUnauthorized ", 401)
+	return fmt.Sprintf("[POST /databases/{id}/replicate][%d] postDatabasesIdReplicateUnauthorized", 401)
 }
 
 func (o *PostDatabasesIDReplicateUnauthorized) String() string {
-	return fmt.Sprintf("[POST /databases/{id}/replicate][%d] postDatabasesIdReplicateUnauthorized ", 401)
+	return fmt.Sprintf("[POST /databases/{id}/replicate][%d] postDatabasesIdReplicateUnauthorized", 401)
 }
 
 func (o *PostDatabasesIDReplicateUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -220,11 +223,11 @@ func (o *PostDatabasesIDReplicateNotFound) Code() int {
 }
 
 func (o *PostDatabasesIDReplicateNotFound) Error() string {
-	return fmt.Sprintf("[POST /databases/{id}/replicate][%d] postDatabasesIdReplicateNotFound ", 404)
+	return fmt.Sprintf("[POST /databases/{id}/replicate][%d] postDatabasesIdReplicateNotFound", 404)
 }
 
 func (o *PostDatabasesIDReplicateNotFound) String() string {
-	return fmt.Sprintf("[POST /databases/{id}/replicate][%d] postDatabasesIdReplicateNotFound ", 404)
+	return fmt.Sprintf("[POST /databases/{id}/replicate][%d] postDatabasesIdReplicateNotFound", 404)
 }
 
 func (o *PostDatabasesIDReplicateNotFound) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
@@ -276,11 +279,11 @@ func (o *PostDatabasesIDReplicateInternalServerError) Code() int {
 }
 
 func (o *PostDatabasesIDReplicateInternalServerError) Error() string {
-	return fmt.Sprintf("[POST /databases/{id}/replicate][%d] postDatabasesIdReplicateInternalServerError ", 500)
+	return fmt.Sprintf("[POST /databases/{id}/replicate][%d] postDatabasesIdReplicateInternalServerError", 500)
 }
 
 func (o *PostDatabasesIDReplicateInternalServerError) String() string {
-	return fmt.Sprintf("[POST /databases/{id}/replicate][%d] postDatabasesIdReplicateInternalServerError ", 500)
+	return fmt.Sprintf("[POST /databases/{id}/replicate][%d] postDatabasesIdReplicateInternalServerError", 500)
 }
 
 func (o *PostDatabasesIDReplicateInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
