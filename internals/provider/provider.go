@@ -13,6 +13,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/pgEdge/terraform-provider-pgedge/client"
 	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/cloud-account"
+	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/cluster"
+	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/database"
 )
 
 var _ provider.Provider = &PgEdgeProvider{}
@@ -129,16 +131,16 @@ func (p *PgEdgeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 
 func (p *PgEdgeProvider) Resources(ctx context.Context) []func() resource.Resource {
 	return []func() resource.Resource{
-		NewDatabaseResource,
-		NewClusterResource,
+		database.NewDatabaseResource,
+		cluster.NewClusterResource,
 		cloudaccount.NewCloudAccountResource,
 	}
 }
 
 func (p *PgEdgeProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
-		NewDatabasesDataSource,
-		NewClustersDataSource,
+		database.NewDatabasesDataSource,
+		cluster.NewClustersDataSource,
 		cloudaccount.NewCloudAccountsDataSource,
 	}
 }
