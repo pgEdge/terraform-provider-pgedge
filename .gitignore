@@ -23,5 +23,3 @@ go.work
 examples/clusters
 examples/databases
 examples/cloud-account
-
-internals/provider/common
