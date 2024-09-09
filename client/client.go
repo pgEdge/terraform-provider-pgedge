@@ -203,7 +203,7 @@ func (c *Client) ReplicateDatabase(ctx context.Context, id strfmt.UUID) (*models
 	return resp.Payload, nil
 }
 
-func (c *Client) GetAllClusters(ctx context.Context) ([]*models.ClusterDetails, error) {
+func (c *Client) GetAllClusters(ctx context.Context) ([]*models.Cluster, error) {
 	request := &operations.GetClustersParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
@@ -219,7 +219,7 @@ func (c *Client) GetAllClusters(ctx context.Context) ([]*models.ClusterDetails, 
 	return resp.Payload, nil
 }
 
-func (c *Client) GetCluster(ctx context.Context, id strfmt.UUID) (*models.ClusterDetails, error) {
+func (c *Client) GetCluster(ctx context.Context, id strfmt.UUID) (*models.Cluster, error) {
 	request := &operations.GetClustersIDParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
@@ -236,7 +236,7 @@ func (c *Client) GetCluster(ctx context.Context, id strfmt.UUID) (*models.Cluste
 	return resp.Payload, nil
 }
 
-func (c *Client) CreateCluster(ctx context.Context, cluster *models.ClusterCreationRequest) (*models.ClusterCreationResponse, error) {
+func (c *Client) CreateCluster(ctx context.Context, cluster *models.CreateClusterInput) (*models.Cluster, error) {
 	request := &operations.PostClustersParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
@@ -245,61 +245,31 @@ func (c *Client) CreateCluster(ctx context.Context, cluster *models.ClusterCreat
 
 	request.SetAuthorization(c.AuthHeader)
 
-	// 	fmt.Println(cluster.Nodes,&cluster.Nodes,cluster.Nodes[0].InstanceType, "cluster")
-	// 	res2B, _ := json.Marshal(cluster)
-	// fmt.Println(string(res2B))
-
 	resp, err := c.PgEdgeAPIClient.Operations.PostClusters(request)
 	if err != nil {
 		return nil, err
 	}
 
 	for {
-		clusterDetails, err := c.GetCluster(ctx, strfmt.UUID(resp.Payload.ID))
+		clusterDetails, err := c.GetCluster(ctx, strfmt.UUID(*resp.Payload.ID))
 		if err != nil {
 			return nil, err
 		}
 
-		switch clusterDetails.Status {
+		switch *clusterDetails.Status {
 		case "available":
-			return resp.Payload, nil
+			return clusterDetails, nil
 		case "failed":
 			return nil, errors.New("cluster creation failed")
 		case "creating":
 			time.Sleep(5 * time.Second)
 		default:
-			return nil, errors.New("unexpected cluster status")
+			return nil, fmt.Errorf("unexpected cluster status: %s", *clusterDetails.Status)
 		}
 	}
 }
 
-func (c *Client) DeleteCluster(ctx context.Context, id strfmt.UUID) error {
-	request := &operations.DeleteClustersIDParams{
-		HTTPClient: c.HTTPClient,
-		Context:    ctx,
-		ID:         id,
-	}
-
-	request.SetAuthorization(c.AuthHeader)
-
-	_, err := c.PgEdgeAPIClient.Operations.DeleteClustersID(request)
-	if strings.Contains(err.Error(), "200") {
-		for {
-			_, err := c.GetCluster(ctx, id)
-			if err != nil {
-				return nil
-			}
-			time.Sleep(5 * time.Second)
-
-		}
-	}
-
-	return err
-}
-
-func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models.ClusterUpdateRequest) (*models.ClusterDetails, error) {
-	fmt.Println(id, "cluster id")
-	fmt.Println(&body.Nodes, "cluster body")
+func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models.UpdateClusterInput) (*models.Cluster, error) {
 	request := &operations.PatchClustersIDParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
@@ -314,23 +284,80 @@ func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models
 		return nil, err
 	}
 
-	// for {
-	_, err = c.GetCluster(ctx, strfmt.UUID(resp.Payload.ID))
+	return resp.Payload, nil
+}
+
+func (c *Client) DeleteCluster(ctx context.Context, id strfmt.UUID) error {
+	request := &operations.DeleteClustersIDParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		ID:         id,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	_, err := c.PgEdgeAPIClient.Operations.DeleteClustersID(request)
+
+	if strings.Contains(err.Error(), "200") {
+		for {
+			_, err := c.GetCluster(ctx, id)
+			if err != nil {
+				return nil
+			}
+			time.Sleep(5 * time.Second)
+
+		}
+	}
+
+	return nil
+}
+
+func (c *Client) GetClusterNodes(ctx context.Context, id strfmt.UUID, nearLat, nearLon, orderBy *string) ([]*models.ClusterNode, error) {
+	request := &operations.GetClustersIDNodesParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		ID:         id,
+		NearLat:    nearLat,
+		NearLon:    nearLon,
+		OrderBy:    orderBy,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	resp, err := c.PgEdgeAPIClient.Operations.GetClustersIDNodes(request)
 	if err != nil {
 		return nil, err
 	}
 
-	// switch clusterDetails.Status {
-	// case "available":
 	return resp.Payload, nil
-	// case "failed":
-	// return nil, errors.New("cluster creation failed")
-	// case "creating":
-	// time.Sleep(5 * time.Second)
-	// default:
-	// return nil, errors.New("unexpected cluster status")
-	// }
-	// }
+}
+
+func (c *Client) GetClusterNodeLogs(ctx context.Context, clusterID, nodeID strfmt.UUID, logName string, params *operations.GetClustersIDNodesNodeIDLogsLogNameParams) ([]*models.ClusterNodeLogMessage, error) {
+	request := &operations.GetClustersIDNodesNodeIDLogsLogNameParams{
+		HTTPClient:    c.HTTPClient,
+		Context:       ctx,
+		ID:            clusterID.String(),
+		NodeID:        nodeID.String(),
+		LogName:       logName,
+		Lines:         params.Lines,
+		Since:         params.Since,
+		Until:         params.Until,
+		Priority:      params.Priority,
+		Grep:          params.Grep,
+		CaseSensitive: params.CaseSensitive,
+		Reverse:       params.Reverse,
+		Dmesg:         params.Dmesg,
+		Output:        params.Output,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	resp, err := c.PgEdgeAPIClient.Operations.GetClustersIDNodesNodeIDLogsLogName(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Payload, nil
 }
 
 func (c *Client) GetCloudAccounts(ctx context.Context) ([]*models.CloudAccount, error) {

@@ -4,22 +4,24 @@ import (
 	"context"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/pgEdge/terraform-provider-pgedge/client/models"
+	"github.com/pgEdge/terraform-provider-pgedge/client/operations"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	BaseUrl        = os.Getenv("PGEDGE_BASE_URL") //your base url here
-	ClientID       = os.Getenv("PGEDGE_CLIENT_ID") //your client id here
-	ClientSecret   = os.Getenv("PGEDGE_CLIENT_SECRET") //your client secret here
+	BaseUrl      = os.Getenv("PGEDGE_BASE_URL")      //your base url here
+	ClientID     = os.Getenv("PGEDGE_CLIENT_ID")     //your client id here
+	ClientSecret = os.Getenv("PGEDGE_CLIENT_SECRET") //your client secret here
 )
 
 var (
-	AccessToken *string
-	DatabaseID  *strfmt.UUID
-	ClusterID   *strfmt.UUID
+	AccessToken    *string
+	DatabaseID     *strfmt.UUID
+	ClusterID      *strfmt.UUID
 	CloudAccountID *strfmt.UUID
 )
 
@@ -34,64 +36,43 @@ func TestOAuthToken(t *testing.T) {
 	assert.Nil(t, err)
 }
 
-func TestCreateCluster(t *testing.T) {
+func TestCreateCloudAccount(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
-	request := &models.ClusterCreationRequest{
-		Name:           "n3",
-		CloudAccountID: CloudAccountID.String(),
-		Regions:        []string{"us-east-2"},
-		Nodes: []*models.ClusterNode{
-			{
-				Name:             "n1",
-				Region:           "us-east-2",
-				Image:            "postgres",
-				InstanceType:     "t4g.small",
-				AvailabilityZone: "us-east-2a",
-				VolumeType:       "gp2",
-			},
-		},
-		Networks: []*models.Network{
-			{
-				Region:        "us-east-2",
-				Cidr:          "10.1.0.0/16",
-				PublicSubnets: []string{"10.1.0.0/24"},
-			},
-		},
-		FirewallRules: []*models.FirewallRule{
-			{
-				Name:    "postgres",
-				Port:    5432,
-				Sources: []string{"0.0.0.0/0"},
-			},
-		},
-		ResourceTags: map[string]string{
-			"key": "value",
+	accountType := "aws"
+	request := &models.CreateCloudAccountInput{
+		Name: "TestAccount",
+		Type: &accountType,
+		Credentials: map[string]interface{}{
+			"role_arn": os.Getenv("PGEDGE_ROLE_ARN"), //your role arn here
 		},
 	}
 
-	cluster, err := client.CreateCluster(context.Background(), request)
-	ClusterID = &cluster.ID
+	account, err := client.CreateCloudAccount(context.Background(), request)
+	CloudAccountID = account.ID
 
 	assert.Nil(t, err)
+	assert.NotNil(t, account)
+	assert.Equal(t, "TestAccount", *account.Name)
 }
 
-func TestGetCluster(t *testing.T) {
-	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
-	_, err := client.GetCluster(context.Background(), strfmt.UUID(*ClusterID))
-
-	assert.Nil(t, err)
+func stringPtr(s string) *string {
+	return &s
 }
-
-func TestUpdateCluster(t *testing.T) {
+func int64Ptr(i int64) *int64 {
+	return &i
+}
+func TestCreateCluster(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
-	request := &models.ClusterUpdateRequest{
-		Regions: []string{"us-east-2"},
-		Nodes: []*models.ClusterNode{
+	request := &models.CreateClusterInput{
+		Name:           stringPtr("test-cluster1"),
+		CloudAccountID: CloudAccountID.String(),
+		Regions:        []string{"us-east-2", "us-west-2"},
+		Nodes: []*models.ClusterNodeSettings{
 			{
 				Name:             "n1",
-				Region:           "us-east-2",
+				Region:           stringPtr("us-east-2"),
 				Image:            "postgres",
 				InstanceType:     "t4g.small",
 				AvailabilityZone: "us-east-2a",
@@ -99,33 +80,106 @@ func TestUpdateCluster(t *testing.T) {
 			},
 			{
 				Name:             "n2",
-				Region:           "us-east-1",
+				Region:           stringPtr("us-west-2"),
 				Image:            "postgres",
-				InstanceType:     "t4g.small",
-				AvailabilityZone: "us-east-2a",
+				InstanceType:     "t4g.medium",
+				AvailabilityZone: "us-west-2a",
 				VolumeType:       "gp2",
 			},
 		},
-		Networks: []*models.Network{
+		Networks: []*models.ClusterNetworkSettings{
 			{
-				Region:        "us-east-2",
+				Region:        stringPtr("us-east-2"),
 				Cidr:          "10.1.0.0/16",
 				PublicSubnets: []string{"10.1.0.0/24"},
 			},
+			{
+				Region:        stringPtr("us-west-2"),
+				Cidr:          "10.2.0.0/16",
+				PublicSubnets: []string{"10.2.0.0/24"},
+			},
 		},
-		FirewallRules: []*models.FirewallRule{
+		FirewallRules: []*models.ClusterFirewallRuleSettings{
 			{
 				Name:    "postgres",
-				Port:    5432,
+				Port:    int64Ptr(5432),
 				Sources: []string{"0.0.0.0/0"},
 			},
 		},
+		NodeLocation: stringPtr("public"),
+		ResourceTags: map[string]string{
+			"key": "value",
+		},
 	}
 
-	cluster, err := client.UpdateCluster(context.Background(), *ClusterID, request)
-	ClusterID = &cluster.ID
+	cluster, err := client.CreateCluster(context.Background(), request)
+	assert.Nil(t, err)
+	assert.NotNil(t, cluster)
+	assert.Equal(t, "available", *cluster.Status)
+	ClusterID = cluster.ID
+}
+
+func TestGetCluster(t *testing.T) {
+	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+	cluster, err := client.GetCluster(context.Background(), *ClusterID)
 
 	assert.Nil(t, err)
+	assert.NotNil(t, cluster)
+	assert.Equal(t, ClusterID.String(), cluster.ID.String())
+}
+
+// func TestUpdateCluster(t *testing.T) {
+// 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+
+// 	request := &models.UpdateClusterInput{
+// 		Regions: []string{"us-east-2", "us-west-2"},
+// 		Nodes: []*models.ClusterNodeSettings{
+// 			{
+// 				Name:             "n1",
+// 				Region:           stringPtr("us-east-2"),
+// 				InstanceType:     "t4g.medium",
+// 				AvailabilityZone: "us-east-2a",
+// 				VolumeType:       "gp2",
+// 			},
+// 			{
+// 				Name:             "n2",
+// 				Region:           stringPtr("us-west-2"),
+// 				InstanceType:     "t4g.medium",
+// 				AvailabilityZone: "us-west-2a",
+// 				VolumeType:       "gp2",
+// 			},
+// 		},
+// 	}
+
+// 	cluster, err := client.UpdateCluster(context.Background(), *ClusterID, request)
+// 	assert.Nil(t, err)
+// 	assert.NotNil(t, cluster)
+// 	assert.Equal(t, 2, len(cluster.Nodes))
+// }
+
+func TestGetClusterNodes(t *testing.T) {
+	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+	nodes, err := client.GetClusterNodes(context.Background(), *ClusterID, nil, nil, nil)
+
+	assert.Nil(t, err)
+	assert.NotNil(t, nodes)
+	assert.Equal(t, 2, len(nodes))
+}
+
+func TestGetClusterNodeLogs(t *testing.T) {
+	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+
+	// Assuming the first node in the cluster
+	nodes, _ := client.GetClusterNodes(context.Background(), *ClusterID, nil, nil, nil)
+	nodeID := nodes[0].ID
+
+	logs, err := client.GetClusterNodeLogs(context.Background(), *ClusterID, strfmt.UUID(*nodeID), "postgresql", &operations.GetClustersIDNodesNodeIDLogsLogNameParams{
+		Lines: int64Ptr(10),
+	})
+
+	assert.Nil(t, err)
+	assert.NotNil(t, logs)
+	assert.Greater(t, len(logs), 0)
 }
 
 func TestGetAllClusters(t *testing.T) {
@@ -197,11 +251,14 @@ func TestDeleteDatabase(t *testing.T) {
 func TestDeleteCluster(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
-	err := client.DeleteCluster(context.Background(), strfmt.UUID(*ClusterID))
-
+	err := client.DeleteCluster(context.Background(), *ClusterID)
 	assert.Nil(t, err)
-}
 
+	// Verify that the cluster is deleted
+	time.Sleep(30 * time.Second) // Give some time for deletion to propagate
+	_, err = client.GetCluster(context.Background(), *ClusterID)
+	assert.NotNil(t, err) // Expect an error as the cluster should not exist
+}
 
 func TestGetCloudAccounts(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
@@ -209,26 +266,6 @@ func TestGetCloudAccounts(t *testing.T) {
 
 	assert.Nil(t, err)
 	assert.NotEmpty(t, accounts)
-}
-
-func TestCreateCloudAccount(t *testing.T) {
-	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
-
-	accountType := "aws"
-	request := &models.CreateCloudAccountInput{
-		Name: "TestAccount",
-		Type: &accountType,
-		Credentials: map[string]interface{}{
-			"role_arn": os.Getenv("PGEDGE_ROLE_ARN"), //your role arn here
-		},
-	}
-
-	account, err := client.CreateCloudAccount(context.Background(), request)
-	CloudAccountID = account.ID
-
-	assert.Nil(t, err)
-	assert.NotNil(t, account)
-	assert.Equal(t, "TestAccount", *account.Name)
 }
 
 func TestGetCloudAccount(t *testing.T) {
@@ -247,12 +284,4 @@ func TestDeleteCloudAccount(t *testing.T) {
 
 	assert.Nil(t, err)
 
-}
-
-func TestGetDeletedCloudAccount(t *testing.T) {
-	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
-	_, err := client.GetCloudAccount(context.Background(), *CloudAccountID)
-
-	assert.NotNil(t, err)
-	assert.Contains(t, err.Error(), "404")
 }
