@@ -66,9 +66,12 @@ type DeleteClustersIDParams struct {
 	// Format: Bearer {access_token}
 	Authorization string
 
-	// ID.
-	//
-	// Format: uuid
+	/* ID.
+
+	   ID of the cluster to delete.
+
+	   Format: uuid
+	*/
 	ID strfmt.UUID
 
 	timeout    time.Duration

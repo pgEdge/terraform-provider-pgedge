@@ -63,25 +63,19 @@ GetClustersParams contains all the parameters to send to the API endpoint
 type GetClustersParams struct {
 
 	// Authorization.
-	//
-	// Format: Bearer {access_token}
 	Authorization string
 
 	/* Limit.
 
-	   Number of clusters to retrieve (default is 10)
-
-	   Format: int32
+	   Maximum number of results to return.
 	*/
-	Limit *int32
+	Limit *int64
 
 	/* Offset.
 
-	   Offset for pagination (default is 0)
-
-	   Format: int32
+	   Offset into the results, for pagination.
 	*/
-	Offset *int32
+	Offset *int64
 
 	timeout    time.Duration
 	Context    context.Context
@@ -148,24 +142,24 @@ func (o *GetClustersParams) SetAuthorization(authorization string) {
 }
 
 // WithLimit adds the limit to the get clusters params
-func (o *GetClustersParams) WithLimit(limit *int32) *GetClustersParams {
+func (o *GetClustersParams) WithLimit(limit *int64) *GetClustersParams {
 	o.SetLimit(limit)
 	return o
 }
 
 // SetLimit adds the limit to the get clusters params
-func (o *GetClustersParams) SetLimit(limit *int32) {
+func (o *GetClustersParams) SetLimit(limit *int64) {
 	o.Limit = limit
 }
 
 // WithOffset adds the offset to the get clusters params
-func (o *GetClustersParams) WithOffset(offset *int32) *GetClustersParams {
+func (o *GetClustersParams) WithOffset(offset *int64) *GetClustersParams {
 	o.SetOffset(offset)
 	return o
 }
 
 // SetOffset adds the offset to the get clusters params
-func (o *GetClustersParams) SetOffset(offset *int32) {
+func (o *GetClustersParams) SetOffset(offset *int64) {
 	o.Offset = offset
 }
 
@@ -185,12 +179,12 @@ func (o *GetClustersParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.R
 	if o.Limit != nil {
 
 		// query param limit
-		var qrLimit int32
+		var qrLimit int64
 
 		if o.Limit != nil {
 			qrLimit = *o.Limit
 		}
-		qLimit := swag.FormatInt32(qrLimit)
+		qLimit := swag.FormatInt64(qrLimit)
 		if qLimit != "" {
 
 			if err := r.SetQueryParam("limit", qLimit); err != nil {
@@ -202,12 +196,12 @@ func (o *GetClustersParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.R
 	if o.Offset != nil {
 
 		// query param offset
-		var qrOffset int32
+		var qrOffset int64
 
 		if o.Offset != nil {
 			qrOffset = *o.Offset
 		}
-		qOffset := swag.FormatInt32(qrOffset)
+		qOffset := swag.FormatInt64(qrOffset)
 		if qOffset != "" {
 
 			if err := r.SetQueryParam("offset", qOffset); err != nil {

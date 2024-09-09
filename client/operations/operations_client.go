@@ -70,6 +70,10 @@ type ClientService interface {
 
 	GetClustersID(params *GetClustersIDParams, opts ...ClientOption) (*GetClustersIDOK, error)
 
+	GetClustersIDNodes(params *GetClustersIDNodesParams, opts ...ClientOption) (*GetClustersIDNodesOK, error)
+
+	GetClustersIDNodesNodeIDLogsLogName(params *GetClustersIDNodesNodeIDLogsLogNameParams, opts ...ClientOption) (*GetClustersIDNodesNodeIDLogsLogNameOK, error)
+
 	GetDatabases(params *GetDatabasesParams, opts ...ClientOption) (*GetDatabasesOK, error)
 
 	GetDatabasesID(params *GetDatabasesIDParams, opts ...ClientOption) (*GetDatabasesIDOK, error)
@@ -132,9 +136,9 @@ func (a *Client) DeleteCloudAccountsID(params *DeleteCloudAccountsIDParams, opts
 }
 
 /*
-DeleteClustersID deletes cluster by ID
+DeleteClustersID deletes a pg edge database cluster
 
-Delete the cluster with the specified ID
+Deletes a pgEdge database cluster.
 */
 func (a *Client) DeleteClustersID(params *DeleteClustersIDParams, opts ...ClientOption) (*DeleteClustersIDNoContent, error) {
 	// TODO: Validate the params before sending
@@ -292,9 +296,9 @@ func (a *Client) GetCloudAccountsID(params *GetCloudAccountsIDParams, opts ...Cl
 }
 
 /*
-GetClusters gets all clusters
+GetClusters lists existing pg edge database clusters
 
-Retrieve a list of clusters with optional limit and offset
+Lists existing pgEdge database clusters.
 */
 func (a *Client) GetClusters(params *GetClustersParams, opts ...ClientOption) (*GetClustersOK, error) {
 	// TODO: Validate the params before sending
@@ -332,9 +336,9 @@ func (a *Client) GetClusters(params *GetClustersParams, opts ...ClientOption) (*
 }
 
 /*
-GetClustersID gets cluster by ID
+GetClustersID retrieves a pg edge database cluster given its ID
 
-Retrieve detailed information about a specific cluster
+Retrieve a pgEdge database cluster given its ID.
 */
 func (a *Client) GetClustersID(params *GetClustersIDParams, opts ...ClientOption) (*GetClustersIDOK, error) {
 	// TODO: Validate the params before sending
@@ -368,6 +372,86 @@ func (a *Client) GetClustersID(params *GetClustersIDParams, opts ...ClientOption
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for GetClustersID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetClustersIDNodes lists nodes belonging to a specific cluster
+
+Lists nodes belonging to a specific cluster.
+*/
+func (a *Client) GetClustersIDNodes(params *GetClustersIDNodesParams, opts ...ClientOption) (*GetClustersIDNodesOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetClustersIDNodesParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "GetClustersIDNodes",
+		Method:             "GET",
+		PathPattern:        "/clusters/{id}/nodes",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetClustersIDNodesReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetClustersIDNodesOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetClustersIDNodes: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetClustersIDNodesNodeIDLogsLogName retrieves messages from log file on a database node
+
+Retrieve messages from log file on a database node.
+*/
+func (a *Client) GetClustersIDNodesNodeIDLogsLogName(params *GetClustersIDNodesNodeIDLogsLogNameParams, opts ...ClientOption) (*GetClustersIDNodesNodeIDLogsLogNameOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetClustersIDNodesNodeIDLogsLogNameParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "GetClustersIDNodesNodeIDLogsLogName",
+		Method:             "GET",
+		PathPattern:        "/clusters/{id}/nodes/{node_id}/logs/{log_name}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetClustersIDNodesNodeIDLogsLogNameReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetClustersIDNodesNodeIDLogsLogNameOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetClustersIDNodesNodeIDLogsLogName: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
@@ -452,9 +536,9 @@ func (a *Client) GetDatabasesID(params *GetDatabasesIDParams, opts ...ClientOpti
 }
 
 /*
-PatchClustersID updates cluster by ID
+PatchClustersID updates a pg edge database cluster
 
-Update the cluster with the specified ID
+Update a pgEdge database cluster.
 */
 func (a *Client) PatchClustersID(params *PatchClustersIDParams, opts ...ClientOption) (*PatchClustersIDOK, error) {
 	// TODO: Validate the params before sending
@@ -572,9 +656,9 @@ func (a *Client) PostCloudAccounts(params *PostCloudAccountsParams, opts ...Clie
 }
 
 /*
-PostClusters creates a new cluster
+PostClusters creates a new pg edge database cluster
 
-Create a new cluster with the specified options
+Creates a new pgEdge database cluster.
 */
 func (a *Client) PostClusters(params *PostClustersParams, opts ...ClientOption) (*PostClustersOK, error) {
 	// TODO: Validate the params before sending

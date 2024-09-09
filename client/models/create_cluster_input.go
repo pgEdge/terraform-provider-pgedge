@@ -15,10 +15,10 @@ import (
 	"github.com/go-openapi/validate"
 )
 
-// Cluster cluster
+// CreateClusterInput create cluster input
 //
-// swagger:model Cluster
-type Cluster struct {
+// swagger:model CreateClusterInput
+type CreateClusterInput struct {
 
 	// backup store ids
 	BackupStoreIds []string `json:"backup_store_ids"`
@@ -27,20 +27,13 @@ type Cluster struct {
 	Capacity int64 `json:"capacity,omitempty"`
 
 	// cloud account
-	// Required: true
-	CloudAccount *CloudAccountProperties `json:"cloud_account"`
+	CloudAccount *CloudAccountProperties `json:"cloud_account,omitempty"`
 
-	// created at
-	// Required: true
-	CreatedAt *string `json:"created_at"`
+	// cloud account id
+	CloudAccountID string `json:"cloud_account_id,omitempty"`
 
 	// firewall rules
 	FirewallRules []*ClusterFirewallRuleSettings `json:"firewall_rules"`
-
-	// id
-	// Required: true
-	// Format: uuid
-	ID *strfmt.UUID `json:"id"`
 
 	// name
 	// Required: true
@@ -65,29 +58,17 @@ type Cluster struct {
 
 	// ssh key id
 	SSHKeyID string `json:"ssh_key_id,omitempty"`
-
-	// status
-	// Required: true
-	Status *string `json:"status"`
 }
 
-// Validate validates this cluster
-func (m *Cluster) Validate(formats strfmt.Registry) error {
+// Validate validates this create cluster input
+func (m *CreateClusterInput) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateCloudAccount(formats); err != nil {
 		res = append(res, err)
 	}
 
-	if err := m.validateCreatedAt(formats); err != nil {
-		res = append(res, err)
-	}
-
 	if err := m.validateFirewallRules(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateID(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -111,20 +92,15 @@ func (m *Cluster) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
-	if err := m.validateStatus(formats); err != nil {
-		res = append(res, err)
-	}
-
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
 	return nil
 }
 
-func (m *Cluster) validateCloudAccount(formats strfmt.Registry) error {
-
-	if err := validate.Required("cloud_account", "body", m.CloudAccount); err != nil {
-		return err
+func (m *CreateClusterInput) validateCloudAccount(formats strfmt.Registry) error {
+	if swag.IsZero(m.CloudAccount) { // not required
+		return nil
 	}
 
 	if m.CloudAccount != nil {
@@ -141,16 +117,7 @@ func (m *Cluster) validateCloudAccount(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Cluster) validateCreatedAt(formats strfmt.Registry) error {
-
-	if err := validate.Required("created_at", "body", m.CreatedAt); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Cluster) validateFirewallRules(formats strfmt.Registry) error {
+func (m *CreateClusterInput) validateFirewallRules(formats strfmt.Registry) error {
 	if swag.IsZero(m.FirewallRules) { // not required
 		return nil
 	}
@@ -176,20 +143,7 @@ func (m *Cluster) validateFirewallRules(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Cluster) validateID(formats strfmt.Registry) error {
-
-	if err := validate.Required("id", "body", m.ID); err != nil {
-		return err
-	}
-
-	if err := validate.FormatOf("id", "body", "uuid", m.ID.String(), formats); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *Cluster) validateName(formats strfmt.Registry) error {
+func (m *CreateClusterInput) validateName(formats strfmt.Registry) error {
 
 	if err := validate.Required("name", "body", m.Name); err != nil {
 		return err
@@ -198,7 +152,7 @@ func (m *Cluster) validateName(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Cluster) validateNetworks(formats strfmt.Registry) error {
+func (m *CreateClusterInput) validateNetworks(formats strfmt.Registry) error {
 	if swag.IsZero(m.Networks) { // not required
 		return nil
 	}
@@ -224,7 +178,7 @@ func (m *Cluster) validateNetworks(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Cluster) validateNodeLocation(formats strfmt.Registry) error {
+func (m *CreateClusterInput) validateNodeLocation(formats strfmt.Registry) error {
 
 	if err := validate.Required("node_location", "body", m.NodeLocation); err != nil {
 		return err
@@ -233,7 +187,7 @@ func (m *Cluster) validateNodeLocation(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Cluster) validateNodes(formats strfmt.Registry) error {
+func (m *CreateClusterInput) validateNodes(formats strfmt.Registry) error {
 	if swag.IsZero(m.Nodes) { // not required
 		return nil
 	}
@@ -259,7 +213,7 @@ func (m *Cluster) validateNodes(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Cluster) validateRegions(formats strfmt.Registry) error {
+func (m *CreateClusterInput) validateRegions(formats strfmt.Registry) error {
 
 	if err := validate.Required("regions", "body", m.Regions); err != nil {
 		return err
@@ -268,17 +222,8 @@ func (m *Cluster) validateRegions(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Cluster) validateStatus(formats strfmt.Registry) error {
-
-	if err := validate.Required("status", "body", m.Status); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// ContextValidate validate this cluster based on the context it is used
-func (m *Cluster) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+// ContextValidate validate this create cluster input based on the context it is used
+func (m *CreateClusterInput) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.contextValidateCloudAccount(ctx, formats); err != nil {
@@ -303,9 +248,13 @@ func (m *Cluster) ContextValidate(ctx context.Context, formats strfmt.Registry) 
 	return nil
 }
 
-func (m *Cluster) contextValidateCloudAccount(ctx context.Context, formats strfmt.Registry) error {
+func (m *CreateClusterInput) contextValidateCloudAccount(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.CloudAccount != nil {
+
+		if swag.IsZero(m.CloudAccount) { // not required
+			return nil
+		}
 
 		if err := m.CloudAccount.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
@@ -320,7 +269,7 @@ func (m *Cluster) contextValidateCloudAccount(ctx context.Context, formats strfm
 	return nil
 }
 
-func (m *Cluster) contextValidateFirewallRules(ctx context.Context, formats strfmt.Registry) error {
+func (m *CreateClusterInput) contextValidateFirewallRules(ctx context.Context, formats strfmt.Registry) error {
 
 	for i := 0; i < len(m.FirewallRules); i++ {
 
@@ -345,7 +294,7 @@ func (m *Cluster) contextValidateFirewallRules(ctx context.Context, formats strf
 	return nil
 }
 
-func (m *Cluster) contextValidateNetworks(ctx context.Context, formats strfmt.Registry) error {
+func (m *CreateClusterInput) contextValidateNetworks(ctx context.Context, formats strfmt.Registry) error {
 
 	for i := 0; i < len(m.Networks); i++ {
 
@@ -370,7 +319,7 @@ func (m *Cluster) contextValidateNetworks(ctx context.Context, formats strfmt.Re
 	return nil
 }
 
-func (m *Cluster) contextValidateNodes(ctx context.Context, formats strfmt.Registry) error {
+func (m *CreateClusterInput) contextValidateNodes(ctx context.Context, formats strfmt.Registry) error {
 
 	for i := 0; i < len(m.Nodes); i++ {
 
@@ -396,7 +345,7 @@ func (m *Cluster) contextValidateNodes(ctx context.Context, formats strfmt.Regis
 }
 
 // MarshalBinary interface implementation
-func (m *Cluster) MarshalBinary() ([]byte, error) {
+func (m *CreateClusterInput) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -404,8 +353,8 @@ func (m *Cluster) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *Cluster) UnmarshalBinary(b []byte) error {
-	var res Cluster
+func (m *CreateClusterInput) UnmarshalBinary(b []byte) error {
+	var res CreateClusterInput
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

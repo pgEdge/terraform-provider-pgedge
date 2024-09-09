@@ -42,12 +42,6 @@ func (o *GetClustersIDReader) ReadResponse(response runtime.ClientResponse, cons
 			return nil, err
 		}
 		return nil, result
-	case 500:
-		result := NewGetClustersIDInternalServerError()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
 	default:
 		return nil, runtime.NewAPIError("[GET /clusters/{id}] GetClustersID", response, response.Code())
 	}
@@ -61,10 +55,10 @@ func NewGetClustersIDOK() *GetClustersIDOK {
 /*
 GetClustersIDOK describes a response with status code 200, with default header values.
 
-Successful response
+Response containing the cluster definition.
 */
 type GetClustersIDOK struct {
-	Payload *models.ClusterDetails
+	Payload *models.Cluster
 }
 
 // IsSuccess returns true when this get clusters Id o k response has a 2xx status code
@@ -107,13 +101,13 @@ func (o *GetClustersIDOK) String() string {
 	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdOK %s", 200, payload)
 }
 
-func (o *GetClustersIDOK) GetPayload() *models.ClusterDetails {
+func (o *GetClustersIDOK) GetPayload() *models.Cluster {
 	return o.Payload
 }
 
 func (o *GetClustersIDOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.ClusterDetails)
+	o.Payload = new(models.Cluster)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
@@ -131,7 +125,7 @@ func NewGetClustersIDBadRequest() *GetClustersIDBadRequest {
 /*
 GetClustersIDBadRequest describes a response with status code 400, with default header values.
 
-Bad Request
+Bad request.
 */
 type GetClustersIDBadRequest struct {
 	Payload *models.Error
@@ -201,7 +195,7 @@ func NewGetClustersIDUnauthorized() *GetClustersIDUnauthorized {
 /*
 GetClustersIDUnauthorized describes a response with status code 401, with default header values.
 
-Unauthorized
+Authorization information is missing or invalid.
 */
 type GetClustersIDUnauthorized struct {
 	Payload *models.Error
@@ -252,76 +246,6 @@ func (o *GetClustersIDUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *GetClustersIDUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Error)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewGetClustersIDInternalServerError creates a GetClustersIDInternalServerError with default headers values
-func NewGetClustersIDInternalServerError() *GetClustersIDInternalServerError {
-	return &GetClustersIDInternalServerError{}
-}
-
-/*
-GetClustersIDInternalServerError describes a response with status code 500, with default header values.
-
-Internal Server Error
-*/
-type GetClustersIDInternalServerError struct {
-	Payload *models.Error
-}
-
-// IsSuccess returns true when this get clusters Id internal server error response has a 2xx status code
-func (o *GetClustersIDInternalServerError) IsSuccess() bool {
-	return false
-}
-
-// IsRedirect returns true when this get clusters Id internal server error response has a 3xx status code
-func (o *GetClustersIDInternalServerError) IsRedirect() bool {
-	return false
-}
-
-// IsClientError returns true when this get clusters Id internal server error response has a 4xx status code
-func (o *GetClustersIDInternalServerError) IsClientError() bool {
-	return false
-}
-
-// IsServerError returns true when this get clusters Id internal server error response has a 5xx status code
-func (o *GetClustersIDInternalServerError) IsServerError() bool {
-	return true
-}
-
-// IsCode returns true when this get clusters Id internal server error response a status code equal to that given
-func (o *GetClustersIDInternalServerError) IsCode(code int) bool {
-	return code == 500
-}
-
-// Code gets the status code for the get clusters Id internal server error response
-func (o *GetClustersIDInternalServerError) Code() int {
-	return 500
-}
-
-func (o *GetClustersIDInternalServerError) Error() string {
-	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdInternalServerError %s", 500, payload)
-}
-
-func (o *GetClustersIDInternalServerError) String() string {
-	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[GET /clusters/{id}][%d] getClustersIdInternalServerError %s", 500, payload)
-}
-
-func (o *GetClustersIDInternalServerError) GetPayload() *models.Error {
-	return o.Payload
-}
-
-func (o *GetClustersIDInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

@@ -64,15 +64,13 @@ PostClustersParams contains all the parameters to send to the API endpoint
 type PostClustersParams struct {
 
 	// Authorization.
-	//
-	// Format: Bearer {access_token}
 	Authorization string
 
 	/* Body.
 
-	   Cluster creation request body
+	   The cluster definition.
 	*/
-	Body *models.ClusterCreationRequest
+	Body *models.CreateClusterInput
 
 	timeout    time.Duration
 	Context    context.Context
@@ -139,13 +137,13 @@ func (o *PostClustersParams) SetAuthorization(authorization string) {
 }
 
 // WithBody adds the body to the post clusters params
-func (o *PostClustersParams) WithBody(body *models.ClusterCreationRequest) *PostClustersParams {
+func (o *PostClustersParams) WithBody(body *models.CreateClusterInput) *PostClustersParams {
 	o.SetBody(body)
 	return o
 }
 
 // SetBody adds the body to the post clusters params
-func (o *PostClustersParams) SetBody(body *models.ClusterCreationRequest) {
+func (o *PostClustersParams) SetBody(body *models.CreateClusterInput) {
 	o.Body = body
 }
 
