@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sanity-io/litter"
-
 	"github.com/go-openapi/strfmt"
 	"github.com/pgEdge/terraform-provider-pgedge/client/models"
 	"github.com/pgEdge/terraform-provider-pgedge/client/operations"
@@ -53,14 +51,6 @@ func NewClient(baseUrl, authHeader string) *Client {
 }
 
 func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
-	if c.PgEdgeAPIClient == nil {
-		return nil, fmt.Errorf("PgEdgeAPIClient is nil")
-	}
-
-	if c.PgEdgeAPIClient.Operations == nil {
-		return nil, fmt.Errorf("Operations is nil")
-	}
-
 	request := &operations.GetDatabasesParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
@@ -76,7 +66,46 @@ func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
 	return resp.Payload, nil
 }
 
-func (c *Client) GetDatabase(ctx context.Context, id strfmt.UUID) (*models.DatabaseDetails, error) {
+func (c *Client) CreateDatabase(ctx context.Context, database *models.CreateDatabaseInput) (*models.Database, error) {
+	request := &operations.PostDatabasesParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		Body:       database,
+	}
+	request.SetAuthorization(c.AuthHeader)
+
+	resp, err := c.PgEdgeAPIClient.Operations.PostDatabases(request)
+	if err != nil {
+		return nil, err
+	}
+
+	// Poll for database creation
+	for {
+		databaseDetails, err := c.GetDatabase(ctx, *resp.Payload.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		if databaseDetails.Status == nil {
+			return nil, errors.New("database status is nil")
+		}
+
+		switch *databaseDetails.Status {
+		case "available":
+			return databaseDetails, nil
+		case "failed":
+			return nil, errors.New("database creation failed")
+		case "creating":
+			time.Sleep(5 * time.Second)
+		default:
+			return nil, fmt.Errorf("unexpected database status: %s", *databaseDetails.Status)
+		}
+	}
+}
+
+
+
+func (c *Client) GetDatabase(ctx context.Context, id strfmt.UUID) (*models.Database, error) {
 	request := &operations.GetDatabasesIDParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
@@ -93,40 +122,7 @@ func (c *Client) GetDatabase(ctx context.Context, id strfmt.UUID) (*models.Datab
 	return resp.Payload, nil
 }
 
-func (c *Client) CreateDatabase(ctx context.Context, database *models.DatabaseCreationRequest) (*models.DatabaseCreationResponse, error) {
-	request := &operations.PostDatabasesParams{
-		HTTPClient: c.HTTPClient,
-		Context:    ctx,
-		Body:       database,
-	}
-	request.SetAuthorization(c.AuthHeader)
-
-	resp, err := c.PgEdgeAPIClient.Operations.PostDatabases(request)
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		databaseDetails, err := c.GetDatabase(ctx, resp.Payload.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		switch databaseDetails.Status {
-		case "available":
-			litter.Dump(databaseDetails)
-			return resp.Payload, nil
-		case "failed":
-			return nil, errors.New("database creation failed")
-		case "creating":
-			time.Sleep(5 * time.Second)
-		default:
-			return nil, errors.New("unexpected database status")
-		}
-	}
-}
-
-func (c *Client) UpdateDatabase(ctx context.Context, id strfmt.UUID, body *models.DatabaseUpdateRequest) (*models.DatabaseDetails, error) {
+func (c *Client) UpdateDatabase(ctx context.Context, id strfmt.UUID, body *models.UpdateDatabaseInput) (*models.Database, error) {
 	request := &operations.PatchDatabasesIDParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
@@ -141,25 +137,7 @@ func (c *Client) UpdateDatabase(ctx context.Context, id strfmt.UUID, body *model
 		return nil, err
 	}
 
-	// for {
-	databaseDetails, err := c.GetDatabase(ctx, resp.Payload.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Println(databaseDetails, "databse details")
-
-	// switch databaseDetails.Status {
-	// case "available":
 	return resp.Payload, nil
-	// case "failed":
-	// return nil, errors.New("database creation failed")
-	// case "creating":
-	// time.Sleep(5 * time.Second)
-	// default:
-	// return nil, errors.New("unexpected database status")
-	// }
-	// }
 }
 
 func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) error {
@@ -183,25 +161,13 @@ func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) error {
 		}
 	}
 
-	return err
-}
-
-func (c *Client) ReplicateDatabase(ctx context.Context, id strfmt.UUID) (*models.ReplicationResponse, error) {
-	request := &operations.PostDatabasesIDReplicateParams{
-		HTTPClient: c.HTTPClient,
-		Context:    ctx,
-		ID:         id,
-	}
-
-	request.SetAuthorization(c.AuthHeader)
-
-	resp, err := c.PgEdgeAPIClient.Operations.PostDatabasesIDReplicate(request)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return resp.Payload, nil
+	return nil
 }
+
 
 func (c *Client) GetAllClusters(ctx context.Context) ([]*models.Cluster, error) {
 	request := &operations.GetClustersParams{

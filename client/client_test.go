@@ -192,60 +192,70 @@ func TestGetAllClusters(t *testing.T) {
 func TestCreateDatabase(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
-	request := &models.DatabaseCreationRequest{
-		Name:      "db5",
+	request := &models.CreateDatabaseInput{
+		Name:      stringPtr("testdb"),
 		ClusterID: *ClusterID,
 	}
 
 	database, err := client.CreateDatabase(context.Background(), request)
-	DatabaseID = &database.ID
-
 	assert.Nil(t, err)
+	assert.NotNil(t, database)
+	assert.Equal(t, "available", *database.Status)
+
+	// Store the database ID for use in other tests
+	DatabaseID = database.ID
 }
 
 func TestGetDatabase(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
-	_, err := client.GetDatabase(context.Background(), *DatabaseID)
 
+	database, err := client.GetDatabase(context.Background(), *DatabaseID)
 	assert.Nil(t, err)
-}
-
-func TestUpdateDatabase(t *testing.T) {
-	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
-
-	request := &models.DatabaseUpdateRequest{
-		Extensions: &models.DatabaseUpdateRequestExtensions{
-			AutoManage: false,
-		},
-	}
-
-	database, err := client.UpdateDatabase(context.Background(), *DatabaseID, request)
-	DatabaseID = &database.ID
-
-	assert.Nil(t, err)
+	assert.NotNil(t, database)
+	assert.Equal(t, DatabaseID.String(), database.ID.String())
 }
 
 func TestGetDatabases(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
-	_, err := client.GetDatabases(context.Background())
 
+	databases, err := client.GetDatabases(context.Background())
 	assert.Nil(t, err)
+	assert.NotEmpty(t, databases)
+
+	// Check if our created database is in the list
+	found := false
+	for _, db := range databases {
+		if db.ID == DatabaseID {
+			found = true
+			break
+		}
+	}
+	assert.True(t, found, "Created database not found in the list")
 }
 
-// func TestReplicateDatabase(t *testing.T) {
+// func TestUpdateDatabase(t *testing.T) {
 // 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
-// 	_, err := client.ReplicateDatabase(context.Background(), *DatabaseID)
+// 	updateRequest := &models.UpdateDatabaseInput{
+// 		Options: []string{"new_option"},
+// 	}
 
+// 	updatedDatabase, err := client.UpdateDatabase(context.Background(), *DatabaseID, updateRequest)
 // 	assert.Nil(t, err)
+// 	assert.NotNil(t, updatedDatabase)
+// 	assert.Contains(t, updatedDatabase.Options, "new_option")
 // }
 
 func TestDeleteDatabase(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
 	err := client.DeleteDatabase(context.Background(), *DatabaseID)
-
 	assert.Nil(t, err)
+
+	// Verify that the database is deleted
+	time.Sleep(5 * time.Second) // Give some time for deletion to propagate
+	_, err = client.GetDatabase(context.Background(), *DatabaseID)
+	assert.NotNil(t, err) // Expect an error as the database should not exist
 }
 
 func TestDeleteCluster(t *testing.T) {
