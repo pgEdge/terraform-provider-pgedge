@@ -42,12 +42,6 @@ func (o *GetDatabasesIDReader) ReadResponse(response runtime.ClientResponse, con
 			return nil, err
 		}
 		return nil, result
-	case 500:
-		result := NewGetDatabasesIDInternalServerError()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
 	default:
 		return nil, runtime.NewAPIError("[GET /databases/{id}] GetDatabasesID", response, response.Code())
 	}
@@ -61,10 +55,10 @@ func NewGetDatabasesIDOK() *GetDatabasesIDOK {
 /*
 GetDatabasesIDOK describes a response with status code 200, with default header values.
 
-Successful response
+Response containing the database definition.
 */
 type GetDatabasesIDOK struct {
-	Payload *models.DatabaseDetails
+	Payload *models.Database
 }
 
 // IsSuccess returns true when this get databases Id o k response has a 2xx status code
@@ -107,13 +101,13 @@ func (o *GetDatabasesIDOK) String() string {
 	return fmt.Sprintf("[GET /databases/{id}][%d] getDatabasesIdOK %s", 200, payload)
 }
 
-func (o *GetDatabasesIDOK) GetPayload() *models.DatabaseDetails {
+func (o *GetDatabasesIDOK) GetPayload() *models.Database {
 	return o.Payload
 }
 
 func (o *GetDatabasesIDOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.DatabaseDetails)
+	o.Payload = new(models.Database)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
@@ -131,7 +125,7 @@ func NewGetDatabasesIDBadRequest() *GetDatabasesIDBadRequest {
 /*
 GetDatabasesIDBadRequest describes a response with status code 400, with default header values.
 
-Bad Request
+Bad request.
 */
 type GetDatabasesIDBadRequest struct {
 	Payload *models.Error
@@ -201,7 +195,7 @@ func NewGetDatabasesIDUnauthorized() *GetDatabasesIDUnauthorized {
 /*
 GetDatabasesIDUnauthorized describes a response with status code 401, with default header values.
 
-Unauthorized
+Authorization information is missing or invalid.
 */
 type GetDatabasesIDUnauthorized struct {
 	Payload *models.Error
@@ -252,76 +246,6 @@ func (o *GetDatabasesIDUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *GetDatabasesIDUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Error)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewGetDatabasesIDInternalServerError creates a GetDatabasesIDInternalServerError with default headers values
-func NewGetDatabasesIDInternalServerError() *GetDatabasesIDInternalServerError {
-	return &GetDatabasesIDInternalServerError{}
-}
-
-/*
-GetDatabasesIDInternalServerError describes a response with status code 500, with default header values.
-
-Internal Server Error
-*/
-type GetDatabasesIDInternalServerError struct {
-	Payload *models.Error
-}
-
-// IsSuccess returns true when this get databases Id internal server error response has a 2xx status code
-func (o *GetDatabasesIDInternalServerError) IsSuccess() bool {
-	return false
-}
-
-// IsRedirect returns true when this get databases Id internal server error response has a 3xx status code
-func (o *GetDatabasesIDInternalServerError) IsRedirect() bool {
-	return false
-}
-
-// IsClientError returns true when this get databases Id internal server error response has a 4xx status code
-func (o *GetDatabasesIDInternalServerError) IsClientError() bool {
-	return false
-}
-
-// IsServerError returns true when this get databases Id internal server error response has a 5xx status code
-func (o *GetDatabasesIDInternalServerError) IsServerError() bool {
-	return true
-}
-
-// IsCode returns true when this get databases Id internal server error response a status code equal to that given
-func (o *GetDatabasesIDInternalServerError) IsCode(code int) bool {
-	return code == 500
-}
-
-// Code gets the status code for the get databases Id internal server error response
-func (o *GetDatabasesIDInternalServerError) Code() int {
-	return 500
-}
-
-func (o *GetDatabasesIDInternalServerError) Error() string {
-	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[GET /databases/{id}][%d] getDatabasesIdInternalServerError %s", 500, payload)
-}
-
-func (o *GetDatabasesIDInternalServerError) String() string {
-	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[GET /databases/{id}][%d] getDatabasesIdInternalServerError %s", 500, payload)
-}
-
-func (o *GetDatabasesIDInternalServerError) GetPayload() *models.Error {
-	return o.Payload
-}
-
-func (o *GetDatabasesIDInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

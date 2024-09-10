@@ -66,9 +66,12 @@ type DeleteDatabasesIDParams struct {
 	// Format: Bearer {access_token}
 	Authorization string
 
-	// ID.
-	//
-	// Format: uuid
+	/* ID.
+
+	   ID of the database to delete.
+
+	   Format: uuid
+	*/
 	ID strfmt.UUID
 
 	timeout    time.Duration

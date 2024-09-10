@@ -12,6 +12,7 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // BackupConfig backup config
@@ -20,21 +21,27 @@ import (
 type BackupConfig struct {
 
 	// id
-	ID string `json:"id,omitempty"`
+	// Required: true
+	// Format: uuid
+	ID *strfmt.UUID `json:"id"`
 
 	// node name
 	NodeName string `json:"node_name,omitempty"`
 
 	// repositories
-	Repositories []*Repository `json:"repositories"`
+	Repositories []*BackupRepository `json:"repositories"`
 
 	// schedules
-	Schedules []*Schedule `json:"schedules"`
+	Schedules []*BackupSchedule `json:"schedules"`
 }
 
 // Validate validates this backup config
 func (m *BackupConfig) Validate(formats strfmt.Registry) error {
 	var res []error
+
+	if err := m.validateID(formats); err != nil {
+		res = append(res, err)
+	}
 
 	if err := m.validateRepositories(formats); err != nil {
 		res = append(res, err)
@@ -47,6 +54,19 @@ func (m *BackupConfig) Validate(formats strfmt.Registry) error {
 	if len(res) > 0 {
 		return errors.CompositeValidationError(res...)
 	}
+	return nil
+}
+
+func (m *BackupConfig) validateID(formats strfmt.Registry) error {
+
+	if err := validate.Required("id", "body", m.ID); err != nil {
+		return err
+	}
+
+	if err := validate.FormatOf("id", "body", "uuid", m.ID.String(), formats); err != nil {
+		return err
+	}
+
 	return nil
 }
 

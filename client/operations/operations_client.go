@@ -88,8 +88,6 @@ type ClientService interface {
 
 	PostDatabases(params *PostDatabasesParams, opts ...ClientOption) (*PostDatabasesOK, error)
 
-	PostDatabasesIDReplicate(params *PostDatabasesIDReplicateParams, opts ...ClientOption) (*PostDatabasesIDReplicateOK, error)
-
 	PostOauthToken(params *PostOauthTokenParams, opts ...ClientOption) (*PostOauthTokenOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
@@ -178,7 +176,7 @@ func (a *Client) DeleteClustersID(params *DeleteClustersIDParams, opts ...Client
 /*
 DeleteDatabasesID deletes a database
 
-Delete the database with the specified ID
+Deletes a database.
 */
 func (a *Client) DeleteDatabasesID(params *DeleteDatabasesIDParams, opts ...ClientOption) (*DeleteDatabasesIDNoContent, error) {
 	// TODO: Validate the params before sending
@@ -456,9 +454,9 @@ func (a *Client) GetClustersIDNodesNodeIDLogsLogName(params *GetClustersIDNodesN
 }
 
 /*
-GetDatabases gets all databases
+GetDatabases lists databases
 
-Retrieve a list of all databases
+Lists databases.
 */
 func (a *Client) GetDatabases(params *GetDatabasesParams, opts ...ClientOption) (*GetDatabasesOK, error) {
 	// TODO: Validate the params before sending
@@ -496,9 +494,9 @@ func (a *Client) GetDatabases(params *GetDatabasesParams, opts ...ClientOption) 
 }
 
 /*
-GetDatabasesID gets database by ID
+GetDatabasesID retrieves a database given its ID
 
-Retrieve detailed information about a specific database
+Retrieve a database given its ID.
 */
 func (a *Client) GetDatabasesID(params *GetDatabasesIDParams, opts ...ClientOption) (*GetDatabasesIDOK, error) {
 	// TODO: Validate the params before sending
@@ -578,7 +576,7 @@ func (a *Client) PatchClustersID(params *PatchClustersIDParams, opts ...ClientOp
 /*
 PatchDatabasesID updates a database
 
-Update the database with the specified ID
+Updates a database.
 */
 func (a *Client) PatchDatabasesID(params *PatchDatabasesIDParams, opts ...ClientOption) (*PatchDatabasesIDOK, error) {
 	// TODO: Validate the params before sending
@@ -698,7 +696,7 @@ func (a *Client) PostClusters(params *PostClustersParams, opts ...ClientOption) 
 /*
 PostDatabases creates a new database
 
-Create a new database with the specified options
+Creates a new database.
 */
 func (a *Client) PostDatabases(params *PostDatabasesParams, opts ...ClientOption) (*PostDatabasesOK, error) {
 	// TODO: Validate the params before sending
@@ -732,46 +730,6 @@ func (a *Client) PostDatabases(params *PostDatabasesParams, opts ...ClientOption
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for PostDatabases: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-PostDatabasesIDReplicate replicates database
-
-Replicate the database with the specified ID
-*/
-func (a *Client) PostDatabasesIDReplicate(params *PostDatabasesIDReplicateParams, opts ...ClientOption) (*PostDatabasesIDReplicateOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewPostDatabasesIDReplicateParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "PostDatabasesIDReplicate",
-		Method:             "POST",
-		PathPattern:        "/databases/{id}/replicate",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &PostDatabasesIDReplicateReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*PostDatabasesIDReplicateOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for PostDatabasesIDReplicate: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

@@ -70,9 +70,9 @@ type PostDatabasesParams struct {
 
 	/* Body.
 
-	   Database creation request body
+	   The database definition.
 	*/
-	Body *models.DatabaseCreationRequest
+	Body *models.CreateDatabaseInput
 
 	timeout    time.Duration
 	Context    context.Context
@@ -139,13 +139,13 @@ func (o *PostDatabasesParams) SetAuthorization(authorization string) {
 }
 
 // WithBody adds the body to the post databases params
-func (o *PostDatabasesParams) WithBody(body *models.DatabaseCreationRequest) *PostDatabasesParams {
+func (o *PostDatabasesParams) WithBody(body *models.CreateDatabaseInput) *PostDatabasesParams {
 	o.SetBody(body)
 	return o
 }
 
 // SetBody adds the body to the post databases params
-func (o *PostDatabasesParams) SetBody(body *models.DatabaseCreationRequest) {
+func (o *PostDatabasesParams) SetBody(body *models.CreateDatabaseInput) {
 	o.Body = body
 }
 

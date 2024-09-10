@@ -12,37 +12,59 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
-// Table table
+// DatabaseTable database table
 //
-// swagger:model Table
-type Table struct {
+// swagger:model DatabaseTable
+type DatabaseTable struct {
 
 	// columns
-	Columns []*Column `json:"columns"`
+	Columns []*DatabaseColumn `json:"columns"`
 
 	// name
-	Name string `json:"name,omitempty"`
+	// Required: true
+	Name *string `json:"name"`
 
 	// primary key
+	// Required: true
 	PrimaryKey []string `json:"primary_key"`
 
 	// replication sets
+	// Required: true
 	ReplicationSets []string `json:"replication_sets"`
 
 	// schema
-	Schema string `json:"schema,omitempty"`
+	// Required: true
+	Schema *string `json:"schema"`
 
 	// status
-	Status []*TableStatus `json:"status"`
+	// Required: true
+	Status []*DatabaseTableStatus `json:"status"`
 }
 
-// Validate validates this table
-func (m *Table) Validate(formats strfmt.Registry) error {
+// Validate validates this database table
+func (m *DatabaseTable) Validate(formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.validateColumns(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateName(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validatePrimaryKey(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateReplicationSets(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateSchema(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -56,7 +78,7 @@ func (m *Table) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Table) validateColumns(formats strfmt.Registry) error {
+func (m *DatabaseTable) validateColumns(formats strfmt.Registry) error {
 	if swag.IsZero(m.Columns) { // not required
 		return nil
 	}
@@ -82,9 +104,46 @@ func (m *Table) validateColumns(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *Table) validateStatus(formats strfmt.Registry) error {
-	if swag.IsZero(m.Status) { // not required
-		return nil
+func (m *DatabaseTable) validateName(formats strfmt.Registry) error {
+
+	if err := validate.Required("name", "body", m.Name); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *DatabaseTable) validatePrimaryKey(formats strfmt.Registry) error {
+
+	if err := validate.Required("primary_key", "body", m.PrimaryKey); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *DatabaseTable) validateReplicationSets(formats strfmt.Registry) error {
+
+	if err := validate.Required("replication_sets", "body", m.ReplicationSets); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *DatabaseTable) validateSchema(formats strfmt.Registry) error {
+
+	if err := validate.Required("schema", "body", m.Schema); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *DatabaseTable) validateStatus(formats strfmt.Registry) error {
+
+	if err := validate.Required("status", "body", m.Status); err != nil {
+		return err
 	}
 
 	for i := 0; i < len(m.Status); i++ {
@@ -108,8 +167,8 @@ func (m *Table) validateStatus(formats strfmt.Registry) error {
 	return nil
 }
 
-// ContextValidate validate this table based on the context it is used
-func (m *Table) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
+// ContextValidate validate this database table based on the context it is used
+func (m *DatabaseTable) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
 	var res []error
 
 	if err := m.contextValidateColumns(ctx, formats); err != nil {
@@ -126,7 +185,7 @@ func (m *Table) ContextValidate(ctx context.Context, formats strfmt.Registry) er
 	return nil
 }
 
-func (m *Table) contextValidateColumns(ctx context.Context, formats strfmt.Registry) error {
+func (m *DatabaseTable) contextValidateColumns(ctx context.Context, formats strfmt.Registry) error {
 
 	for i := 0; i < len(m.Columns); i++ {
 
@@ -151,7 +210,7 @@ func (m *Table) contextValidateColumns(ctx context.Context, formats strfmt.Regis
 	return nil
 }
 
-func (m *Table) contextValidateStatus(ctx context.Context, formats strfmt.Registry) error {
+func (m *DatabaseTable) contextValidateStatus(ctx context.Context, formats strfmt.Registry) error {
 
 	for i := 0; i < len(m.Status); i++ {
 
@@ -177,7 +236,7 @@ func (m *Table) contextValidateStatus(ctx context.Context, formats strfmt.Regist
 }
 
 // MarshalBinary interface implementation
-func (m *Table) MarshalBinary() ([]byte, error) {
+func (m *DatabaseTable) MarshalBinary() ([]byte, error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -185,8 +244,8 @@ func (m *Table) MarshalBinary() ([]byte, error) {
 }
 
 // UnmarshalBinary interface implementation
-func (m *Table) UnmarshalBinary(b []byte) error {
-	var res Table
+func (m *DatabaseTable) UnmarshalBinary(b []byte) error {
+	var res DatabaseTable
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}
