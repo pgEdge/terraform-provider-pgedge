@@ -64,7 +64,7 @@ type DatabaseModel struct {
 	Options        types.List   `tfsdk:"options"`
 	// Backups        types.Object `tfsdk:"backups"`
 	// Components     types.List   `tfsdk:"components"`
-	// Extensions     types.Object `tfsdk:"extensions"`
+	Extensions     types.Object `tfsdk:"extensions"`
 	// Nodes          types.List   `tfsdk:"nodes"`
 	// Roles          types.List   `tfsdk:"roles"`
 	// Tables         types.List   `tfsdk:"tables"`
@@ -134,11 +134,11 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 						// 		Attributes: d.componentSchema(),
 						// 	},
 						// },
-						// "extensions": schema.SingleNestedAttribute{
-						// 	Computed:    true,
-						// 	Description: "Extensions configuration for the database",
-						// 	Attributes:  d.extensionsSchema(),
-						// },
+						"extensions": schema.SingleNestedAttribute{
+							Computed:    true,
+							Description: "Extensions configuration for the database",
+							Attributes:  d.extensionsSchema(),
+						},
 						// "nodes": schema.ListNestedAttribute{
 						// 	Computed:    true,
 						// 	Description: "Nodes of the database",
@@ -195,7 +195,7 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			Options:        d.convertToListValue(db.Options),
 			// Backups:        d.mapBackupsToModel(db.Backups),
 			// Components:     d.mapComponentsToModel(db.Components),
-			// Extensions:     d.mapExtensionsToModel(db.Extensions),
+			Extensions:     d.mapExtensionsToModel(db.Extensions),
 			// Nodes:          d.mapNodesToModel(db.Nodes),
 			// Roles:          d.mapRolesToModel(db.Roles),
 			// Tables:         d.mapTablesToModel(db.Tables),

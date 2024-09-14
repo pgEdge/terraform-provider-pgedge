@@ -12,6 +12,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+
 	// "github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
@@ -219,16 +221,16 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
             //         },
             //     },
             // },
-            // "extensions": schema.SingleNestedAttribute{
-            //     Description: "Extensions configuration for the database.",
-            //     Computed:    true,
-			// 	Optional:    true,
-            //     Attributes: map[string]schema.Attribute{
-            //         "auto_manage": schema.BoolAttribute{Computed: true, Optional: true},
-            //         "available":   schema.ListAttribute{Computed: true, ElementType: types.StringType},
-            //         "requested":   schema.ListAttribute{Computed: true, Optional: true, ElementType: types.StringType},
-            //     },
-            // },
+            "extensions": schema.SingleNestedAttribute{
+                Description: "Extensions configuration for the database.",
+                Computed:    true,
+				Optional:    true,
+                Attributes: map[string]schema.Attribute{
+                    "auto_manage": schema.BoolAttribute{Computed: true, Optional: true},
+                    "available":   schema.ListAttribute{Computed: true, ElementType: types.StringType},
+                    "requested":   schema.ListAttribute{Computed: true, Optional: true, ElementType: types.StringType},
+                },
+            },
             // "nodes": schema.ListNestedAttribute{
             //     Description: "List of nodes in the database.",
             //     Computed:    true,
@@ -360,6 +362,12 @@ func (r *databaseResource) Configure(_ context.Context, req resource.ConfigureRe
 	r.client = client
 }
 
+type extensionsModel struct {
+    AutoManage types.Bool   `tfsdk:"auto_manage"`
+    Available  types.List   `tfsdk:"available"`
+    Requested  types.List   `tfsdk:"requested"`
+}
+
 func (r *databaseResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
     var plan databaseResourceModel
     diags := req.Plan.Get(ctx, &plan)
@@ -375,22 +383,20 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
         Options:        convertToStringSlice(plan.Options),
     }
 
-	// Handle Extensions
-    // if !plan.Extensions.IsNull() {
-    //     var extensionsData struct {
-    //         AutoManage bool     `tfsdk:"auto_manage"`
-    //         Requested  []string `tfsdk:"requested"`
-    //     }
-    //     diags := plan.Extensions.As(ctx, &extensionsData, basetypes.ObjectAsOptions{})
-    //     resp.Diagnostics.Append(diags...)
-    //     if resp.Diagnostics.HasError() {
-    //         return
-    //     }
-    //     createInput.Extensions = &models.Extensions{
-    //         AutoManage: extensionsData.AutoManage,
-    //         Requested:  extensionsData.Requested,
-    //     }
-    // }
+	 // Handle Extensions
+     if !plan.Extensions.IsNull() && !plan.Extensions.IsUnknown() {
+        var extensionsData extensionsModel
+        diags := plan.Extensions.As(ctx, &extensionsData, basetypes.ObjectAsOptions{})
+        resp.Diagnostics.Append(diags...)
+        if resp.Diagnostics.HasError() {
+            return
+        }
+        
+        createInput.Extensions = &models.Extensions{
+            AutoManage: extensionsData.AutoManage.ValueBool(),
+            Requested:  convertTFListToStringSlice(extensionsData.Requested),
+        }
+    }
 
     // Handle Backups
     // if !plan.Backups.IsNull() {
@@ -497,6 +503,21 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
         Options: convertToStringSlice(plan.Options),
     }
 
+     // Handle Extensions
+     if !plan.Extensions.IsNull() {
+        var extensionsData extensionsModel
+        diags := plan.Extensions.As(ctx, &extensionsData, basetypes.ObjectAsOptions{})
+        resp.Diagnostics.Append(diags...)
+        if resp.Diagnostics.HasError() {
+            return
+        }
+        
+        updateInput.Extensions = &models.Extensions{
+            AutoManage: extensionsData.AutoManage.ValueBool(),
+            Requested:  convertTFListToStringSlice(extensionsData.Requested),
+        }
+    }
+
 	 // Handle Extensions
 	//  if !plan.Extensions.IsNull() {
     //     var extensionsData struct {
@@ -582,7 +603,7 @@ func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database)
         Options:        convertToListValue(database.Options),
         // Backups:        r.mapBackupsToResourceModel(database.Backups),
         // Components:     r.mapComponentsToResourceModel(database.Components),
-        // Extensions:     r.mapExtensionsToResourceModel(database.Extensions),
+        Extensions:     r.mapExtensionsToResourceModel(database.Extensions),
         // Nodes:          r.mapNodesToResourceModel(database.Nodes),
         // Roles:          r.mapRolesToResourceModel(database.Roles),
         // Tables:         r.mapTablesToResourceModel(database.Tables),
@@ -1041,7 +1062,7 @@ type databaseResourceModel struct {
     Options        types.List   `tfsdk:"options"`
     // Backups        types.Object `tfsdk:"backups"`
     // Components     types.List   `tfsdk:"components"`
-    // Extensions     types.Object `tfsdk:"extensions"`
+    Extensions     types.Object `tfsdk:"extensions"`
     // Nodes          types.List   `tfsdk:"nodes"`
     // Roles          types.List   `tfsdk:"roles"`
     // Tables         types.List   `tfsdk:"tables"`
@@ -1066,4 +1087,18 @@ func convertToListValue(slice []string) types.List {
 		elements[i] = types.StringValue(s)
 	}
 	return types.ListValueMust(types.StringType, elements)
+}
+
+// Helper function to convert types.List to []string
+func convertTFListToStringSlice(list types.List) []string {
+    if list.IsNull() || list.IsUnknown() {
+        return nil
+    }
+    var result []string
+    for _, elem := range list.Elements() {
+        if str, ok := elem.(types.String); ok {
+            result = append(result, str.ValueString())
+        }
+    }
+    return result
 }
