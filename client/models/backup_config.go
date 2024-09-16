@@ -22,8 +22,7 @@ type BackupConfig struct {
 
 	// id
 	// Required: true
-	// Format: uuid
-	ID *strfmt.UUID `json:"id"`
+	ID *string `json:"id"`
 
 	// node name
 	NodeName string `json:"node_name,omitempty"`
@@ -60,10 +59,6 @@ func (m *BackupConfig) Validate(formats strfmt.Registry) error {
 func (m *BackupConfig) validateID(formats strfmt.Registry) error {
 
 	if err := validate.Required("id", "body", m.ID); err != nil {
-		return err
-	}
-
-	if err := validate.FormatOf("id", "body", "uuid", m.ID.String(), formats); err != nil {
 		return err
 	}
 

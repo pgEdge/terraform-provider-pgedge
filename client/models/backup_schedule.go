@@ -25,8 +25,7 @@ type BackupSchedule struct {
 
 	// id
 	// Required: true
-	// Format: uuid
-	ID *strfmt.UUID `json:"id"`
+	ID *string `json:"id"`
 
 	// type
 	// Required: true
@@ -67,10 +66,6 @@ func (m *BackupSchedule) validateCronExpression(formats strfmt.Registry) error {
 func (m *BackupSchedule) validateID(formats strfmt.Registry) error {
 
 	if err := validate.Required("id", "body", m.ID); err != nil {
-		return err
-	}
-
-	if err := validate.FormatOf("id", "body", "uuid", m.ID.String(), formats); err != nil {
 		return err
 	}
 

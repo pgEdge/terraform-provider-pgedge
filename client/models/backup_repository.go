@@ -29,8 +29,7 @@ type BackupRepository struct {
 	AzureEndpoint string `json:"azure_endpoint,omitempty"`
 
 	// backup store id
-	// Format: uuid
-	BackupStoreID strfmt.UUID `json:"backup_store_id,omitempty"`
+	BackupStoreID string `json:"backup_store_id,omitempty"`
 
 	// base path
 	BasePath string `json:"base_path,omitempty"`
@@ -49,8 +48,7 @@ type BackupRepository struct {
 	GcsEndpoint string `json:"gcs_endpoint,omitempty"`
 
 	// id
-	// Format: uuid
-	ID strfmt.UUID `json:"id,omitempty"`
+	ID string `json:"id,omitempty"`
 
 	// retention full
 	RetentionFull int64 `json:"retention_full,omitempty"`
@@ -75,15 +73,7 @@ type BackupRepository struct {
 func (m *BackupRepository) Validate(formats strfmt.Registry) error {
 	var res []error
 
-	if err := m.validateBackupStoreID(formats); err != nil {
-		res = append(res, err)
-	}
-
 	if err := m.validateDatabaseID(formats); err != nil {
-		res = append(res, err)
-	}
-
-	if err := m.validateID(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -93,36 +83,12 @@ func (m *BackupRepository) Validate(formats strfmt.Registry) error {
 	return nil
 }
 
-func (m *BackupRepository) validateBackupStoreID(formats strfmt.Registry) error {
-	if swag.IsZero(m.BackupStoreID) { // not required
-		return nil
-	}
-
-	if err := validate.FormatOf("backup_store_id", "body", "uuid", m.BackupStoreID.String(), formats); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (m *BackupRepository) validateDatabaseID(formats strfmt.Registry) error {
 	if swag.IsZero(m.DatabaseID) { // not required
 		return nil
 	}
 
 	if err := validate.FormatOf("database_id", "body", "uuid", m.DatabaseID.String(), formats); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (m *BackupRepository) validateID(formats strfmt.Registry) error {
-	if swag.IsZero(m.ID) { // not required
-		return nil
-	}
-
-	if err := validate.FormatOf("id", "body", "uuid", m.ID.String(), formats); err != nil {
 		return err
 	}
 

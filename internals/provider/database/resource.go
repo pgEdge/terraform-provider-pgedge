@@ -91,123 +91,126 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
                 ElementType: types.StringType,
                 Optional:    true,
             },
-            // "backups": schema.SingleNestedAttribute{
-            //     Description: "Backup configuration for the database.",
-            //     Computed:    true,
-			// 	Optional:    true,
-            //     Attributes: map[string]schema.Attribute{
-            //         "provider": schema.StringAttribute{
-            //             Description: "The backup provider.",
-            //             Computed:    true,
-			// 			Optional:    true,
-            //         },
-            //         "config": schema.ListNestedAttribute{
-            //             Description: "List of backup configurations.",
-            //             Computed:    true,
-			// 			Optional:    true,
-            //             NestedObject: schema.NestedAttributeObject{
-            //                 Attributes: map[string]schema.Attribute{
-            //                     "id": schema.StringAttribute{
-            //                         Description: "Unique identifier for the backup config.",
-            //                         Computed:    true,
-            //                     },
-            //                     "node_name": schema.StringAttribute{
-            //                         Description: "Name of the node.",
-            //                         Computed:    true,
-			// 						Optional:    true,
-            //                     },
-            //                     "repositories": schema.ListNestedAttribute{
-            //                         Description: "List of backup repositories.",
-            //                         Computed:    true,
-            //                         NestedObject: schema.NestedAttributeObject{
-            //                             Attributes: map[string]schema.Attribute{
-            //                                 "id": schema.StringAttribute{
-            //                                     Description: "Unique identifier for the repository.",
-            //                                     Computed:    true,
-            //                                 },
-            //                                 "type": schema.StringAttribute{
-            //                                     Description: "Type of the repository.",
-            //                                     Computed:    true,
-            //                                 },
-            //                                 "backup_store_id": schema.StringAttribute{
-            //                                     Description: "ID of the backup store.",
-            //                                     Computed:    true,
-            //                                 },
-            //                                 "base_path": schema.StringAttribute{
-            //                                     Description: "Base path for the repository.",
-            //                                     Computed:    true,
-            //                                 },
-            //                                 "s3_bucket": schema.StringAttribute{
-            //                                     Description: "S3 bucket name.",
-            //                                     Computed:    true,
-            //                                 },
-            //                                 "s3_region": schema.StringAttribute{
-            //                                     Description: "S3 region.",
-            //                                     Computed:    true,
-            //                                 },
-            //                                 "s3_endpoint": schema.StringAttribute{
-            //                                     Description: "S3 endpoint.",
-            //                                     Computed:    true,
-            //                                 },
-            //                                 "gcs_bucket": schema.StringAttribute{
-            //                                     Description: "GCS bucket name.",
-            //                                     Computed:    true,
-            //                                 },
-            //                                 "gcs_endpoint": schema.StringAttribute{
-            //                                     Description: "GCS endpoint.",
-            //                                     Computed:    true,
-            //                                 },
-            //                                 "azure_account": schema.StringAttribute{
-            //                                     Description: "Azure account.",
-            //                                     Computed:    true,
-            //                                 },
-            //                                 "azure_container": schema.StringAttribute{
-            //                                     Description: "Azure container.",
-            //                                     Computed:    true,
-            //                                 },
-            //                                 "azure_endpoint": schema.StringAttribute{
-            //                                     Description: "Azure endpoint.",
-            //                                     Computed:    true,
-            //                                 },
-            //                                 "retention_full": schema.Int64Attribute{
-            //                                     Description: "Retention period for full backups.",
-            //                                     Computed:    true,
-            //                                 },
-            //                                 "retention_full_type": schema.StringAttribute{
-            //                                     Description: "Type of retention for full backups.",
-            //                                     Computed:    true,
-            //                                 },
-            //                             },
-            //                         },
-            //                     },
-            //                     "schedules": schema.ListNestedAttribute{
-            //                         Description: "List of backup schedules.",
-            //                         Computed:    true,
-			// 						Optional:    true,
-            //                         NestedObject: schema.NestedAttributeObject{
-            //                             Attributes: map[string]schema.Attribute{
-            //                                 "id": schema.StringAttribute{
-            //                                     Description: "Unique identifier for the schedule.",
-            //                                     Computed:    true,
-            //                                 },
-            //                                 "type": schema.StringAttribute{
-            //                                     Description: "Type of the schedule.",
-            //                                     Computed:    true,
-			// 									Optional:    true,
-            //                                 },
-            //                                 "cron_expression": schema.StringAttribute{
-            //                                     Description: "Cron expression for the schedule.",
-            //                                     Computed:    true,
-			// 									Optional:    true,
-            //                                 },
-            //                             },
-            //                         },
-            //                     },
-            //                 },
-            //             },
-            //         },
-            //     },
-            // },
+            "backups": schema.SingleNestedAttribute{
+                Description: "Backup configuration for the database.",
+                Computed:    true,
+				Optional:    true,
+                Attributes: map[string]schema.Attribute{
+                    "provider": schema.StringAttribute{
+                        Description: "The backup provider.",
+                        Computed:    true,
+						Optional:    true,
+                    },
+                    "config": schema.ListNestedAttribute{
+                        Description: "List of backup configurations.",
+                        Computed:    true,
+						Optional:    true,
+                        NestedObject: schema.NestedAttributeObject{
+                            Attributes: map[string]schema.Attribute{
+                                "id": schema.StringAttribute{
+                                    Description: "Unique identifier for the backup config.",
+                                    Computed:    true,
+                                    Optional:    true,
+                                },
+                                "node_name": schema.StringAttribute{
+                                    Description: "Name of the node.",
+                                    Computed:    true,
+									Optional:    true,
+                                },
+                                "repositories": schema.ListNestedAttribute{
+                                    Description: "List of backup repositories.",
+                                    Computed:    true,
+                                    NestedObject: schema.NestedAttributeObject{
+                                        Attributes: map[string]schema.Attribute{
+                                            "id": schema.StringAttribute{
+                                                Description: "Unique identifier for the repository.",
+                                                Computed:    true,
+                                                Optional:    true,
+                                            },
+                                            "type": schema.StringAttribute{
+                                                Description: "Type of the repository.",
+                                                Computed:    true,
+                                            },
+                                            "backup_store_id": schema.StringAttribute{
+                                                Description: "ID of the backup store.",
+                                                Computed:    true,
+                                            },
+                                            "base_path": schema.StringAttribute{
+                                                Description: "Base path for the repository.",
+                                                Computed:    true,
+                                            },
+                                            "s3_bucket": schema.StringAttribute{
+                                                Description: "S3 bucket name.",
+                                                Computed:    true,
+                                            },
+                                            "s3_region": schema.StringAttribute{
+                                                Description: "S3 region.",
+                                                Computed:    true,
+                                            },
+                                            "s3_endpoint": schema.StringAttribute{
+                                                Description: "S3 endpoint.",
+                                                Computed:    true,
+                                            },
+                                            "gcs_bucket": schema.StringAttribute{
+                                                Description: "GCS bucket name.",
+                                                Computed:    true,
+                                            },
+                                            "gcs_endpoint": schema.StringAttribute{
+                                                Description: "GCS endpoint.",
+                                                Computed:    true,
+                                            },
+                                            "azure_account": schema.StringAttribute{
+                                                Description: "Azure account.",
+                                                Computed:    true,
+                                            },
+                                            "azure_container": schema.StringAttribute{
+                                                Description: "Azure container.",
+                                                Computed:    true,
+                                            },
+                                            "azure_endpoint": schema.StringAttribute{
+                                                Description: "Azure endpoint.",
+                                                Computed:    true,
+                                            },
+                                            "retention_full": schema.Int64Attribute{
+                                                Description: "Retention period for full backups.",
+                                                Computed:    true,
+                                            },
+                                            "retention_full_type": schema.StringAttribute{
+                                                Description: "Type of retention for full backups.",
+                                                Computed:    true,
+                                            },
+                                        },
+                                    },
+                                },
+                                "schedules": schema.ListNestedAttribute{
+                                    Description: "List of backup schedules.",
+                                    Computed:    true,
+									Optional:    true,
+                                    NestedObject: schema.NestedAttributeObject{
+                                        Attributes: map[string]schema.Attribute{
+                                            "id": schema.StringAttribute{
+                                                Description: "Unique identifier for the schedule.",
+                                                Computed:    true,
+                                                Optional:    true,
+                                            },
+                                            "type": schema.StringAttribute{
+                                                Description: "Type of the schedule.",
+                                                Computed:    true,
+												Optional:    true,
+                                            },
+                                            "cron_expression": schema.StringAttribute{
+                                                Description: "Cron expression for the schedule.",
+                                                Computed:    true,
+												Optional:    true,
+                                            },
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
+            },
             // "components": schema.ListNestedAttribute{
             //     Description: "List of components in the database.",
             //     Computed:    true,
@@ -398,42 +401,107 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
         }
     }
 
-    // Handle Backups
-    // if !plan.Backups.IsNull() {
-    //     var backupsData struct {
-    //         Provider string `tfsdk:"provider"`
-    //         Config   []struct {
-    //             NodeName  string `tfsdk:"node_name"`
-    //             Schedules []struct {
-    //                 Type            string `tfsdk:"type"`
-    //                 CronExpression string `tfsdk:"cron_expression"`
-    //             } `tfsdk:"schedules"`
-    //         } `tfsdk:"config"`
-    //     }
-    //     diags := plan.Backups.As(ctx, &backupsData, basetypes.ObjectAsOptions{})
-    //     resp.Diagnostics.Append(diags...)
-    //     if resp.Diagnostics.HasError() {
-    //         return
-    //     }
+   // Handle Backups
+   if !plan.Backups.IsNull() && !plan.Backups.IsUnknown() {
+    var backupsData struct {
+        Provider types.String `tfsdk:"provider"`
+        Config   []struct {
+            ID           types.String `tfsdk:"id"`
+            NodeName     types.String `tfsdk:"node_name"`
+            Repositories types.List   `tfsdk:"repositories"`
+            Schedules    types.List   `tfsdk:"schedules"`
+        } `tfsdk:"config"`
+    }
+    diags := plan.Backups.As(ctx, &backupsData, basetypes.ObjectAsOptions{})
+    resp.Diagnostics.Append(diags...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
 
-    //     createInput.Backups = &models.Backups{
-    //         Provider: &backupsData.Provider,
-    //         Config:   make([]*models.BackupConfig, len(backupsData.Config)),
-    //     }
+    backups := &models.Backups{
+        Provider: backupsData.Provider.ValueStringPointer(),
+        Config:   make([]*models.BackupConfig, 0),
+    }
 
-    //     for i, config := range backupsData.Config {
-    //         createInput.Backups.Config[i] = &models.BackupConfig{
-    //             NodeName:  config.NodeName,
-    //             Schedules: make([]*models.BackupSchedule, len(config.Schedules)),
-    //         }
-    //         for j, schedule := range config.Schedules {
-    //             createInput.Backups.Config[i].Schedules[j] = &models.BackupSchedule{
-    //                 Type:           &schedule.Type,
-    //                 CronExpression: &schedule.CronExpression,
-    //             }
-    //         }
-    //     }
-    // }
+    for _, config := range backupsData.Config {
+        backupConfig := &models.BackupConfig{
+            ID:           config.ID.ValueStringPointer(),
+            NodeName:     *config.NodeName.ValueStringPointer(),
+            Repositories: make([]*models.BackupRepository, 0),
+            Schedules:    make([]*models.BackupSchedule, 0),
+        }
+
+        if !config.Repositories.IsNull() && !config.Repositories.IsUnknown() {
+            var repositories []struct {
+                ID                 types.String `tfsdk:"id"`
+                Type               types.String `tfsdk:"type"`
+                BackupStoreID      types.String `tfsdk:"backup_store_id"`
+                BasePath           types.String `tfsdk:"base_path"`
+                S3Bucket           types.String `tfsdk:"s3_bucket"`
+                S3Region           types.String `tfsdk:"s3_region"`
+                S3Endpoint         types.String `tfsdk:"s3_endpoint"`
+                GcsBucket          types.String `tfsdk:"gcs_bucket"`
+                GcsEndpoint        types.String `tfsdk:"gcs_endpoint"`
+                AzureAccount       types.String `tfsdk:"azure_account"`
+                AzureContainer     types.String `tfsdk:"azure_container"`
+                AzureEndpoint      types.String `tfsdk:"azure_endpoint"`
+                RetentionFull      types.Int64  `tfsdk:"retention_full"`
+                RetentionFullType  types.String `tfsdk:"retention_full_type"`
+            }
+            diags := config.Repositories.ElementsAs(ctx, &repositories, false)
+            resp.Diagnostics.Append(diags...)
+            if resp.Diagnostics.HasError() {
+                return
+            }
+
+            for _, repo := range repositories {
+                backupConfig.Repositories = append(backupConfig.Repositories, &models.BackupRepository{
+                    ID:                 *repo.ID.ValueStringPointer(),
+                    Type:               *repo.Type.ValueStringPointer(),
+                    BackupStoreID:      *repo.BackupStoreID.ValueStringPointer(),
+                    BasePath:           *repo.BasePath.ValueStringPointer(),
+                    S3Bucket:           *repo.S3Bucket.ValueStringPointer(),
+                    S3Region:           *repo.S3Region.ValueStringPointer(),
+                    S3Endpoint:         *repo.S3Endpoint.ValueStringPointer(),
+                    GcsBucket:          *repo.GcsBucket.ValueStringPointer(),
+                    GcsEndpoint:        *repo.GcsEndpoint.ValueStringPointer(),
+                    AzureAccount:       *repo.AzureAccount.ValueStringPointer(),
+                    AzureContainer:     *repo.AzureContainer.ValueStringPointer(),
+                    AzureEndpoint:      *repo.AzureEndpoint.ValueStringPointer(),
+                    RetentionFull:      *repo.RetentionFull.ValueInt64Pointer(),
+                    RetentionFullType:  *repo.RetentionFullType.ValueStringPointer(),
+                })
+            }
+        }
+
+        if !config.Schedules.IsNull() && !config.Schedules.IsUnknown() {
+            var schedules []struct {
+                ID              types.String `tfsdk:"id"`
+                Type            types.String `tfsdk:"type"`
+                CronExpression  types.String `tfsdk:"cron_expression"`
+            }
+            diags := config.Schedules.ElementsAs(ctx, &schedules, false)
+            resp.Diagnostics.Append(diags...)
+            if resp.Diagnostics.HasError() {
+                return
+            }
+
+            for _, schedule := range schedules {
+                backupConfig.Schedules = append(backupConfig.Schedules, &models.BackupSchedule{
+                    ID:             schedule.ID.ValueStringPointer(),
+                    Type:           schedule.Type.ValueStringPointer(),
+                    CronExpression: schedule.CronExpression.ValueStringPointer(),
+                })
+            }
+        }
+
+        backups.Config = append(backups.Config, backupConfig)
+    }
+
+    createInput.Backups = backups
+}
+
+
 
     tflog.Debug(ctx, "Creating pgEdge database", map[string]interface{}{
         "create_input": createInput,
@@ -518,23 +586,6 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
         }
     }
 
-	 // Handle Extensions
-	//  if !plan.Extensions.IsNull() {
-    //     var extensionsData struct {
-    //         AutoManage bool     `tfsdk:"auto_manage"`
-    //         Requested  []string `tfsdk:"requested"`
-    //     }
-    //     diags := plan.Extensions.As(ctx, &extensionsData, basetypes.ObjectAsOptions{})
-    //     resp.Diagnostics.Append(diags...)
-    //     if resp.Diagnostics.HasError() {
-    //         return
-    //     }
-    //     updateInput.Extensions = &models.Extensions{
-    //         AutoManage: extensionsData.AutoManage,
-    //         Requested:  extensionsData.Requested,
-    //     }
-    // }
-
     tflog.Debug(ctx, "Updating pgEdge database", map[string]interface{}{
         "update_input": updateInput,
     })
@@ -601,7 +652,7 @@ func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database)
         Domain:         types.StringValue(database.Domain),
         ConfigVersion:  types.StringValue(database.ConfigVersion),
         Options:        convertToListValue(database.Options),
-        // Backups:        r.mapBackupsToResourceModel(database.Backups),
+        Backups:        r.mapBackupsToResourceModel(database.Backups),
         // Components:     r.mapComponentsToResourceModel(database.Components),
         Extensions:     r.mapExtensionsToResourceModel(database.Extensions),
         // Nodes:          r.mapNodesToResourceModel(database.Nodes),
@@ -610,25 +661,50 @@ func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database)
     }
 }
 
+var backupConfigType = map[string]attr.Type{
+    "id":           types.StringType,
+    "node_name":    types.StringType,
+    "repositories": types.ListType{ElemType: types.ObjectType{AttrTypes: backupRepositoryType}},
+    "schedules":    types.ListType{ElemType: types.ObjectType{AttrTypes: backupScheduleType}},
+}
+
+var backupRepositoryType = map[string]attr.Type{
+    "id":                  types.StringType,
+    "type":                types.StringType,
+    "backup_store_id":     types.StringType,
+    "base_path":           types.StringType,
+    "s3_bucket":           types.StringType,
+    "s3_region":           types.StringType,
+    "s3_endpoint":         types.StringType,
+    "gcs_bucket":          types.StringType,
+    "gcs_endpoint":        types.StringType,
+    "azure_account":       types.StringType,
+    "azure_container":     types.StringType,
+    "azure_endpoint":      types.StringType,
+    "retention_full":      types.Int64Type,
+    "retention_full_type": types.StringType,
+}
+
+var backupScheduleType = map[string]attr.Type{
+    "id":               types.StringType,
+    "type":             types.StringType,
+    "cron_expression":  types.StringType,
+}
+
 func (r *databaseResource) mapBackupsToResourceModel(backups *models.Backups) types.Object {
     if backups == nil {
         return types.ObjectNull(map[string]attr.Type{
             "provider": types.StringType,
-            "config":   types.ListType{ElemType: types.ObjectType{AttrTypes: map[string]attr.Type{}}},
+            "config":   types.ListType{ElemType: types.ObjectType{AttrTypes: backupConfigType}},
         })
     }
 
     configList := []attr.Value{}
     for _, config := range backups.Config {
         configObj, _ := types.ObjectValue(
-            map[string]attr.Type{
-                "id":           types.StringType,
-                "node_name":    types.StringType,
-                "repositories": types.ListType{ElemType: types.ObjectType{AttrTypes: map[string]attr.Type{}}},
-                "schedules":    types.ListType{ElemType: types.ObjectType{AttrTypes: map[string]attr.Type{}}},
-            },
+            backupConfigType,
             map[string]attr.Value{
-                "id":           types.StringValue(config.ID.String()),
+                "id":           types.StringPointerValue(config.ID),
                 "node_name":    types.StringValue(config.NodeName),
                 "repositories": r.mapBackupRepositoriesToResourceModel(config.Repositories),
                 "schedules":    r.mapBackupSchedulesToResourceModel(config.Schedules),
@@ -640,11 +716,11 @@ func (r *databaseResource) mapBackupsToResourceModel(backups *models.Backups) ty
     backupsObj, _ := types.ObjectValue(
         map[string]attr.Type{
             "provider": types.StringType,
-            "config":   types.ListType{ElemType: types.ObjectType{AttrTypes: map[string]attr.Type{}}},
+            "config":   types.ListType{ElemType: types.ObjectType{AttrTypes: backupConfigType}},
         },
         map[string]attr.Value{
             "provider": types.StringPointerValue(backups.Provider),
-            "config":   types.ListValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{}}, configList),
+            "config":   types.ListValueMust(types.ObjectType{AttrTypes: backupConfigType}, configList),
         },
     )
 
@@ -792,26 +868,11 @@ func (r *databaseResource) mapBackupRepositoriesToResourceModel(repositories []*
     repoList := []attr.Value{}
     for _, repo := range repositories {
         repoObj, _ := types.ObjectValue(
-            map[string]attr.Type{
-                "id":                   types.StringType,
-                "type":                 types.StringType,
-                "backup_store_id":      types.StringType,
-                "base_path":            types.StringType,
-                "s3_bucket":            types.StringType,
-                "s3_region":            types.StringType,
-                "s3_endpoint":          types.StringType,
-                "gcs_bucket":           types.StringType,
-                "gcs_endpoint":         types.StringType,
-                "azure_account":        types.StringType,
-                "azure_container":      types.StringType,
-                "azure_endpoint":       types.StringType,
-                "retention_full":       types.Int64Type,
-                "retention_full_type":  types.StringType,
-            },
+            backupRepositoryType,
             map[string]attr.Value{
-                "id":                   types.StringValue(repo.ID.String()),
+                "id":                   types.StringValue(repo.ID),
                 "type":                 types.StringValue(repo.Type),
-                "backup_store_id":      types.StringValue(repo.BackupStoreID.String()),
+                "backup_store_id":      types.StringValue(repo.BackupStoreID),
                 "base_path":            types.StringValue(repo.BasePath),
                 "s3_bucket":            types.StringValue(repo.S3Bucket),
                 "s3_region":            types.StringValue(repo.S3Region),
@@ -827,36 +888,23 @@ func (r *databaseResource) mapBackupRepositoriesToResourceModel(repositories []*
         )
         repoList = append(repoList, repoObj)
     }
-    return types.ListValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{}}, repoList)
+    return types.ListValueMust(types.ObjectType{AttrTypes: backupRepositoryType}, repoList)
 }
 
 func (r *databaseResource) mapBackupSchedulesToResourceModel(schedules []*models.BackupSchedule) types.List {
     scheduleList := []attr.Value{}
     for _, schedule := range schedules {
         scheduleObj, _ := types.ObjectValue(
-            map[string]attr.Type{
-                "id":               types.StringType,
-                "type":             types.StringType,
-                "cron_expression":  types.StringType,
-            },
+            backupScheduleType,
             map[string]attr.Value{
-                "id":               types.StringValue(schedule.ID.String()),
+                "id":               types.StringPointerValue(schedule.ID),
                 "type":             types.StringPointerValue(schedule.Type),
                 "cron_expression":  types.StringPointerValue(schedule.CronExpression),
             },
         )
         scheduleList = append(scheduleList, scheduleObj)
     }
-    return types.ListValueMust(
-        types.ObjectType{
-            AttrTypes: map[string]attr.Type{
-                "id":               types.StringType,
-                "type":             types.StringType,
-                "cron_expression":  types.StringType,
-            },
-        },
-        scheduleList,
-    )
+    return types.ListValueMust(types.ObjectType{AttrTypes: backupScheduleType}, scheduleList)
 }
 
 func (r *databaseResource) mapConnectionToResourceModel(connection *models.Connection) types.Object {
@@ -1060,7 +1108,7 @@ type databaseResourceModel struct {
     Domain         types.String `tfsdk:"domain"`
     ConfigVersion  types.String `tfsdk:"config_version"`
     Options        types.List   `tfsdk:"options"`
-    // Backups        types.Object `tfsdk:"backups"`
+    Backups        types.Object `tfsdk:"backups"`
     // Components     types.List   `tfsdk:"components"`
     Extensions     types.Object `tfsdk:"extensions"`
     // Nodes          types.List   `tfsdk:"nodes"`

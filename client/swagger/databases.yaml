@@ -269,7 +269,6 @@ definitions:
     properties:
       id:
         type: string
-        format: uuid
       node_name:
         type: string
       schedules:
@@ -289,7 +288,6 @@ definitions:
     properties:
       id:
         type: string
-        format: uuid
       type:
         type: string
       cron_expression:
@@ -299,7 +297,6 @@ definitions:
     properties:
       id:
         type: string
-        format: uuid
       database_id:
         type: string
         format: uuid
@@ -309,7 +306,6 @@ definitions:
         type: string
       backup_store_id:
         type: string
-        format: uuid
       base_path:
         type: string
       s3_bucket:

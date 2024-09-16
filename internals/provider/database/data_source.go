@@ -62,7 +62,7 @@ type DatabaseModel struct {
 	Domain         types.String `tfsdk:"domain"`
 	ConfigVersion  types.String `tfsdk:"config_version"`
 	Options        types.List   `tfsdk:"options"`
-	// Backups        types.Object `tfsdk:"backups"`
+	Backups        types.Object `tfsdk:"backups"`
 	// Components     types.List   `tfsdk:"components"`
 	Extensions     types.Object `tfsdk:"extensions"`
 	// Nodes          types.List   `tfsdk:"nodes"`
@@ -122,11 +122,11 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							ElementType: types.StringType,
 							Description: "Options for the database",
 						},
-						// "backups": schema.SingleNestedAttribute{
-						// 	Computed:    true,
-						// 	Description: "Backup configuration for the database",
-						// 	Attributes:  d.backupsSchema(),
-						// },
+						"backups": schema.SingleNestedAttribute{
+							Computed:    true,
+							Description: "Backup configuration for the database",
+							Attributes:  d.backupsSchema(),
+						},
 						// "components": schema.ListNestedAttribute{
 						// 	Computed:    true,
 						// 	Description: "Components of the database",
@@ -193,7 +193,7 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			Domain:         types.StringValue(db.Domain),
 			ConfigVersion:  types.StringValue(db.ConfigVersion),
 			Options:        d.convertToListValue(db.Options),
-			// Backups:        d.mapBackupsToModel(db.Backups),
+			Backups:        d.mapBackupsToModel(db.Backups),
 			// Components:     d.mapComponentsToModel(db.Components),
 			Extensions:     d.mapExtensionsToModel(db.Extensions),
 			// Nodes:          d.mapNodesToModel(db.Nodes),
@@ -470,21 +470,16 @@ func (d *databasesDataSource) mapBackupsToModel(backups *models.Backups) types.O
     if backups == nil {
         return types.ObjectNull(map[string]attr.Type{
             "provider": types.StringType,
-            "config":   types.ListType{ElemType: types.ObjectType{AttrTypes: map[string]attr.Type{}}},
+            "config":   types.ListType{ElemType: types.ObjectType{AttrTypes: d.backupConfigType()}},
         })
     }
 
     configList := []attr.Value{}
     for _, config := range backups.Config {
         configObj, _ := types.ObjectValue(
-            map[string]attr.Type{
-                "id":           types.StringType,
-                "node_name":    types.StringType,
-                "repositories": types.ListType{ElemType: types.ObjectType{AttrTypes: map[string]attr.Type{}}},
-                "schedules":    types.ListType{ElemType: types.ObjectType{AttrTypes: map[string]attr.Type{}}},
-            },
+            d.backupConfigType(),
             map[string]attr.Value{
-                "id":           types.StringValue(config.ID.String()),
+                "id":           types.StringPointerValue(config.ID),
                 "node_name":    types.StringValue(config.NodeName),
                 "repositories": d.mapBackupRepositoriesToModel(config.Repositories),
                 "schedules":    d.mapBackupSchedulesToModel(config.Schedules),
@@ -496,41 +491,62 @@ func (d *databasesDataSource) mapBackupsToModel(backups *models.Backups) types.O
     backupsObj, _ := types.ObjectValue(
         map[string]attr.Type{
             "provider": types.StringType,
-            "config":   types.ListType{ElemType: types.ObjectType{AttrTypes: map[string]attr.Type{}}},
+            "config":   types.ListType{ElemType: types.ObjectType{AttrTypes: d.backupConfigType()}},
         },
         map[string]attr.Value{
             "provider": types.StringPointerValue(backups.Provider),
-            "config":   types.ListValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{}}, configList),
+            "config":   types.ListValueMust(types.ObjectType{AttrTypes: d.backupConfigType()}, configList),
         },
     )
 
     return backupsObj
 }
 
+func (d *databasesDataSource) backupConfigType() map[string]attr.Type {
+    return map[string]attr.Type{
+        "id":           types.StringType,
+        "node_name":    types.StringType,
+        "repositories": types.ListType{ElemType: types.ObjectType{AttrTypes: d.backupRepositoryType()}},
+        "schedules":    types.ListType{ElemType: types.ObjectType{AttrTypes: d.backupScheduleType()}},
+    }
+}
+
+func (d *databasesDataSource) backupRepositoryType() map[string]attr.Type {
+    return map[string]attr.Type{
+        "id":                   types.StringType,
+        "type":                 types.StringType,
+        "backup_store_id":      types.StringType,
+        "base_path":            types.StringType,
+        "s3_bucket":            types.StringType,
+        "s3_region":            types.StringType,
+        "s3_endpoint":          types.StringType,
+        "gcs_bucket":           types.StringType,
+        "gcs_endpoint":         types.StringType,
+        "azure_account":        types.StringType,
+        "azure_container":      types.StringType,
+        "azure_endpoint":       types.StringType,
+        "retention_full":       types.Int64Type,
+        "retention_full_type":  types.StringType,
+    }
+}
+
+func (d *databasesDataSource) backupScheduleType() map[string]attr.Type {
+    return map[string]attr.Type{
+        "id":               types.StringType,
+        "type":             types.StringType,
+        "cron_expression":  types.StringType,
+    }
+}
+
 func (d *databasesDataSource) mapBackupRepositoriesToModel(repositories []*models.BackupRepository) types.List {
     repoList := []attr.Value{}
     for _, repo := range repositories {
         repoObj, _ := types.ObjectValue(
-            map[string]attr.Type{
-                "id":                   types.StringType,
-                "type":                 types.StringType,
-                "backup_store_id":      types.StringType,
-                "base_path":            types.StringType,
-                "s3_bucket":            types.StringType,
-                "s3_region":            types.StringType,
-                "s3_endpoint":          types.StringType,
-                "gcs_bucket":           types.StringType,
-                "gcs_endpoint":         types.StringType,
-                "azure_account":        types.StringType,
-                "azure_container":      types.StringType,
-                "azure_endpoint":       types.StringType,
-                "retention_full":       types.Int64Type,
-                "retention_full_type":  types.StringType,
-            },
+            d.backupRepositoryType(),
             map[string]attr.Value{
-                "id":                   types.StringValue(repo.ID.String()),
+                "id":                   types.StringValue(repo.ID),
                 "type":                 types.StringValue(repo.Type),
-                "backup_store_id":      types.StringValue(repo.BackupStoreID.String()),
+                "backup_store_id":      types.StringValue(repo.BackupStoreID),
                 "base_path":            types.StringValue(repo.BasePath),
                 "s3_bucket":            types.StringValue(repo.S3Bucket),
                 "s3_region":            types.StringValue(repo.S3Region),
@@ -546,27 +562,23 @@ func (d *databasesDataSource) mapBackupRepositoriesToModel(repositories []*model
         )
         repoList = append(repoList, repoObj)
     }
-    return types.ListValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{}}, repoList)
+    return types.ListValueMust(types.ObjectType{AttrTypes: d.backupRepositoryType()}, repoList)
 }
 
 func (d *databasesDataSource) mapBackupSchedulesToModel(schedules []*models.BackupSchedule) types.List {
     scheduleList := []attr.Value{}
     for _, schedule := range schedules {
         scheduleObj, _ := types.ObjectValue(
-            map[string]attr.Type{
-                "id":               types.StringType,
-                "type":             types.StringType,
-                "cron_expression":  types.StringType,
-            },
+            d.backupScheduleType(),
             map[string]attr.Value{
-                "id":               types.StringValue(schedule.ID.String()),
+                "id":               types.StringPointerValue(schedule.ID),
                 "type":             types.StringPointerValue(schedule.Type),
                 "cron_expression":  types.StringPointerValue(schedule.CronExpression),
             },
         )
         scheduleList = append(scheduleList, scheduleObj)
     }
-    return types.ListValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{}}, scheduleList)
+    return types.ListValueMust(types.ObjectType{AttrTypes: d.backupScheduleType()}, scheduleList)
 }
 
 func (d *databasesDataSource) mapComponentsToModel(components []*models.DatabaseComponentVersion) types.List {
