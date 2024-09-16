@@ -65,7 +65,7 @@ type DatabaseModel struct {
 	Backups        types.Object `tfsdk:"backups"`
 	// Components     types.List   `tfsdk:"components"`
 	Extensions     types.Object `tfsdk:"extensions"`
-	// Nodes          types.List   `tfsdk:"nodes"`
+	Nodes          types.List   `tfsdk:"nodes"`
 	// Roles          types.List   `tfsdk:"roles"`
 	// Tables         types.List   `tfsdk:"tables"`
 }
@@ -139,13 +139,13 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Description: "Extensions configuration for the database",
 							Attributes:  d.extensionsSchema(),
 						},
-						// "nodes": schema.ListNestedAttribute{
-						// 	Computed:    true,
-						// 	Description: "Nodes of the database",
-						// 	NestedObject: schema.NestedAttributeObject{
-						// 		Attributes: d.nodeSchema(),
-						// 	},
-						// },
+						"nodes": schema.ListNestedAttribute{
+							Computed:    true,
+							Description: "Nodes of the database",
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: d.nodeSchema(),
+							},
+						},
 						// "roles": schema.ListNestedAttribute{
 						// 	Computed:    true,
 						// 	Description: "Roles in the database",
@@ -196,7 +196,7 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			Backups:        d.mapBackupsToModel(db.Backups),
 			// Components:     d.mapComponentsToModel(db.Components),
 			Extensions:     d.mapExtensionsToModel(db.Extensions),
-			// Nodes:          d.mapNodesToModel(db.Nodes),
+			Nodes:          d.mapNodesToModel(db.Nodes),
 			// Roles:          d.mapRolesToModel(db.Roles),
 			// Tables:         d.mapTablesToModel(db.Tables),
 		}
@@ -357,7 +357,7 @@ func (d *databasesDataSource) connectionSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"database":            schema.StringAttribute{Computed: true},
 		"host":                schema.StringAttribute{Computed: true},
-		"password":            schema.StringAttribute{Computed: true, Sensitive: true},
+		"password":            schema.StringAttribute{Computed: true},
 		"port":                schema.Int64Attribute{Computed: true},
 		"username":            schema.StringAttribute{Computed: true},
 		"external_ip_address": schema.StringAttribute{Computed: true},
@@ -630,17 +630,66 @@ func (d *databasesDataSource) mapExtensionsToModel(extensions *models.Extensions
     return extensionsObj
 }
 
+func (d *databasesDataSource) connectionAttrTypes() map[string]attr.Type {
+    return map[string]attr.Type{
+        "database":            types.StringType,
+        "host":                types.StringType,
+        "password":            types.StringType,
+        "port":                types.Int64Type,
+        "username":            types.StringType,
+        "external_ip_address": types.StringType,
+        "internal_ip_address": types.StringType,
+        "internal_host":       types.StringType,
+    }
+}
+
+func (d *databasesDataSource) locationAttrTypes() map[string]attr.Type {
+    return map[string]attr.Type{
+        "code":        types.StringType,
+        "country":     types.StringType,
+        "latitude":    types.Float64Type,
+        "longitude":   types.Float64Type,
+        "name":        types.StringType,
+        "region":      types.StringType,
+        "region_code": types.StringType,
+        "timezone":    types.StringType,
+        "postal_code": types.StringType,
+        "metro_code":  types.StringType,
+        "city":        types.StringType,
+    }
+}
+
+func (d *databasesDataSource) regionAttrTypes() map[string]attr.Type {
+    return map[string]attr.Type{
+        "active":             types.BoolType,
+        "availability_zones": types.ListType{ElemType: types.StringType},
+        "cloud":              types.StringType,
+        "code":               types.StringType,
+        "name":               types.StringType,
+        "parent":             types.StringType,
+    }
+}
+
+func (d *databasesDataSource) nodeExtensionsAttrTypes() map[string]attr.Type {
+    return map[string]attr.Type{
+        "errors":    types.MapType{ElemType: types.StringType},
+        "installed": types.ListType{ElemType: types.StringType},
+    }
+}
+
 func (d *databasesDataSource) mapNodesToModel(nodes []*models.DatabaseNode) types.List {
     nodesList := []attr.Value{}
+    nodeAttrTypes := map[string]attr.Type{
+        "name":       types.StringType,
+        "connection": types.ObjectType{AttrTypes: d.connectionAttrTypes()},
+        "location":   types.ObjectType{AttrTypes: d.locationAttrTypes()},
+        "region":     types.ObjectType{AttrTypes: d.regionAttrTypes()},
+        "extensions": types.ObjectType{AttrTypes: d.nodeExtensionsAttrTypes()},
+    }
+    
     for _, node := range nodes {
         nodeObj, _ := types.ObjectValue(
-            map[string]attr.Type{
-                "name":       types.StringType,
-                "connection": types.ObjectType{AttrTypes: map[string]attr.Type{}},
-                "location":   types.ObjectType{AttrTypes: map[string]attr.Type{}},
-                "region":     types.ObjectType{AttrTypes: map[string]attr.Type{}},
-                "extensions": types.ObjectType{AttrTypes: map[string]attr.Type{}},
-            },
+            nodeAttrTypes,
             map[string]attr.Value{
                 "name":       types.StringPointerValue(node.Name),
                 "connection": d.mapConnectionToModel(node.Connection),
@@ -651,24 +700,17 @@ func (d *databasesDataSource) mapNodesToModel(nodes []*models.DatabaseNode) type
         )
         nodesList = append(nodesList, nodeObj)
     }
-    return types.ListValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{}}, nodesList)
+
+    return types.ListValueMust(types.ObjectType{AttrTypes: nodeAttrTypes}, nodesList)
+
 }
 
 func (d *databasesDataSource) mapConnectionToModel(connection *models.Connection) types.Object {
     if connection == nil {
-        return types.ObjectNull(map[string]attr.Type{})
+        return types.ObjectNull(d.connectionAttrTypes())
     }
     connectionObj, _ := types.ObjectValue(
-        map[string]attr.Type{
-            "database":            types.StringType,
-            "host":                types.StringType,
-            "password":            types.StringType,
-            "port":                types.Int64Type,
-            "username":            types.StringType,
-            "external_ip_address": types.StringType,
-            "internal_ip_address": types.StringType,
-            "internal_host":       types.StringType,
-        },
+        d.connectionAttrTypes(),
         map[string]attr.Value{
             "database":            types.StringPointerValue(connection.Database),
             "host":                types.StringValue(connection.Host),
@@ -685,22 +727,10 @@ func (d *databasesDataSource) mapConnectionToModel(connection *models.Connection
 
 func (d *databasesDataSource) mapLocationToModel(location *models.Location) types.Object {
     if location == nil {
-        return types.ObjectNull(map[string]attr.Type{})
+        return types.ObjectNull(d.locationAttrTypes())
     }
     locationObj, _ := types.ObjectValue(
-        map[string]attr.Type{
-            "code":        types.StringType,
-            "country":     types.StringType,
-            "latitude":    types.Float64Type,
-            "longitude":   types.Float64Type,
-            "name":        types.StringType,
-            "region":      types.StringType,
-            "region_code": types.StringType,
-            "timezone":    types.StringType,
-            "postal_code": types.StringType,
-            "metro_code":  types.StringType,
-            "city":        types.StringType,
-        },
+        d.locationAttrTypes(),
         map[string]attr.Value{
             "code":        types.StringValue(location.Code),
             "country":     types.StringValue(location.Country),
@@ -720,20 +750,13 @@ func (d *databasesDataSource) mapLocationToModel(location *models.Location) type
 
 func (d *databasesDataSource) mapRegionToModel(region *models.Region) types.Object {
     if region == nil {
-        return types.ObjectNull(map[string]attr.Type{})
+        return types.ObjectNull(d.regionAttrTypes())
     }
     regionObj, _ := types.ObjectValue(
-        map[string]attr.Type{
-            "active":             types.BoolType,
-            "availability_zones": types.ListType{ElemType: types.StringType},
-            "cloud":              types.StringType,
-            "code":               types.StringType,
-            "name":               types.StringType,
-            "parent":             types.StringType,
-        },
+        d.regionAttrTypes(),
         map[string]attr.Value{
             "active":             types.BoolValue(region.Active),
-            "availability_zones": d.convertToListValue(region.AvailabilityZones),
+            "availability_zones": types.ListValueMust(types.StringType, d.stringSliceToValueSlice(region.AvailabilityZones)),
             "cloud":              types.StringPointerValue(region.Cloud),
             "code":               types.StringPointerValue(region.Code),
             "name":               types.StringPointerValue(region.Name),
@@ -745,20 +768,17 @@ func (d *databasesDataSource) mapRegionToModel(region *models.Region) types.Obje
 
 func (d *databasesDataSource) mapNodeExtensionsToModel(extensions *models.DatabaseNodeExtensions) types.Object {
     if extensions == nil {
-        return types.ObjectNull(map[string]attr.Type{})
+        return types.ObjectNull(d.nodeExtensionsAttrTypes())
     }
     errorsMap := make(map[string]attr.Value)
     for k, v := range extensions.Errors {
         errorsMap[k] = types.StringValue(v)
     }
     extensionsObj, _ := types.ObjectValue(
-        map[string]attr.Type{
-            "errors":    types.MapType{ElemType: types.StringType},
-            "installed": types.ListType{ElemType: types.StringType},
-        },
+        d.nodeExtensionsAttrTypes(),
         map[string]attr.Value{
             "errors":    types.MapValueMust(types.StringType, errorsMap),
-            "installed": d.convertToListValue(extensions.Installed),
+            "installed": types.ListValueMust(types.StringType, d.stringSliceToValueSlice(extensions.Installed)),
         },
     )
     return extensionsObj
@@ -868,4 +888,13 @@ func (d *databasesDataSource) mapTableStatusToModel(status []*models.DatabaseTab
         statusList = append(statusList, statusObj)
     }
     return types.ListValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{}}, statusList)
+}
+
+// Helper function to convert []string to []attr.Value
+func (d *databasesDataSource) stringSliceToValueSlice(slice []string) []attr.Value {
+    valueSlice := make([]attr.Value, len(slice))
+    for i, s := range slice {
+        valueSlice[i] = types.StringValue(s)
+    }
+    return valueSlice
 }

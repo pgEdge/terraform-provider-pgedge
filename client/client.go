@@ -137,7 +137,28 @@ func (c *Client) UpdateDatabase(ctx context.Context, id strfmt.UUID, body *model
 		return nil, err
 	}
 
-	return resp.Payload, nil
+	// Poll for database update
+	for {
+		databaseDetails, err := c.GetDatabase(ctx, *resp.Payload.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		if databaseDetails.Status == nil {
+			return nil, errors.New("database status is nil")
+		}
+
+		switch *databaseDetails.Status {
+		case "available":
+			return databaseDetails, nil
+		case "failed":
+			return nil, errors.New("database creation failed")
+		case "modifying":
+			time.Sleep(5 * time.Second)
+		default:
+			return nil, fmt.Errorf("unexpected database status: %s", *databaseDetails.Status)
+		}
+	}
 }
 
 func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) error {
