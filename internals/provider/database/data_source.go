@@ -63,10 +63,10 @@ type DatabaseModel struct {
 	ConfigVersion  types.String `tfsdk:"config_version"`
 	Options        types.List   `tfsdk:"options"`
 	Backups        types.Object `tfsdk:"backups"`
-	// Components     types.List   `tfsdk:"components"`
+	Components     types.List   `tfsdk:"components"`
 	Extensions     types.Object `tfsdk:"extensions"`
 	Nodes          types.List   `tfsdk:"nodes"`
-	// Roles          types.List   `tfsdk:"roles"`
+	Roles          types.List   `tfsdk:"roles"`
 	Tables         types.List   `tfsdk:"tables"`
 }
 
@@ -127,13 +127,13 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Description: "Backup configuration for the database",
 							Attributes:  d.backupsSchema(),
 						},
-						// "components": schema.ListNestedAttribute{
-						// 	Computed:    true,
-						// 	Description: "Components of the database",
-						// 	NestedObject: schema.NestedAttributeObject{
-						// 		Attributes: d.componentSchema(),
-						// 	},
-						// },
+						"components": schema.ListNestedAttribute{
+							Computed:    true,
+							Description: "Components of the database",
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: d.componentSchema(),
+							},
+						},
 						"extensions": schema.SingleNestedAttribute{
 							Computed:    true,
 							Description: "Extensions configuration for the database",
@@ -146,13 +146,13 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 								Attributes: d.nodeSchema(),
 							},
 						},
-						// "roles": schema.ListNestedAttribute{
-						// 	Computed:    true,
-						// 	Description: "Roles in the database",
-						// 	NestedObject: schema.NestedAttributeObject{
-						// 		Attributes: d.roleSchema(),
-						// 	},
-						// },
+						"roles": schema.ListNestedAttribute{
+							Computed:    true,
+							Description: "Roles in the database",
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: d.roleSchema(),
+							},
+						},
 						"tables": schema.ListNestedAttribute{
 							Computed:    true,
 							Description: "Tables in the database",
@@ -194,10 +194,10 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			ConfigVersion:  types.StringValue(db.ConfigVersion),
 			Options:        d.convertToListValue(db.Options),
 			Backups:        d.mapBackupsToModel(db.Backups),
-			// Components:     d.mapComponentsToModel(db.Components),
+			Components:     d.mapComponentsToModel(db.Components),
 			Extensions:     d.mapExtensionsToModel(db.Extensions),
 			Nodes:          d.mapNodesToModel(db.Nodes),
-			// Roles:          d.mapRolesToModel(db.Roles),
+			Roles:          d.mapRolesToModel(db.Roles),
 			Tables:         d.mapTablesToModel(db.Tables),
 		}
 
@@ -583,15 +583,17 @@ func (d *databasesDataSource) mapBackupSchedulesToModel(schedules []*models.Back
 
 func (d *databasesDataSource) mapComponentsToModel(components []*models.DatabaseComponentVersion) types.List {
     componentsList := []attr.Value{}
+    componentAttrTypes := map[string]attr.Type{
+        "id":           types.StringType,
+        "name":         types.StringType,
+        "version":      types.StringType,
+        "release_date": types.StringType,
+        "status":       types.StringType,
+    }
+
     for _, component := range components {
         componentObj, _ := types.ObjectValue(
-            map[string]attr.Type{
-                "id":           types.StringType,
-                "name":         types.StringType,
-                "version":      types.StringType,
-                "release_date": types.StringType,
-                "status":       types.StringType,
-            },
+            componentAttrTypes,
             map[string]attr.Value{
                 "id":           types.StringValue(component.ID.String()),
                 "name":         types.StringPointerValue(component.Name),
@@ -602,7 +604,8 @@ func (d *databasesDataSource) mapComponentsToModel(components []*models.Database
         )
         componentsList = append(componentsList, componentObj)
     }
-    return types.ListValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{}}, componentsList)
+
+    return types.ListValueMust(types.ObjectType{AttrTypes: componentAttrTypes}, componentsList)
 }
 
 func (d *databasesDataSource) mapExtensionsToModel(extensions *models.Extensions) types.Object {
@@ -786,19 +789,21 @@ func (d *databasesDataSource) mapNodeExtensionsToModel(extensions *models.Databa
 
 func (d *databasesDataSource) mapRolesToModel(roles []*models.DatabaseRole) types.List {
     rolesList := []attr.Value{}
+    roleAttrTypes := map[string]attr.Type{
+        "name":             types.StringType,
+        "bypass_rls":       types.BoolType,
+        "connection_limit": types.Int64Type,
+        "create_db":        types.BoolType,
+        "create_role":      types.BoolType,
+        "inherit":          types.BoolType,
+        "login":            types.BoolType,
+        "replication":      types.BoolType,
+        "superuser":        types.BoolType,
+    }
+
     for _, role := range roles {
         roleObj, _ := types.ObjectValue(
-            map[string]attr.Type{
-                "name":             types.StringType,
-                "bypass_rls":       types.BoolType,
-                "connection_limit": types.Int64Type,
-                "create_db":        types.BoolType,
-                "create_role":      types.BoolType,
-                "inherit":          types.BoolType,
-                "login":            types.BoolType,
-                "replication":      types.BoolType,
-                "superuser":        types.BoolType,
-            },
+            roleAttrTypes,
             map[string]attr.Value{
                 "name":             types.StringPointerValue(role.Name),
                 "bypass_rls":       types.BoolPointerValue(role.BypassRls),
@@ -813,7 +818,8 @@ func (d *databasesDataSource) mapRolesToModel(roles []*models.DatabaseRole) type
         )
         rolesList = append(rolesList, roleObj)
     }
-    return types.ListValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{}}, rolesList)
+
+    return types.ListValueMust(types.ObjectType{AttrTypes: roleAttrTypes}, rolesList)
 }
 
 func (d *databasesDataSource) mapTablesToModel(tables []*models.DatabaseTable) types.List {

@@ -222,19 +222,19 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					},
 				},
 			},
-			// "components": schema.ListNestedAttribute{
-			//     Description: "List of components in the database.",
-			//     Computed:    true,
-			//     NestedObject: schema.NestedAttributeObject{
-			//         Attributes: map[string]schema.Attribute{
-			//             "id":           schema.StringAttribute{Computed: true},
-			//             "name":         schema.StringAttribute{Computed: true},
-			//             "version":      schema.StringAttribute{Computed: true},
-			//             "release_date": schema.StringAttribute{Computed: true},
-			//             "status":       schema.StringAttribute{Computed: true},
-			//         },
-			//     },
-			// },
+			"components": schema.ListNestedAttribute{
+			    Description: "List of components in the database.",
+			    Computed:    true,
+			    NestedObject: schema.NestedAttributeObject{
+			        Attributes: map[string]schema.Attribute{
+			            "id":           schema.StringAttribute{Computed: true},
+			            "name":         schema.StringAttribute{Computed: true},
+			            "version":      schema.StringAttribute{Computed: true},
+			            "release_date": schema.StringAttribute{Computed: true},
+			            "status":       schema.StringAttribute{Computed: true},
+			        },
+			    },
+			},
 			"extensions": schema.SingleNestedAttribute{
 				Description: "Extensions configuration for the database.",
 				Computed:    true,
@@ -315,23 +315,23 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					},
 				},
 			},
-			// "roles": schema.ListNestedAttribute{
-			//     Description: "List of roles in the database.",
-			//     Computed:    true,
-			//     NestedObject: schema.NestedAttributeObject{
-			//         Attributes: map[string]schema.Attribute{
-			//             "name":             schema.StringAttribute{Computed: true},
-			//             "bypass_rls":       schema.BoolAttribute{Computed: true},
-			//             "connection_limit": schema.Int64Attribute{Computed: true},
-			//             "create_db":        schema.BoolAttribute{Computed: true},
-			//             "create_role":      schema.BoolAttribute{Computed: true},
-			//             "inherit":          schema.BoolAttribute{Computed: true},
-			//             "login":            schema.BoolAttribute{Computed: true},
-			//             "replication":      schema.BoolAttribute{Computed: true},
-			//             "superuser":        schema.BoolAttribute{Computed: true},
-			//         },
-			//     },
-			// },
+			"roles": schema.ListNestedAttribute{
+			    Description: "List of roles in the database.",
+			    Computed:    true,
+			    NestedObject: schema.NestedAttributeObject{
+			        Attributes: map[string]schema.Attribute{
+			            "name":             schema.StringAttribute{Computed: true},
+			            "bypass_rls":       schema.BoolAttribute{Computed: true},
+			            "connection_limit": schema.Int64Attribute{Computed: true},
+			            "create_db":        schema.BoolAttribute{Computed: true},
+			            "create_role":      schema.BoolAttribute{Computed: true},
+			            "inherit":          schema.BoolAttribute{Computed: true},
+			            "login":            schema.BoolAttribute{Computed: true},
+			            "replication":      schema.BoolAttribute{Computed: true},
+			            "superuser":        schema.BoolAttribute{Computed: true},
+			        },
+			    },
+			},
 			"tables": schema.ListNestedAttribute{
 			    Description: "List of tables in the database.",
 			    Computed:    true,
@@ -914,10 +914,10 @@ func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database)
 		ConfigVersion: types.StringValue(database.ConfigVersion),
 		Options:       convertToListValue(database.Options),
 		Backups:       r.mapBackupsToResourceModel(database.Backups),
-		// Components:     r.mapComponentsToResourceModel(database.Components),
+		Components:     r.mapComponentsToResourceModel(database.Components),
 		Extensions: r.mapExtensionsToResourceModel(database.Extensions),
 		Nodes:      r.mapNodesToResourceModel(database.Nodes),
-		// Roles:          r.mapRolesToResourceModel(database.Roles),
+		Roles:          r.mapRolesToResourceModel(database.Roles),
 		Tables:         r.mapTablesToResourceModel(database.Tables),
 	}
 }
@@ -990,27 +990,29 @@ func (r *databaseResource) mapBackupsToResourceModel(backups *models.Backups) ty
 
 func (r *databaseResource) mapComponentsToResourceModel(components []*models.DatabaseComponentVersion) types.List {
 	componentsList := []attr.Value{}
-	for _, component := range components {
-		componentObj, _ := types.ObjectValue(
-			map[string]attr.Type{
-				"id":           types.StringType,
-				"name":         types.StringType,
-				"version":      types.StringType,
-				"release_date": types.StringType,
-				"status":       types.StringType,
-			},
-			map[string]attr.Value{
-				"id":           types.StringValue(component.ID.String()),
-				"name":         types.StringPointerValue(component.Name),
-				"version":      types.StringPointerValue(component.Version),
-				"release_date": types.StringPointerValue(component.ReleaseDate),
-				"status":       types.StringPointerValue(component.Status),
-			},
-		)
-		componentsList = append(componentsList, componentObj)
-	}
+    componentAttrTypes := map[string]attr.Type{
+        "id":           types.StringType,
+        "name":         types.StringType,
+        "version":      types.StringType,
+        "release_date": types.StringType,
+        "status":       types.StringType,
+    }
 
-	return types.ListValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{}}, componentsList)
+    for _, component := range components {
+        componentObj, _ := types.ObjectValue(
+            componentAttrTypes,
+            map[string]attr.Value{
+                "id":           types.StringValue(component.ID.String()),
+                "name":         types.StringPointerValue(component.Name),
+                "version":      types.StringPointerValue(component.Version),
+                "release_date": types.StringPointerValue(component.ReleaseDate),
+                "status":       types.StringPointerValue(component.Status),
+            },
+        )
+        componentsList = append(componentsList, componentObj)
+    }
+
+    return types.ListValueMust(types.ObjectType{AttrTypes: componentAttrTypes}, componentsList)
 }
 
 func (r *databaseResource) mapExtensionsToResourceModel(extensions *models.Extensions) types.Object {
@@ -1067,35 +1069,37 @@ func (r *databaseResource) mapNodesToResourceModel(nodes []*models.DatabaseNode)
 
 func (r *databaseResource) mapRolesToResourceModel(roles []*models.DatabaseRole) types.List {
 	rolesList := []attr.Value{}
-	for _, role := range roles {
-		roleObj, _ := types.ObjectValue(
-			map[string]attr.Type{
-				"name":             types.StringType,
-				"bypass_rls":       types.BoolType,
-				"connection_limit": types.Int64Type,
-				"create_db":        types.BoolType,
-				"create_role":      types.BoolType,
-				"inherit":          types.BoolType,
-				"login":            types.BoolType,
-				"replication":      types.BoolType,
-				"superuser":        types.BoolType,
-			},
-			map[string]attr.Value{
-				"name":             types.StringPointerValue(role.Name),
-				"bypass_rls":       types.BoolPointerValue(role.BypassRls),
-				"connection_limit": types.Int64PointerValue(role.ConnectionLimit),
-				"create_db":        types.BoolPointerValue(role.CreateDb),
-				"create_role":      types.BoolPointerValue(role.CreateRole),
-				"inherit":          types.BoolPointerValue(role.Inherit),
-				"login":            types.BoolPointerValue(role.Login),
-				"replication":      types.BoolPointerValue(role.Replication),
-				"superuser":        types.BoolPointerValue(role.Superuser),
-			},
-		)
-		rolesList = append(rolesList, roleObj)
-	}
+    roleAttrTypes := map[string]attr.Type{
+        "name":             types.StringType,
+        "bypass_rls":       types.BoolType,
+        "connection_limit": types.Int64Type,
+        "create_db":        types.BoolType,
+        "create_role":      types.BoolType,
+        "inherit":          types.BoolType,
+        "login":            types.BoolType,
+        "replication":      types.BoolType,
+        "superuser":        types.BoolType,
+    }
 
-	return types.ListValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{}}, rolesList)
+    for _, role := range roles {
+        roleObj, _ := types.ObjectValue(
+            roleAttrTypes,
+            map[string]attr.Value{
+                "name":             types.StringPointerValue(role.Name),
+                "bypass_rls":       types.BoolPointerValue(role.BypassRls),
+                "connection_limit": types.Int64PointerValue(role.ConnectionLimit),
+                "create_db":        types.BoolPointerValue(role.CreateDb),
+                "create_role":      types.BoolPointerValue(role.CreateRole),
+                "inherit":          types.BoolPointerValue(role.Inherit),
+                "login":            types.BoolPointerValue(role.Login),
+                "replication":      types.BoolPointerValue(role.Replication),
+                "superuser":        types.BoolPointerValue(role.Superuser),
+            },
+        )
+        rolesList = append(rolesList, roleObj)
+    }
+
+    return types.ListValueMust(types.ObjectType{AttrTypes: roleAttrTypes}, rolesList)
 }
 
 func (r *databaseResource) mapTablesToResourceModel(tables []*models.DatabaseTable) types.List {
@@ -1422,10 +1426,10 @@ type databaseResourceModel struct {
 	ConfigVersion types.String `tfsdk:"config_version"`
 	Options       types.List   `tfsdk:"options"`
 	Backups       types.Object `tfsdk:"backups"`
-	// Components     types.List   `tfsdk:"components"`
+	Components     types.List   `tfsdk:"components"`
 	Extensions types.Object `tfsdk:"extensions"`
 	Nodes      types.List   `tfsdk:"nodes"`
-	// Roles          types.List   `tfsdk:"roles"`
+	Roles          types.List   `tfsdk:"roles"`
 	Tables         types.List   `tfsdk:"tables"`
 }
 
