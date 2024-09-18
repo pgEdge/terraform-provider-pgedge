@@ -225,6 +225,9 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"components": schema.ListNestedAttribute{
 			    Description: "List of components in the database.",
 			    Computed:    true,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
 			    NestedObject: schema.NestedAttributeObject{
 			        Attributes: map[string]schema.Attribute{
 			            "id":           schema.StringAttribute{Computed: true},
@@ -318,6 +321,9 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"roles": schema.ListNestedAttribute{
 			    Description: "List of roles in the database.",
 			    Computed:    true,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
 			    NestedObject: schema.NestedAttributeObject{
 			        Attributes: map[string]schema.Attribute{
 			            "name":             schema.StringAttribute{Computed: true},
@@ -335,9 +341,6 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"tables": schema.ListNestedAttribute{
 			    Description: "List of tables in the database.",
 			    Computed:    true,
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.UseStateForUnknown(),
-				},
 			    NestedObject: schema.NestedAttributeObject{
 			        Attributes: map[string]schema.Attribute{
 			            "name":             schema.StringAttribute{Computed: true},
