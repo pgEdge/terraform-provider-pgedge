@@ -22,7 +22,6 @@ func TestAccClusterResource(t *testing.T) {
 						{
 							name              = "n1"
 							region            = "us-west-1"
-							image             = "postgres"
 							instance_type     = "t4g.small"
 							availability_zone = "us-west-1a"
 							volume_size       = 20
@@ -31,7 +30,6 @@ func TestAccClusterResource(t *testing.T) {
 						{
 							name              = "n2"
 							region            = "us-west-2"
-							image             = "postgres"
 							instance_type     = "t4g.medium"
 							availability_zone = "us-west-2a"
 							volume_size       = 20

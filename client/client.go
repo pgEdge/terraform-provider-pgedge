@@ -284,7 +284,23 @@ func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models
 		return nil, err
 	}
 
-	return resp.Payload, nil
+	for {
+		clusterDetails, err := c.GetCluster(ctx, strfmt.UUID(*resp.Payload.ID))
+		if err != nil {
+			return nil, err
+		}
+
+		switch *clusterDetails.Status {
+		case "available":
+			return clusterDetails, nil
+		case "failed":
+			return nil, errors.New("cluster creation failed")
+		case "modifying":
+			time.Sleep(5 * time.Second)
+		default:
+			return nil, fmt.Errorf("unexpected cluster status: %s", *clusterDetails.Status)
+		}
+	}
 }
 
 func (c *Client) DeleteCluster(ctx context.Context, id strfmt.UUID) error {

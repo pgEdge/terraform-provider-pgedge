@@ -312,8 +312,10 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 		clusterDetails.Capacity = types.Int64Value(cluster.Capacity)
 
 		// Set Regions
-		regions := make([]attr.Value, len(cluster.Regions))
-		for i, region := range cluster.Regions {
+		sortedRegions := sortRegions(cluster.Regions)
+
+		regions := make([]attr.Value, len(sortedRegions))
+		for i, region := range sortedRegions {
 			regions[i] = types.StringValue(region)
 		}
 		clusterDetails.Regions = types.ListValueMust(types.StringType, regions)
