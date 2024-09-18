@@ -332,42 +332,45 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			//         },
 			//     },
 			// },
-			// "tables": schema.ListNestedAttribute{
-			//     Description: "List of tables in the database.",
-			//     Computed:    true,
-			//     NestedObject: schema.NestedAttributeObject{
-			//         Attributes: map[string]schema.Attribute{
-			//             "name":             schema.StringAttribute{Computed: true},
-			//             "schema":           schema.StringAttribute{Computed: true},
-			//             "primary_key":      schema.ListAttribute{Computed: true, ElementType: types.StringType},
-			//             "replication_sets": schema.ListAttribute{Computed: true, ElementType: types.StringType},
-			//             "columns": schema.ListNestedAttribute{
-			//                 Computed: true,
-			//                 NestedObject: schema.NestedAttributeObject{
-			//                     Attributes: map[string]schema.Attribute{
-			//                         "name":             schema.StringAttribute{Computed: true},
-			//                         "data_type":        schema.StringAttribute{Computed: true},
-			//                         "default":          schema.StringAttribute{Computed: true},
-			//                         "is_nullable":      schema.BoolAttribute{Computed: true},
-			//                         "is_primary_key":   schema.BoolAttribute{Computed: true},
-			//                         "ordinal_position": schema.Int64Attribute{Computed: true},
-			//                     },
-			//                 },
-			//             },
-			//             "status": schema.ListNestedAttribute{
-			//                 Computed: true,
-			//                 NestedObject: schema.NestedAttributeObject{
-			//                     Attributes: map[string]schema.Attribute{
-			//                         "aligned":     schema.BoolAttribute{Computed: true},
-			//                         "node_name":   schema.StringAttribute{Computed: true},
-			//                         "present":     schema.BoolAttribute{Computed: true},
-			//                         "replicating": schema.BoolAttribute{Computed: true},
-			//                     },
-			//                 },
-			//             },
-			//         },
-			//     },
-			// },
+			"tables": schema.ListNestedAttribute{
+			    Description: "List of tables in the database.",
+			    Computed:    true,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
+			    NestedObject: schema.NestedAttributeObject{
+			        Attributes: map[string]schema.Attribute{
+			            "name":             schema.StringAttribute{Computed: true},
+			            "schema":           schema.StringAttribute{Computed: true},
+			            "primary_key":      schema.ListAttribute{Computed: true, ElementType: types.StringType},
+			            "replication_sets": schema.ListAttribute{Computed: true, ElementType: types.StringType},
+			            "columns": schema.ListNestedAttribute{
+			                Computed: true,
+			                NestedObject: schema.NestedAttributeObject{
+			                    Attributes: map[string]schema.Attribute{
+			                        "name":             schema.StringAttribute{Computed: true},
+			                        "data_type":        schema.StringAttribute{Computed: true},
+			                        "default":          schema.StringAttribute{Computed: true},
+			                        "is_nullable":      schema.BoolAttribute{Computed: true},
+			                        "is_primary_key":   schema.BoolAttribute{Computed: true},
+			                        "ordinal_position": schema.Int64Attribute{Computed: true},
+			                    },
+			                },
+			            },
+			            "status": schema.ListNestedAttribute{
+			                Computed: true,
+			                NestedObject: schema.NestedAttributeObject{
+			                    Attributes: map[string]schema.Attribute{
+			                        "aligned":     schema.BoolAttribute{Computed: true},
+			                        "node_name":   schema.StringAttribute{Computed: true},
+			                        "present":     schema.BoolAttribute{Computed: true},
+			                        "replicating": schema.BoolAttribute{Computed: true},
+			                    },
+			                },
+			            },
+			        },
+			    },
+			},
 		},
 	}
 }
@@ -915,7 +918,7 @@ func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database)
 		Extensions: r.mapExtensionsToResourceModel(database.Extensions),
 		Nodes:      r.mapNodesToResourceModel(database.Nodes),
 		// Roles:          r.mapRolesToResourceModel(database.Roles),
-		// Tables:         r.mapTablesToResourceModel(database.Tables),
+		Tables:         r.mapTablesToResourceModel(database.Tables),
 	}
 }
 
@@ -1096,31 +1099,73 @@ func (r *databaseResource) mapRolesToResourceModel(roles []*models.DatabaseRole)
 }
 
 func (r *databaseResource) mapTablesToResourceModel(tables []*models.DatabaseTable) types.List {
-	tablesList := []attr.Value{}
-	for _, table := range tables {
-		tableObj, _ := types.ObjectValue(
-			map[string]attr.Type{
-				"name":             types.StringType,
-				"schema":           types.StringType,
-				"primary_key":      types.ListType{ElemType: types.StringType},
-				"replication_sets": types.ListType{ElemType: types.StringType},
-				"columns":          types.ListType{ElemType: types.ObjectType{AttrTypes: map[string]attr.Type{}}},
-				"status":           types.ListType{ElemType: types.ObjectType{AttrTypes: map[string]attr.Type{}}},
-			},
-			map[string]attr.Value{
-				"name":             types.StringPointerValue(table.Name),
-				"schema":           types.StringPointerValue(table.Schema),
-				"primary_key":      types.ListValueMust(types.StringType, r.stringSliceToValueSlice(table.PrimaryKey)),
-				"replication_sets": types.ListValueMust(types.StringType, r.stringSliceToValueSlice(table.ReplicationSets)),
-				"columns":          r.mapColumnsToResourceModel(table.Columns),
-				"status":           r.mapTableStatusToResourceModel(table.Status),
-			},
-		)
-		tablesList = append(tablesList, tableObj)
-	}
+    if tables == nil {
+        return types.ListNull(types.ObjectType{AttrTypes: r.tableAttrTypes()})
+    }
 
-	return types.ListValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{}}, tablesList)
+    tablesList := make([]attr.Value, 0, len(tables))
+    for _, table := range tables {
+        if table == nil {
+            continue
+        }
+
+        tableObj, diags := types.ObjectValue(
+            r.tableAttrTypes(),
+            map[string]attr.Value{
+                "name":             types.StringPointerValue(table.Name),
+                "schema":           types.StringPointerValue(table.Schema),
+                "primary_key":      types.ListValueMust(types.StringType, r.stringSliceToValueSlice(table.PrimaryKey)),
+                "replication_sets": types.ListValueMust(types.StringType, r.stringSliceToValueSlice(table.ReplicationSets)),
+                "columns":          r.mapColumnsToResourceModel(table.Columns),
+                "status":           r.mapTableStatusToResourceModel(table.Status),
+            },
+        )
+
+        if diags.HasError() {
+            continue
+        }
+
+        tablesList = append(tablesList, tableObj)
+    }
+
+    if len(tablesList) == 0 {
+        return types.ListNull(types.ObjectType{AttrTypes: r.tableAttrTypes()})
+    }
+
+    result := types.ListValueMust(types.ObjectType{AttrTypes: r.tableAttrTypes()}, tablesList)
+    return result
 }
+
+func (r *databaseResource) tableStatusAttrTypes() map[string]attr.Type {
+    return map[string]attr.Type{
+        "aligned":     types.BoolType,
+        "node_name":   types.StringType,
+        "present":     types.BoolType,
+        "replicating": types.BoolType,
+    }
+}
+
+func (r *databaseResource) tableAttrTypes() map[string]attr.Type {
+    columnType := map[string]attr.Type{
+        "name":             types.StringType,
+        "data_type":        types.StringType,
+        "default":          types.StringType,
+        "is_nullable":      types.BoolType,
+        "is_primary_key":   types.BoolType,
+        "ordinal_position": types.Int64Type,
+    }
+
+    return map[string]attr.Type{
+        "name":             types.StringType,
+        "schema":           types.StringType,
+        "primary_key":      types.ListType{ElemType: types.StringType},
+        "replication_sets": types.ListType{ElemType: types.StringType},
+        "columns":          types.ListType{ElemType: types.ObjectType{AttrTypes: columnType}},
+        "status":           types.ListType{ElemType: types.ObjectType{AttrTypes: r.tableStatusAttrTypes()}},
+    }
+}
+
+
 
 // Helper functions
 
@@ -1293,53 +1338,63 @@ func (r *databaseResource) mapNodeExtensionsToResourceModel(extensions *models.D
 	return extensionsObj
 }
 func (r *databaseResource) mapColumnsToResourceModel(columns []*models.DatabaseColumn) types.List {
-	columnsList := []attr.Value{}
-	for _, column := range columns {
-		columnObj, _ := types.ObjectValue(
-			map[string]attr.Type{
-				"name":             types.StringType,
-				"data_type":        types.StringType,
-				"default":          types.StringType,
-				"is_nullable":      types.BoolType,
-				"is_primary_key":   types.BoolType,
-				"ordinal_position": types.Int64Type,
-			},
-			map[string]attr.Value{
-				"name":             types.StringPointerValue(column.Name),
-				"data_type":        types.StringPointerValue(column.DataType),
-				"default":          types.StringPointerValue(column.Default),
-				"is_nullable":      types.BoolPointerValue(column.IsNullable),
-				"is_primary_key":   types.BoolPointerValue(column.IsPrimaryKey),
-				"ordinal_position": types.Int64PointerValue(column.OrdinalPosition),
-			},
-		)
-		columnsList = append(columnsList, columnObj)
-	}
+    columnsList := make([]attr.Value, 0, len(columns))
+    columnType := map[string]attr.Type{
+        "name":             types.StringType,
+        "data_type":        types.StringType,
+        "default":          types.StringType,
+        "is_nullable":      types.BoolType,
+        "is_primary_key":   types.BoolType,
+        "ordinal_position": types.Int64Type,
+    }
 
-	return types.ListValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{}}, columnsList)
+    for _, column := range columns {
+        if column == nil {
+            continue
+        }
+
+        columnObj, diags := types.ObjectValue(
+            columnType,
+            map[string]attr.Value{
+                "name":             types.StringPointerValue(column.Name),
+                "data_type":        types.StringPointerValue(column.DataType),
+                "default":          types.StringPointerValue(column.Default),
+                "is_nullable":      types.BoolPointerValue(column.IsNullable),
+                "is_primary_key":   types.BoolPointerValue(column.IsPrimaryKey),
+                "ordinal_position": types.Int64PointerValue(column.OrdinalPosition),
+            },
+        )
+
+        if diags.HasError() {
+            continue
+        }
+
+        columnsList = append(columnsList, columnObj)
+    }
+
+    return types.ListValueMust(
+        types.ObjectType{AttrTypes: columnType},
+        columnsList,
+    )
 }
 
 func (r *databaseResource) mapTableStatusToResourceModel(status []*models.DatabaseTableStatus) types.List {
 	statusList := []attr.Value{}
-	for _, s := range status {
-		statusObj, _ := types.ObjectValue(
-			map[string]attr.Type{
-				"aligned":     types.BoolType,
-				"node_name":   types.StringType,
-				"present":     types.BoolType,
-				"replicating": types.BoolType,
-			},
-			map[string]attr.Value{
-				"aligned":     types.BoolPointerValue(s.Aligned),
-				"node_name":   types.StringPointerValue(s.NodeName),
-				"present":     types.BoolPointerValue(s.Present),
-				"replicating": types.BoolPointerValue(s.Replicating),
-			},
-		)
-		statusList = append(statusList, statusObj)
-	}
+    for _, s := range status {
+        statusObj, _ := types.ObjectValue(
+            r.tableStatusAttrTypes(),
+            map[string]attr.Value{
+                "aligned":     types.BoolPointerValue(s.Aligned),
+                "node_name":   types.StringPointerValue(s.NodeName),
+                "present":     types.BoolPointerValue(s.Present),
+                "replicating": types.BoolPointerValue(s.Replicating),
+            },
+        )
+        statusList = append(statusList, statusObj)
+    }
 
-	return types.ListValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{}}, statusList)
+    return types.ListValueMust(types.ObjectType{AttrTypes: r.tableStatusAttrTypes()}, statusList)
+
 }
 
 func (r *databaseResource) stringSliceToValueSlice(slice []string) []attr.Value {
@@ -1371,7 +1426,7 @@ type databaseResourceModel struct {
 	Extensions types.Object `tfsdk:"extensions"`
 	Nodes      types.List   `tfsdk:"nodes"`
 	// Roles          types.List   `tfsdk:"roles"`
-	// Tables         types.List   `tfsdk:"tables"`
+	Tables         types.List   `tfsdk:"tables"`
 }
 
 func convertToStringSlice(list types.List) []string {

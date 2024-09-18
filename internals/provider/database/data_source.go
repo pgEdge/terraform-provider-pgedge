@@ -67,7 +67,7 @@ type DatabaseModel struct {
 	Extensions     types.Object `tfsdk:"extensions"`
 	Nodes          types.List   `tfsdk:"nodes"`
 	// Roles          types.List   `tfsdk:"roles"`
-	// Tables         types.List   `tfsdk:"tables"`
+	Tables         types.List   `tfsdk:"tables"`
 }
 
 func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
@@ -153,13 +153,13 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 						// 		Attributes: d.roleSchema(),
 						// 	},
 						// },
-						// "tables": schema.ListNestedAttribute{
-						// 	Computed:    true,
-						// 	Description: "Tables in the database",
-						// 	NestedObject: schema.NestedAttributeObject{
-						// 		Attributes: d.tableSchema(),
-						// 	},
-						// },
+						"tables": schema.ListNestedAttribute{
+							Computed:    true,
+							Description: "Tables in the database",
+							NestedObject: schema.NestedAttributeObject{
+								Attributes: d.tableSchema(),
+							},
+						},
 					},
 				},
 			},
@@ -198,7 +198,7 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			Extensions:     d.mapExtensionsToModel(db.Extensions),
 			Nodes:          d.mapNodesToModel(db.Nodes),
 			// Roles:          d.mapRolesToModel(db.Roles),
-			// Tables:         d.mapTablesToModel(db.Tables),
+			Tables:         d.mapTablesToModel(db.Tables),
 		}
 
 		state.Databases = append(state.Databases, databaseModel)
@@ -818,29 +818,91 @@ func (d *databasesDataSource) mapRolesToModel(roles []*models.DatabaseRole) type
 
 func (d *databasesDataSource) mapTablesToModel(tables []*models.DatabaseTable) types.List {
     tablesList := []attr.Value{}
+    tableAttrTypes := map[string]attr.Type{
+        "name":             types.StringType,
+        "schema":           types.StringType,
+        "primary_key":      types.ListType{ElemType: types.StringType},
+        "replication_sets": types.ListType{ElemType: types.StringType},
+        "columns":          types.ListType{ElemType: types.ObjectType{AttrTypes: d.columnAttrTypes()}},
+        "status":           types.ListType{ElemType: types.ObjectType{AttrTypes: d.tableStatusAttrTypes()}},
+    }
+
     for _, table := range tables {
         tableObj, _ := types.ObjectValue(
-            map[string]attr.Type{
-                "name":             types.StringType,
-                "schema":           types.StringType,
-                "primary_key":      types.ListType{ElemType: types.StringType},
-                "replication_sets": types.ListType{ElemType: types.StringType},
-                "columns":          types.ListType{ElemType: types.ObjectType{AttrTypes: map[string]attr.Type{}}},
-                "status":           types.ListType{ElemType: types.ObjectType{AttrTypes: map[string]attr.Type{}}},
-            },
+            tableAttrTypes,
             map[string]attr.Value{
                 "name":             types.StringPointerValue(table.Name),
                 "schema":           types.StringPointerValue(table.Schema),
-                "primary_key":      d.convertToListValue(table.PrimaryKey),
-                "replication_sets": d.convertToListValue(table.ReplicationSets),
-                "columns":          d.mapColumnsToModel(table.Columns),
-                "status":           d.mapTableStatusToModel(table.Status),
+                "primary_key":      types.ListValueMust(types.StringType, d.stringSliceToValueSlice(table.PrimaryKey)),
+                "replication_sets": types.ListValueMust(types.StringType, d.stringSliceToValueSlice(table.ReplicationSets)),
+                "columns":          d.mapColumnsToResourceModel(table.Columns),
+                "status":           d.mapTableStatusToResourceModel(table.Status),
             },
         )
         tablesList = append(tablesList, tableObj)
     }
-    return types.ListValueMust(types.ObjectType{AttrTypes: map[string]attr.Type{}}, tablesList)
+
+    return types.ListValueMust(types.ObjectType{AttrTypes: tableAttrTypes}, tablesList)
 }
+
+func (d *databasesDataSource) columnAttrTypes() map[string]attr.Type {
+    return map[string]attr.Type{
+        "name":             types.StringType,
+        "data_type":        types.StringType,
+        "default":          types.StringType,
+        "is_nullable":      types.BoolType,
+        "is_primary_key":   types.BoolType,
+        "ordinal_position": types.Int64Type,
+    }
+}
+
+func (d *databasesDataSource) tableStatusAttrTypes() map[string]attr.Type {
+    return map[string]attr.Type{
+        "aligned":     types.BoolType,
+        "node_name":   types.StringType,
+        "present":     types.BoolType,
+        "replicating": types.BoolType,
+    }
+}
+
+func (d *databasesDataSource) mapColumnsToResourceModel(columns []*models.DatabaseColumn) types.List {
+    columnsList := []attr.Value{}
+    for _, column := range columns {
+        columnObj, _ := types.ObjectValue(
+            d.columnAttrTypes(),
+            map[string]attr.Value{
+                "name":             types.StringPointerValue(column.Name),
+                "data_type":        types.StringPointerValue(column.DataType),
+                "default":          types.StringPointerValue(column.Default),
+                "is_nullable":      types.BoolPointerValue(column.IsNullable),
+                "is_primary_key":   types.BoolPointerValue(column.IsPrimaryKey),
+                "ordinal_position": types.Int64PointerValue(column.OrdinalPosition),
+            },
+        )
+        columnsList = append(columnsList, columnObj)
+    }
+
+    return types.ListValueMust(types.ObjectType{AttrTypes: d.columnAttrTypes()}, columnsList)
+}
+
+func (d *databasesDataSource) mapTableStatusToResourceModel(status []*models.DatabaseTableStatus) types.List {
+    statusList := []attr.Value{}
+    for _, s := range status {
+        statusObj, _ := types.ObjectValue(
+            d.tableStatusAttrTypes(),
+            map[string]attr.Value{
+                "aligned":     types.BoolPointerValue(s.Aligned),
+                "node_name":   types.StringPointerValue(s.NodeName),
+                "present":     types.BoolPointerValue(s.Present),
+                "replicating": types.BoolPointerValue(s.Replicating),
+            },
+        )
+        statusList = append(statusList, statusObj)
+    }
+
+    return types.ListValueMust(types.ObjectType{AttrTypes: d.tableStatusAttrTypes()}, statusList)
+}
+
 
 func (d *databasesDataSource) mapColumnsToModel(columns []*models.DatabaseColumn) types.List {
     columnsList := []attr.Value{}
