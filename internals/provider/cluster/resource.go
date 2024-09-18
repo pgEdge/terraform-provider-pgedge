@@ -3,6 +3,7 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -81,6 +82,9 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 			"created_at": schema.StringAttribute{
 				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"nodes": schema.ListNestedAttribute{
 				Required: true,
@@ -88,9 +92,8 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					Attributes: map[string]schema.Attribute{
 						"name":              schema.StringAttribute{Required: true},
 						"region":            schema.StringAttribute{Required: true},
-						"image":             schema.StringAttribute{Required: true},
 						"instance_type":     schema.StringAttribute{Required: true},
-						"availability_zone": schema.StringAttribute{Required: true},
+						"availability_zone": schema.StringAttribute{Optional: true},
 						"volume_size":       schema.Int64Attribute{Optional: true},
 						"volume_type":       schema.StringAttribute{Optional: true},
 						"volume_iops":       schema.Int64Attribute{Optional: true},
@@ -135,23 +138,27 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
+	sortedRegions := sortRegions(regions)
+
 
 	createInput := &models.CreateClusterInput{
 		Name:           plan.Name.ValueStringPointer(),
 		CloudAccountID: plan.CloudAccountID.ValueString(),
-		SSHKeyID:       plan.SSHKeyID.ValueString(),
 		NodeLocation:   plan.NodeLocation.ValueStringPointer(),
-		Regions:        regions,
+		Regions:        sortedRegions,
 		Nodes:          make([]*models.ClusterNodeSettings, 0),
 		Networks:       make([]*models.ClusterNetworkSettings, 0),
 		FirewallRules:  make([]*models.ClusterFirewallRuleSettings, 0),
+	}
+
+	if !plan.SSHKeyID.IsNull() {
+		createInput.SSHKeyID = plan.SSHKeyID.ValueString()
 	}
 
 	for _, node := range plan.Nodes {
 		createInput.Nodes = append(createInput.Nodes, &models.ClusterNodeSettings{
 			Name:             node.Name.ValueString(),
 			Region:           node.Region.ValueStringPointer(),
-			Image:            node.Image.ValueString(),
 			InstanceType:     node.InstanceType.ValueString(),
 			AvailabilityZone: node.AvailabilityZone.ValueString(),
 			VolumeSize:       node.VolumeSize.ValueInt64(),
@@ -230,16 +237,21 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	state.Name = types.StringValue(*cluster.Name)
+	state.Name = types.StringPointerValue(cluster.Name)
 	state.CloudAccountID = types.StringPointerValue(cluster.CloudAccount.ID)
-	state.SSHKeyID = types.StringValue(cluster.SSHKeyID)
-	state.NodeLocation = types.StringValue(*cluster.NodeLocation)
-	state.Status = types.StringValue(*cluster.Status)
+	state.NodeLocation = types.StringPointerValue(cluster.NodeLocation)
+	state.Status = types.StringPointerValue(cluster.Status)
 	state.CreatedAt = types.StringPointerValue(cluster.CreatedAt)
 
+	if cluster.SSHKeyID != "" {
+		state.SSHKeyID = types.StringValue(cluster.SSHKeyID)
+	}
+
+	sortedRegions := sortRegions(cluster.Regions)
+
 	state.Regions = types.ListValueMust(types.StringType, func() []attr.Value {
-		regions := make([]attr.Value, len(cluster.Regions))
-		for i, region := range cluster.Regions {
+		regions := make([]attr.Value, len(sortedRegions))
+		for i, region := range sortedRegions {
 			regions[i] = types.StringValue(region)
 		}
 		return regions
@@ -256,7 +268,6 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		nodes = append(nodes, nodeModel{
 			Name:             types.StringValue(node.Name),
 			Region:           types.StringValue(*node.Region),
-			Image:            types.StringValue(node.Image),
 			InstanceType:     types.StringValue(node.InstanceType),
 			AvailabilityZone: types.StringValue(node.AvailabilityZone),
 			VolumeSize:       types.Int64Value(node.VolumeSize),
@@ -322,13 +333,61 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
+	sortedRegions := sortRegions(regions)
+
 	updateInput := &models.UpdateClusterInput{
 		SSHKeyID: plan.SSHKeyID.ValueString(),
-		Regions:  regions,
+		Regions:  sortedRegions,
 		Nodes:    make([]*models.ClusterNodeSettings, 0),
-		Networks: make([]*models.ClusterNetworkSettings, 0),
 	}
 
+	// Add nodes
+	for _, node := range plan.Nodes {
+        nodeSettings := &models.ClusterNodeSettings{
+            Name:             node.Name.ValueString(),
+            Region:           node.Region.ValueStringPointer(),
+            AvailabilityZone: node.AvailabilityZone.ValueString(),
+            InstanceType:     node.InstanceType.ValueString(),
+            VolumeSize:       node.VolumeSize.ValueInt64(),
+            VolumeType:       node.VolumeType.ValueString(),
+            VolumeIops:       node.VolumeIops.ValueInt64(),
+        }
+
+        updateInput.Nodes = append(updateInput.Nodes, nodeSettings)
+    }
+
+	
+  // Add Networks
+  for _, network := range plan.Networks {
+	publicSubnets, diags := convertToStringSlice(ctx, network.PublicSubnets)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+
+	networkSettings := &models.ClusterNetworkSettings{
+		Region:        network.Region.ValueStringPointer(),
+		Cidr:          network.Cidr.ValueString(),
+		PublicSubnets: publicSubnets,
+	}
+
+	updateInput.Networks = append(updateInput.Networks, networkSettings)
+}
+
+    // Set FirewallRules
+    for _, rule := range plan.FirewallRules {
+        sources, diags := convertToStringSlice(ctx, rule.Sources)
+        resp.Diagnostics.Append(diags...)
+        if resp.Diagnostics.HasError() {
+            return
+        }
+
+        updateInput.FirewallRules = append(updateInput.FirewallRules, &models.ClusterFirewallRuleSettings{
+            Name:    rule.Name.ValueString(),
+            Port:    rule.Port.ValueInt64Pointer(),
+            Sources: sources,
+        })
+    }
 
 	cluster, err := r.client.UpdateCluster(ctx, strfmt.UUID(*plan.ID.ValueStringPointer()), updateInput)
 	if err != nil {
@@ -381,14 +440,13 @@ type clusterResourceModel struct {
 }
 
 type nodeModel struct {
-	Name             types.String `tfsdk:"name"`
-	Region           types.String `tfsdk:"region"`
-	Image            types.String `tfsdk:"image"`
-	InstanceType     types.String `tfsdk:"instance_type"`
-	AvailabilityZone types.String `tfsdk:"availability_zone"`
-	VolumeSize       types.Int64  `tfsdk:"volume_size"`
-	VolumeType       types.String `tfsdk:"volume_type"`
-	VolumeIops       types.Int64  `tfsdk:"volume_iops"`
+    Name             types.String  `tfsdk:"name"`
+    Region           types.String  `tfsdk:"region"`
+    InstanceType     types.String  `tfsdk:"instance_type"`
+    AvailabilityZone types.String  `tfsdk:"availability_zone"`
+    VolumeSize       types.Int64   `tfsdk:"volume_size"`
+    VolumeType       types.String  `tfsdk:"volume_type"`
+    VolumeIops       types.Int64   `tfsdk:"volume_iops"`
 }
 
 type networkModel struct {
@@ -419,4 +477,10 @@ func convertToStringSlice(ctx context.Context, list types.List) ([]string, diag.
 	}
 
 	return result, diags
+}
+
+
+func sortRegions(regions []string) []string {
+    sort.Strings(regions)
+    return regions
 }
