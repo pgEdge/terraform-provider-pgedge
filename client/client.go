@@ -333,6 +333,81 @@ func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models
 	// }
 }
 
+func (c *Client) GetCloudAccounts(ctx context.Context) ([]*models.CloudAccount, error) {
+	if c.PgEdgeAPIClient == nil {
+		return nil, fmt.Errorf("PgEdgeAPIClient is nil")
+	}
+
+	request := &operations.GetCloudAccountsParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	resp, err := c.PgEdgeAPIClient.Operations.GetCloudAccounts(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Payload, nil
+}
+
+func (c *Client) GetCloudAccount(ctx context.Context, id strfmt.UUID) (*models.CloudAccount, error) {
+	request := &operations.GetCloudAccountsIDParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		ID:         id,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	resp, err := c.PgEdgeAPIClient.Operations.GetCloudAccountsID(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Payload, nil
+}
+
+func (c *Client) CreateCloudAccount(ctx context.Context, account *models.CreateCloudAccountInput) (*models.CloudAccount, error) {
+	request := &operations.PostCloudAccountsParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		Body:       account,
+	}
+	request.SetAuthorization(c.AuthHeader)
+
+	resp, err := c.PgEdgeAPIClient.Operations.PostCloudAccounts(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Payload, nil
+}
+
+func (c *Client) DeleteCloudAccount(ctx context.Context, id strfmt.UUID) error {
+	request := &operations.DeleteCloudAccountsIDParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		ID:         id,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	_, err := c.PgEdgeAPIClient.Operations.DeleteCloudAccountsID(request)
+	if err != nil {
+		// The API returns 200 OK for successful deletion
+		if strings.Contains(err.Error(), "200") {
+			return nil
+		}
+		return err
+	}
+
+	return nil
+}
+
+
 func (c *Client) OAuthToken(ctx context.Context, clientId, clientSecret, grantType string) (*operations.PostOauthTokenOKBody, error) {
 	request := &operations.PostOauthTokenParams{
 		HTTPClient: c.HTTPClient,

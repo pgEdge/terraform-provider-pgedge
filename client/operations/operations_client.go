@@ -56,9 +56,15 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
+	DeleteCloudAccountsID(params *DeleteCloudAccountsIDParams, opts ...ClientOption) (*DeleteCloudAccountsIDNoContent, error)
+
 	DeleteClustersID(params *DeleteClustersIDParams, opts ...ClientOption) (*DeleteClustersIDNoContent, error)
 
 	DeleteDatabasesID(params *DeleteDatabasesIDParams, opts ...ClientOption) (*DeleteDatabasesIDNoContent, error)
+
+	GetCloudAccounts(params *GetCloudAccountsParams, opts ...ClientOption) (*GetCloudAccountsOK, error)
+
+	GetCloudAccountsID(params *GetCloudAccountsIDParams, opts ...ClientOption) (*GetCloudAccountsIDOK, error)
 
 	GetClusters(params *GetClustersParams, opts ...ClientOption) (*GetClustersOK, error)
 
@@ -72,6 +78,8 @@ type ClientService interface {
 
 	PatchDatabasesID(params *PatchDatabasesIDParams, opts ...ClientOption) (*PatchDatabasesIDOK, error)
 
+	PostCloudAccounts(params *PostCloudAccountsParams, opts ...ClientOption) (*PostCloudAccountsOK, error)
+
 	PostClusters(params *PostClustersParams, opts ...ClientOption) (*PostClustersOK, error)
 
 	PostDatabases(params *PostDatabasesParams, opts ...ClientOption) (*PostDatabasesOK, error)
@@ -81,6 +89,46 @@ type ClientService interface {
 	PostOauthToken(params *PostOauthTokenParams, opts ...ClientOption) (*PostOauthTokenOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
+}
+
+/*
+DeleteCloudAccountsID offboards a cloud account
+
+Offboard a cloud account.
+*/
+func (a *Client) DeleteCloudAccountsID(params *DeleteCloudAccountsIDParams, opts ...ClientOption) (*DeleteCloudAccountsIDNoContent, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewDeleteCloudAccountsIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "DeleteCloudAccountsID",
+		Method:             "DELETE",
+		PathPattern:        "/cloud-accounts/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &DeleteCloudAccountsIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*DeleteCloudAccountsIDNoContent)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for DeleteCloudAccountsID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
@@ -160,6 +208,86 @@ func (a *Client) DeleteDatabasesID(params *DeleteDatabasesIDParams, opts ...Clie
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for DeleteDatabasesID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetCloudAccounts lists cloud accounts known to pg edge
+
+Lists cloud accounts known to pgEdge.
+*/
+func (a *Client) GetCloudAccounts(params *GetCloudAccountsParams, opts ...ClientOption) (*GetCloudAccountsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetCloudAccountsParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "GetCloudAccounts",
+		Method:             "GET",
+		PathPattern:        "/cloud-accounts",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetCloudAccountsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetCloudAccountsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetCloudAccounts: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetCloudAccountsID retrieves a cloud account
+
+Retrieve a cloud account.
+*/
+func (a *Client) GetCloudAccountsID(params *GetCloudAccountsIDParams, opts ...ClientOption) (*GetCloudAccountsIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetCloudAccountsIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "GetCloudAccountsID",
+		Method:             "GET",
+		PathPattern:        "/cloud-accounts/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetCloudAccountsIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetCloudAccountsIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetCloudAccountsID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
@@ -400,6 +528,46 @@ func (a *Client) PatchDatabasesID(params *PatchDatabasesIDParams, opts ...Client
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for PatchDatabasesID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostCloudAccounts onboards a new cloud account
+
+Onboard a new cloud account.
+*/
+func (a *Client) PostCloudAccounts(params *PostCloudAccountsParams, opts ...ClientOption) (*PostCloudAccountsOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostCloudAccountsParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "PostCloudAccounts",
+		Method:             "POST",
+		PathPattern:        "/cloud-accounts",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PostCloudAccountsReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostCloudAccountsOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for PostCloudAccounts: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
