@@ -151,8 +151,8 @@ func (c *Client) UpdateDatabase(ctx context.Context, id strfmt.UUID, body *model
 		switch *databaseDetails.Status {
 		case "available":
 			return databaseDetails, nil
-		case "failed":
-			return nil, errors.New("database creation failed")
+		case "degraded":
+			return nil, errors.New("database degraded")
 		case "modifying":
 			time.Sleep(5 * time.Second)
 		default:
@@ -281,7 +281,7 @@ func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models
 		case "available":
 			return clusterDetails, nil
 		case "failed":
-			return nil, errors.New("cluster creation failed")
+			return nil, errors.New("cluster update failed")
 		case "modifying":
 			time.Sleep(5 * time.Second)
 		default:

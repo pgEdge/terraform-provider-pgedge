@@ -681,31 +681,33 @@ func (d *databasesDataSource) nodeExtensionsAttrTypes() map[string]attr.Type {
 }
 
 func (d *databasesDataSource) mapNodesToModel(nodes []*models.DatabaseNode) types.List {
-    nodesList := []attr.Value{}
-    nodeAttrTypes := map[string]attr.Type{
-        "name":       types.StringType,
-        "connection": types.ObjectType{AttrTypes: d.connectionAttrTypes()},
-        "location":   types.ObjectType{AttrTypes: d.locationAttrTypes()},
-        "region":     types.ObjectType{AttrTypes: d.regionAttrTypes()},
-        "extensions": types.ObjectType{AttrTypes: d.nodeExtensionsAttrTypes()},
-    }
-    
-    for _, node := range nodes {
-        nodeObj, _ := types.ObjectValue(
-            nodeAttrTypes,
-            map[string]attr.Value{
-                "name":       types.StringPointerValue(node.Name),
-                "connection": d.mapConnectionToModel(node.Connection),
-                "location":   d.mapLocationToModel(node.Location),
-                "region":     d.mapRegionToModel(node.Region),
-                "extensions": d.mapNodeExtensionsToModel(node.Extensions),
-            },
-        )
-        nodesList = append(nodesList, nodeObj)
-    }
+	nodesList := []attr.Value{}
+	nodeAttrTypes := map[string]attr.Type{
+		"name":       types.StringType,
+		"connection": types.ObjectType{AttrTypes: d.connectionAttrTypes()},
+		"location":   types.ObjectType{AttrTypes: d.locationAttrTypes()},
+		"region":     types.ObjectType{AttrTypes: d.regionAttrTypes()},
+		"extensions": types.ObjectType{AttrTypes: d.nodeExtensionsAttrTypes()},
+	}
 
-    return types.ListValueMust(types.ObjectType{AttrTypes: nodeAttrTypes}, nodesList)
+	// Sort nodes by name
+	sortedNodes := sortNodes(nodes)
 
+	for _, node := range sortedNodes {
+		nodeObj, _ := types.ObjectValue(
+			nodeAttrTypes,
+			map[string]attr.Value{
+				"name":       types.StringPointerValue(node.Name),
+				"connection": d.mapConnectionToModel(node.Connection),
+				"location":   d.mapLocationToModel(node.Location),
+				"region":     d.mapRegionToModel(node.Region),
+				"extensions": d.mapNodeExtensionsToModel(node.Extensions),
+			},
+		)
+		nodesList = append(nodesList, nodeObj)
+	}
+
+	return types.ListValueMust(types.ObjectType{AttrTypes: nodeAttrTypes}, nodesList)
 }
 
 func (d *databasesDataSource) mapConnectionToModel(connection *models.Connection) types.Object {

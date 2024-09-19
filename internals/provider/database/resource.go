@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -255,69 +256,65 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				},
 			},
 			"nodes": schema.ListNestedAttribute{
-				Description: "List of nodes in the database.",
-				Computed:    true,
-				Optional:    true,
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.UseStateForUnknown(),
-				},
-				NestedObject: schema.NestedAttributeObject{
-					Attributes: map[string]schema.Attribute{
-						"name": schema.StringAttribute{Computed: true, Optional: true},
-						"connection": schema.SingleNestedAttribute{
-							Computed: true,
-							Optional: true,
-							Attributes: map[string]schema.Attribute{
-								"database":            schema.StringAttribute{Computed: true, Optional: true},
-								"host":                schema.StringAttribute{Computed: true, Optional: true},
-								"password":            schema.StringAttribute{Computed: true},
-								"port":                schema.Int64Attribute{Computed: true, Optional: true},
-								"username":            schema.StringAttribute{Computed: true},
-								"external_ip_address": schema.StringAttribute{Computed: true, Optional: true},
-								"internal_ip_address": schema.StringAttribute{Computed: true, Optional: true},
-								"internal_host":       schema.StringAttribute{Computed: true, Optional: true},
-							},
-						},
-						"location": schema.SingleNestedAttribute{
-							Computed: true,
-							Optional: true,
-							Attributes: map[string]schema.Attribute{
-								"code":        schema.StringAttribute{Computed: true, Optional: true},
-								"country":     schema.StringAttribute{Computed: true, Optional: true},
-								"latitude":    schema.Float64Attribute{Computed: true, Optional: true},
-								"longitude":   schema.Float64Attribute{Computed: true, Optional: true},
-								"name":        schema.StringAttribute{Computed: true, Optional: true},
-								"region":      schema.StringAttribute{Computed: true, Optional: true},
-								"region_code": schema.StringAttribute{Computed: true, Optional: true},
-								"timezone":    schema.StringAttribute{Computed: true, Optional: true},
-								"postal_code": schema.StringAttribute{Computed: true, Optional: true},
-								"metro_code":  schema.StringAttribute{Computed: true, Optional: true},
-								"city":        schema.StringAttribute{Computed: true, Optional: true},
-							},
-						},
-						"region": schema.SingleNestedAttribute{
-							Computed: true,
-							Optional: true,
-							Attributes: map[string]schema.Attribute{
-								"active":             schema.BoolAttribute{Computed: true, Optional: true},
-								"availability_zones": schema.ListAttribute{Computed: true, Optional: true, ElementType: types.StringType},
-								"cloud":              schema.StringAttribute{Computed: true, Optional: true},
-								"code":               schema.StringAttribute{Computed: true, Optional: true},
-								"name":               schema.StringAttribute{Computed: true, Optional: true},
-								"parent":             schema.StringAttribute{Computed: true, Optional: true},
-							},
-						},
-						"extensions": schema.SingleNestedAttribute{
-							Computed: true,
-							Optional: true,
-							Attributes: map[string]schema.Attribute{
-								"errors":    schema.MapAttribute{Computed: true, Optional: true, ElementType: types.StringType},
-								"installed": schema.ListAttribute{Computed: true, Optional: true, ElementType: types.StringType},
-							},
-						},
-					},
-				},
-			},
+    Description: "List of nodes in the database.",
+    Computed:    true,
+    Optional:    true,
+    PlanModifiers: []planmodifier.List{
+        listplanmodifier.UseStateForUnknown(),
+    },
+    NestedObject: schema.NestedAttributeObject{
+        Attributes: map[string]schema.Attribute{
+            "name": schema.StringAttribute{Computed: true, Optional: true},
+            "connection": schema.SingleNestedAttribute{
+                Computed: true,
+                Attributes: map[string]schema.Attribute{
+                    "database":            schema.StringAttribute{Computed: true},
+                    "host":                schema.StringAttribute{Computed: true},
+                    "password":            schema.StringAttribute{Computed: true},
+                    "port":                schema.Int64Attribute{Computed: true},
+                    "username":            schema.StringAttribute{Computed: true},
+                    "external_ip_address": schema.StringAttribute{Computed: true},
+                    "internal_ip_address": schema.StringAttribute{Computed: true},
+                    "internal_host":       schema.StringAttribute{Computed: true},
+                },
+            },
+            "location": schema.SingleNestedAttribute{
+                Computed: true,
+                Attributes: map[string]schema.Attribute{
+                    "code":        schema.StringAttribute{Computed: true},
+                    "country":     schema.StringAttribute{Computed: true},
+                    "latitude":    schema.Float64Attribute{Computed: true},
+                    "longitude":   schema.Float64Attribute{Computed: true},
+                    "name":        schema.StringAttribute{Computed: true},
+                    "region":      schema.StringAttribute{Computed: true},
+                    "region_code": schema.StringAttribute{Computed: true},
+                    "timezone":    schema.StringAttribute{Computed: true},
+                    "postal_code": schema.StringAttribute{Computed: true},
+                    "metro_code":  schema.StringAttribute{Computed: true},
+                    "city":        schema.StringAttribute{Computed: true},
+                },
+            },
+            "region": schema.SingleNestedAttribute{
+                Computed: true,
+                Attributes: map[string]schema.Attribute{
+                    "active":             schema.BoolAttribute{Computed: true},
+                    "availability_zones": schema.ListAttribute{Computed: true, ElementType: types.StringType},
+                    "cloud":              schema.StringAttribute{Computed: true},
+                    "code":               schema.StringAttribute{Computed: true},
+                    "name":               schema.StringAttribute{Computed: true},
+                    "parent":             schema.StringAttribute{Computed: true},
+                },
+            },
+            "extensions": schema.SingleNestedAttribute{
+                Computed: true,
+                Attributes: map[string]schema.Attribute{
+                    "errors":    schema.MapAttribute{Computed: true, ElementType: types.StringType},
+                    "installed": schema.ListAttribute{Computed: true, ElementType: types.StringType},
+                },
+            },
+        },
+    },
+},
 			"roles": schema.ListNestedAttribute{
 			    Description: "List of roles in the database.",
 			    Computed:    true,
@@ -341,6 +338,9 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"tables": schema.ListNestedAttribute{
 			    Description: "List of tables in the database.",
 			    Computed:    true,
+				// PlanModifiers: []planmodifier.List{
+				// 	listplanmodifier.UseStateForUnknown(),
+				// },
 			    NestedObject: schema.NestedAttributeObject{
 			        Attributes: map[string]schema.Attribute{
 			            "name":             schema.StringAttribute{Computed: true},
@@ -587,6 +587,62 @@ func (r *databaseResource) Read(ctx context.Context, req resource.ReadRequest, r
 	}
 }
 
+func (r *databaseResource) nodesEqual(planNodes, stateNodes types.List) bool {
+    if planNodes.IsNull() || stateNodes.IsNull() {
+        return planNodes.IsNull() == stateNodes.IsNull()
+    }
+
+    planElements := planNodes.Elements()
+    stateElements := stateNodes.Elements()
+
+    if len(planElements) != len(stateElements) {
+        return false
+    }
+
+    planNodeNames := make(map[string]bool)
+    stateNodeNames := make(map[string]bool)
+
+    for _, nodeElem := range planElements {
+        if nodeObj, ok := nodeElem.(types.Object); ok {
+            var node struct {
+                Name types.String `tfsdk:"name"`
+            }
+            diags := nodeObj.As(context.Background(), &node, basetypes.ObjectAsOptions{})
+            if diags.HasError() {
+                continue
+            }
+            planNodeNames[node.Name.ValueString()] = true
+        }
+    }
+
+    for _, nodeElem := range stateElements {
+        if nodeObj, ok := nodeElem.(types.Object); ok {
+            var node struct {
+                Name types.String `tfsdk:"name"`
+            }
+            diags := nodeObj.As(context.Background(), &node, basetypes.ObjectAsOptions{})
+            if diags.HasError() {
+                continue
+            }
+            stateNodeNames[node.Name.ValueString()] = true
+        }
+    }
+
+    for name := range planNodeNames {
+        if !stateNodeNames[name] {
+            return false
+        }
+    }
+
+    for name := range stateNodeNames {
+        if !planNodeNames[name] {
+            return false
+        }
+    }
+
+    return true
+}
+
 func (r *databaseResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan databaseResourceModel
 	diags := req.Plan.Get(ctx, &plan)
@@ -614,7 +670,7 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 		updateCount++
 		updateField = "extensions"
 	}
-	if !plan.Nodes.Equal(state.Nodes) {
+	if !r.nodesEqual(plan.Nodes, state.Nodes) {
 		updateCount++
 		updateField = "nodes"
 	}
@@ -1053,7 +1109,10 @@ func (r *databaseResource) mapNodesToResourceModel(nodes []*models.DatabaseNode)
 		"extensions": types.ObjectType{AttrTypes: r.nodeExtensionsAttrTypes()},
 	}
 
-	for _, node := range nodes {
+	// Sort nodes by name
+	sortedNodes := sortNodes(nodes)
+
+	for _, node := range sortedNodes {
 		nodeObj, _ := types.ObjectValue(
 			nodeAttrTypes,
 			map[string]attr.Value{
@@ -1068,6 +1127,15 @@ func (r *databaseResource) mapNodesToResourceModel(nodes []*models.DatabaseNode)
 	}
 
 	return types.ListValueMust(types.ObjectType{AttrTypes: nodeAttrTypes}, nodesList)
+}
+
+func sortNodes(nodes []*models.DatabaseNode) []*models.DatabaseNode {
+	sortedNodes := make([]*models.DatabaseNode, len(nodes))
+	copy(sortedNodes, nodes)
+	sort.Slice(sortedNodes, func(i, j int) bool {
+		return *sortedNodes[i].Name < *sortedNodes[j].Name
+	})
+	return sortedNodes
 }
 
 func (r *databaseResource) mapRolesToResourceModel(roles []*models.DatabaseRole) types.List {
@@ -1386,9 +1454,16 @@ func (r *databaseResource) mapColumnsToResourceModel(columns []*models.DatabaseC
 }
 
 func (r *databaseResource) mapTableStatusToResourceModel(status []*models.DatabaseTableStatus) types.List {
-	statusList := []attr.Value{}
+	if status == nil {
+        return types.ListNull(types.ObjectType{AttrTypes: r.tableStatusAttrTypes()})
+    }
+
+    statusList := make([]attr.Value, 0, len(status))
     for _, s := range status {
-        statusObj, _ := types.ObjectValue(
+        if s == nil {
+            continue
+        }
+        statusObj, diags := types.ObjectValue(
             r.tableStatusAttrTypes(),
             map[string]attr.Value{
                 "aligned":     types.BoolPointerValue(s.Aligned),
@@ -1397,7 +1472,14 @@ func (r *databaseResource) mapTableStatusToResourceModel(status []*models.Databa
                 "replicating": types.BoolPointerValue(s.Replicating),
             },
         )
+        if diags.HasError() {
+            continue
+        }
         statusList = append(statusList, statusObj)
+    }
+
+    if len(statusList) == 0 {
+        return types.ListNull(types.ObjectType{AttrTypes: r.tableStatusAttrTypes()})
     }
 
     return types.ListValueMust(types.ObjectType{AttrTypes: r.tableStatusAttrTypes()}, statusList)
