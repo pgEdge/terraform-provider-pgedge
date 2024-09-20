@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -318,10 +319,12 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"roles": schema.ListNestedAttribute{
 			    Description: "List of roles in the database.",
 			    Computed:    true,
+				Optional: true,
 				PlanModifiers: []planmodifier.List{
 					listplanmodifier.UseStateForUnknown(),
 				},
 			    NestedObject: schema.NestedAttributeObject{
+					PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
 			        Attributes: map[string]schema.Attribute{
 			            "name":             schema.StringAttribute{Computed: true},
 			            "bypass_rls":       schema.BoolAttribute{Computed: true},
