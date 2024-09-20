@@ -68,33 +68,31 @@ func TestCreateCluster(t *testing.T) {
 	request := &models.CreateClusterInput{
 		Name:           stringPtr("test-cluster1"),
 		CloudAccountID: CloudAccountID.String(),
-		Regions:        []string{"us-east-2", "us-west-2"},
+		Regions:        []string{"ap-northeast-1", "ap-northeast-3"},
 		Nodes: []*models.ClusterNodeSettings{
 			{
 				Name:             "n1",
-				Region:           stringPtr("us-east-2"),
+				Region:           stringPtr("ap-northeast-1"),
 				Image:            "postgres",
 				InstanceType:     "t4g.small",
-				AvailabilityZone: "us-east-2a",
 				VolumeType:       "gp2",
 			},
 			{
 				Name:             "n2",
-				Region:           stringPtr("us-west-2"),
+				Region:           stringPtr("ap-northeast-3"),
 				Image:            "postgres",
 				InstanceType:     "t4g.medium",
-				AvailabilityZone: "us-west-2a",
 				VolumeType:       "gp2",
 			},
 		},
 		Networks: []*models.ClusterNetworkSettings{
 			{
-				Region:        stringPtr("us-east-2"),
+				Region:        stringPtr("ap-northeast-1"),
 				Cidr:          "10.1.0.0/16",
 				PublicSubnets: []string{"10.1.0.0/24"},
 			},
 			{
-				Region:        stringPtr("us-west-2"),
+				Region:        stringPtr("ap-northeast-3"),
 				Cidr:          "10.2.0.0/16",
 				PublicSubnets: []string{"10.2.0.0/24"},
 			},
@@ -107,9 +105,6 @@ func TestCreateCluster(t *testing.T) {
 			},
 		},
 		NodeLocation: stringPtr("public"),
-		ResourceTags: map[string]string{
-			"key": "value",
-		},
 	}
 
 	cluster, err := client.CreateCluster(context.Background(), request)
@@ -132,20 +127,20 @@ func TestGetCluster(t *testing.T) {
 // 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
 // 	request := &models.UpdateClusterInput{
-// 		Regions: []string{"us-east-2", "us-west-2"},
+// 		Regions: []string{"ap-northeast-1", "ap-northeast-3"},
 // 		Nodes: []*models.ClusterNodeSettings{
 // 			{
 // 				Name:             "n1",
-// 				Region:           stringPtr("us-east-2"),
+// 				Region:           stringPtr("ap-northeast-1"),
 // 				InstanceType:     "t4g.medium",
-// 				AvailabilityZone: "us-east-2a",
+// 				AvailabilityZone: "ap-northeast-1a",
 // 				VolumeType:       "gp2",
 // 			},
 // 			{
 // 				Name:             "n2",
-// 				Region:           stringPtr("us-west-2"),
+// 				Region:           stringPtr("ap-northeast-3"),
 // 				InstanceType:     "t4g.medium",
-// 				AvailabilityZone: "us-west-2a",
+// 				AvailabilityZone: "ap-northeast-3a",
 // 				VolumeType:       "gp2",
 // 			},
 // 		},

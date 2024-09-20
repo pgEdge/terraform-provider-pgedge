@@ -103,8 +103,6 @@ func (c *Client) CreateDatabase(ctx context.Context, database *models.CreateData
 	}
 }
 
-
-
 func (c *Client) GetDatabase(ctx context.Context, id strfmt.UUID) (*models.Database, error) {
 	request := &operations.GetDatabasesIDParams{
 		HTTPClient: c.HTTPClient,
@@ -171,7 +169,7 @@ func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) error {
 	request.SetAuthorization(c.AuthHeader)
 
 	_, err := c.PgEdgeAPIClient.Operations.DeleteDatabasesID(request)
-	if strings.Contains(err.Error(), "200") {
+	if err == nil {
 		for {
 			_, err := c.GetDatabase(ctx, id)
 			if err != nil {
@@ -182,13 +180,8 @@ func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) error {
 		}
 	}
 
-	if err != nil {
-		return err
-	}
-
 	return nil
 }
-
 
 func (c *Client) GetAllClusters(ctx context.Context) ([]*models.Cluster, error) {
 	request := &operations.GetClustersParams{
@@ -300,15 +293,13 @@ func (c *Client) DeleteCluster(ctx context.Context, id strfmt.UUID) error {
 	request.SetAuthorization(c.AuthHeader)
 
 	_, err := c.PgEdgeAPIClient.Operations.DeleteClustersID(request)
-
-	if strings.Contains(err.Error(), "200") {
+	if err == nil {
 		for {
 			_, err := c.GetCluster(ctx, id)
 			if err != nil {
 				return nil
 			}
 			time.Sleep(5 * time.Second)
-
 		}
 	}
 
@@ -427,16 +418,11 @@ func (c *Client) DeleteCloudAccount(ctx context.Context, id strfmt.UUID) error {
 
 	_, err := c.PgEdgeAPIClient.Operations.DeleteCloudAccountsID(request)
 	if err != nil {
-		// The API returns 200 OK for successful deletion
-		if strings.Contains(err.Error(), "200") {
-			return nil
-		}
 		return err
 	}
 
 	return nil
 }
-
 
 func (c *Client) OAuthToken(ctx context.Context, clientId, clientSecret, grantType string) (*operations.PostOauthTokenOKBody, error) {
 	request := &operations.PostOauthTokenParams{
