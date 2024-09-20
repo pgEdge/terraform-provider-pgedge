@@ -3,13 +3,13 @@ package cluster
 import (
 	"context"
 	"fmt"
-	"sort"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -93,10 +93,10 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 						"name":              schema.StringAttribute{Required: true},
 						"region":            schema.StringAttribute{Required: true},
 						"instance_type":     schema.StringAttribute{Required: true},
-						"availability_zone": schema.StringAttribute{Optional: true},
-						"volume_size":       schema.Int64Attribute{Optional: true},
-						"volume_type":       schema.StringAttribute{Optional: true},
-						"volume_iops":       schema.Int64Attribute{Optional: true},
+						"availability_zone": schema.StringAttribute{Optional: true, Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+						"volume_size":       schema.Int64Attribute{Optional: true, Computed: true, PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()}},
+						"volume_type":       schema.StringAttribute{Optional: true, Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+						"volume_iops":       schema.Int64Attribute{Optional: true, Computed: true, PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()}},
 					},
 				},
 			},
@@ -138,18 +138,15 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
-	sortedRegions := sortRegions(regions)
-
-
 	createInput := &models.CreateClusterInput{
 		Name:           plan.Name.ValueStringPointer(),
 		CloudAccountID: plan.CloudAccountID.ValueString(),
 		NodeLocation:   plan.NodeLocation.ValueStringPointer(),
-		Regions:        sortedRegions,
 		Nodes:          make([]*models.ClusterNodeSettings, 0),
 		Networks:       make([]*models.ClusterNetworkSettings, 0),
 		FirewallRules:  make([]*models.ClusterFirewallRuleSettings, 0),
 	}
+	createInput.Regions = regions
 
 	if !plan.SSHKeyID.IsNull() {
 		createInput.SSHKeyID = plan.SSHKeyID.ValueString()
@@ -213,6 +210,71 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	plan.Status = types.StringPointerValue(cluster.Status)
 	plan.CreatedAt = types.StringPointerValue(cluster.CreatedAt)
 
+    // Update other fields as necessary
+    plan.CloudAccountID = types.StringPointerValue(cluster.CloudAccount.ID)
+    plan.NodeLocation = types.StringPointerValue(cluster.NodeLocation)
+    
+    if cluster.SSHKeyID != "" {
+        plan.SSHKeyID = types.StringValue(cluster.SSHKeyID)
+    }
+
+    // Update Nodes
+    nodes := make([]nodeModel, 0)
+    for _, node := range cluster.Nodes {
+        nodes = append(nodes, nodeModel{
+            Name:             types.StringValue(node.Name),
+            Region:           types.StringValue(*node.Region),
+            InstanceType:     types.StringValue(node.InstanceType),
+            AvailabilityZone: types.StringValue(node.AvailabilityZone),
+            VolumeSize:       types.Int64Value(node.VolumeSize),
+            VolumeType:       types.StringValue(node.VolumeType),
+            VolumeIops:       types.Int64Value(node.VolumeIops),
+        })
+    }
+    plan.Nodes = nodes
+
+    // Update Networks
+    networks := make([]networkModel, 0)
+    for _, network := range cluster.Networks {
+        networks = append(networks, networkModel{
+            Region: types.StringValue(*network.Region),
+            Cidr:   types.StringValue(network.Cidr),
+            PublicSubnets: types.ListValueMust(types.StringType, func() []attr.Value {
+                subnets := make([]attr.Value, len(network.PublicSubnets))
+                for i, subnet := range network.PublicSubnets {
+                    subnets[i] = types.StringValue(subnet)
+                }
+                return subnets
+            }()),
+        })
+    }
+    plan.Networks = networks
+
+    // Update Firewall Rules
+    firewallRules := make([]firewallRuleModel, 0)
+    for _, rule := range cluster.FirewallRules {
+        firewallRules = append(firewallRules, firewallRuleModel{
+            Name: types.StringValue(rule.Name),
+            Port: types.Int64Value(*rule.Port),
+            Sources: types.ListValueMust(types.StringType, func() []attr.Value {
+                sources := make([]attr.Value, len(rule.Sources))
+                for i, source := range rule.Sources {
+                    sources[i] = types.StringValue(source)
+                }
+                return sources
+            }()),
+        })
+    }
+    plan.FirewallRules = firewallRules
+
+	plan.Regions = types.ListValueMust(types.StringType, func() []attr.Value {
+		regions := make([]attr.Value, len(createInput.Regions))
+		for i, region := range createInput.Regions {
+			regions[i] = types.StringValue(region)
+		}
+		return regions
+	}())
+
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -247,15 +309,18 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		state.SSHKeyID = types.StringValue(cluster.SSHKeyID)
 	}
 
-	sortedRegions := sortRegions(cluster.Regions)
+	var currentRegions []string
+    state.Regions.ElementsAs(ctx, &currentRegions, false)
 
-	state.Regions = types.ListValueMust(types.StringType, func() []attr.Value {
-		regions := make([]attr.Value, len(sortedRegions))
-		for i, region := range sortedRegions {
-			regions[i] = types.StringValue(region)
-		}
-		return regions
-	}())
+    if !compareRegions(cluster.Regions, currentRegions) {
+        state.Regions = types.ListValueMust(types.StringType, func() []attr.Value {
+            regions := make([]attr.Value, len(cluster.Regions))
+            for i, region := range cluster.Regions {
+                regions[i] = types.StringValue(region)
+            }
+            return regions
+        }())
+    }
 
 	diags = resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
@@ -333,13 +398,11 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	sortedRegions := sortRegions(regions)
-
 	updateInput := &models.UpdateClusterInput{
 		SSHKeyID: plan.SSHKeyID.ValueString(),
-		Regions:  sortedRegions,
 		Nodes:    make([]*models.ClusterNodeSettings, 0),
 	}
+	updateInput.Regions = regions
 
 	// Add nodes
 	for _, node := range plan.Nodes {
@@ -398,14 +461,90 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
-	plan.Status = types.StringValue(*cluster.Status)
+	updatedPlan := r.mapClusterToResourceModel(cluster)
 
-	diags = resp.State.Set(ctx, plan)
+	updatedPlan.Regions = plan.Regions
+	updatedPlan.Status = types.StringPointerValue(cluster.Status)
+
+	diags = resp.State.Set(ctx, updatedPlan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 }
+
+func (r *clusterResource) mapClusterToResourceModel(cluster *models.Cluster) clusterResourceModel {
+	clusterResource := clusterResourceModel{
+		ID:             types.StringValue(cluster.ID.String()),
+		Name:           types.StringPointerValue(cluster.Name),
+		CloudAccountID: types.StringPointerValue(cluster.CloudAccount.ID),
+		NodeLocation:   types.StringPointerValue(cluster.NodeLocation),
+		CreatedAt:      types.StringPointerValue(cluster.CreatedAt),
+		// Regions:        r.mapRegionsToResourceModel(cluster.Regions),
+		Nodes:          r.mapNodesToResourceModel(cluster.Nodes),
+		Networks:       r.mapNetworksToResourceModel(cluster.Networks),
+		FirewallRules:  r.mapFirewallRulesToResourceModel(cluster.FirewallRules),
+	}
+
+	return clusterResource
+}
+
+func (r *clusterResource) mapRegionsToResourceModel(regions []string) types.List {
+	elements := make([]attr.Value, len(regions))
+    for i, region := range regions {
+        elements[i] = types.StringValue(region)
+    }
+    return types.ListValueMust(types.StringType, elements)
+}
+
+func (r *clusterResource) mapNodesToResourceModel(nodes []*models.ClusterNodeSettings) []nodeModel {
+	var result []nodeModel
+	for _, node := range nodes {
+		result = append(result, nodeModel{
+			Name:             types.StringValue(node.Name),
+			Region:           types.StringPointerValue(node.Region),
+			InstanceType:     types.StringValue(node.InstanceType),
+			AvailabilityZone: types.StringValue(node.AvailabilityZone),
+			VolumeSize:       types.Int64Value(node.VolumeSize),
+			VolumeType:       types.StringValue(node.VolumeType),
+			VolumeIops:       types.Int64Value(node.VolumeIops),
+		})
+	}
+	return result
+}
+
+func (r *clusterResource) mapNetworksToResourceModel(networks []*models.ClusterNetworkSettings) []networkModel {
+	var result []networkModel
+	for _, network := range networks {
+		result = append(result, networkModel{
+			Region:        types.StringPointerValue(network.Region),
+			Cidr:          types.StringValue(network.Cidr),
+			PublicSubnets: types.ListValueMust(types.StringType, r.stringSliceToValueSlice(network.PublicSubnets)),
+		})
+	}
+	return result
+}
+
+func (r *clusterResource) mapFirewallRulesToResourceModel(rules []*models.ClusterFirewallRuleSettings) []firewallRuleModel {
+	var result []firewallRuleModel
+	for _, rule := range rules {
+		result = append(result, firewallRuleModel{
+			Name:    types.StringValue(rule.Name),
+			Port:    types.Int64PointerValue(rule.Port),
+			Sources: types.ListValueMust(types.StringType, r.stringSliceToValueSlice(rule.Sources)),
+		})
+	}
+	return result
+}
+
+func (r *clusterResource) stringSliceToValueSlice(slice []string) []attr.Value {
+	valueSlice := make([]attr.Value, len(slice))
+	for i, s := range slice {
+		valueSlice[i] = types.StringValue(s)
+	}
+	return valueSlice
+}
+
 
 func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var state clusterResourceModel
@@ -479,8 +618,18 @@ func convertToStringSlice(ctx context.Context, list types.List) ([]string, diag.
 	return result, diags
 }
 
-
-func sortRegions(regions []string) []string {
-    sort.Strings(regions)
-    return regions
+func compareRegions(a, b []string) bool {
+    if len(a) != len(b) {
+        return false
+    }
+    aMap := make(map[string]bool)
+    for _, v := range a {
+        aMap[v] = true
+    }
+    for _, v := range b {
+        if !aMap[v] {
+            return false
+        }
+    }
+    return true
 }

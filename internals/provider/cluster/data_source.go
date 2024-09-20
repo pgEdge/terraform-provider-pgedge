@@ -311,15 +311,14 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 		clusterDetails.NodeLocation = types.StringValue(*cluster.NodeLocation)
 		clusterDetails.Capacity = types.Int64Value(cluster.Capacity)
 
-		// Set Regions
-		sortedRegions := sortRegions(cluster.Regions)
-
-		regions := make([]attr.Value, len(sortedRegions))
-		for i, region := range sortedRegions {
+	// Set Regions
+	clusterDetails.Regions = types.ListValueMust(types.StringType, func() []attr.Value {
+		regions := make([]attr.Value, len(cluster.Regions))
+		for i, region := range cluster.Regions {
 			regions[i] = types.StringValue(region)
 		}
-		clusterDetails.Regions = types.ListValueMust(types.StringType, regions)
-
+		return regions
+	}())
 		// Set FirewallRules
 		firewallRules := make([]types.Object, len(cluster.FirewallRules))
 		for i, rule := range cluster.FirewallRules {
