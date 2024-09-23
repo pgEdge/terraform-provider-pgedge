@@ -112,6 +112,7 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					"provider": schema.StringAttribute{
 						Description: "The backup provider.",
 						Computed:    true,
+						Optional:    true,
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.UseStateForUnknown(),
 						},			
@@ -120,7 +121,13 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						Description: "List of backup configurations.",
 						Computed:    true,
 						Optional:    true,
+						PlanModifiers: []planmodifier.List{
+							listplanmodifier.UseStateForUnknown(),
+						},
 						NestedObject: schema.NestedAttributeObject{
+							PlanModifiers: []planmodifier.Object{
+								objectplanmodifier.UseStateForUnknown(),
+							},
 							Attributes: map[string]schema.Attribute{
 								"id": schema.StringAttribute{
 									Description: "Unique identifier for the backup config.",
@@ -381,9 +388,12 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 	createInput := &models.CreateDatabaseInput{
 		Name:          plan.Name.ValueStringPointer(),
 		ClusterID:     strfmt.UUID(plan.ClusterID.ValueString()),
-		ConfigVersion: plan.ConfigVersion.ValueString(),
 		Options:       convertToStringSlice(plan.Options),
 	}
+
+	if !plan.ConfigVersion.IsNull() && !plan.ConfigVersion.IsUnknown() {
+		createInput.ConfigVersion = plan.ConfigVersion.ValueString()
+	}	
 
 	// Handle Extensions
 	if !plan.Extensions.IsNull() && !plan.Extensions.IsUnknown() {
