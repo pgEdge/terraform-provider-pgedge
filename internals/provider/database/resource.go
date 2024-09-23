@@ -78,6 +78,9 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 			"pg_version": schema.StringAttribute{
 				Description: "The PostgreSQL version of the database.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},			
 				Computed:    true,
 			},
 			"storage_used": schema.Int64Attribute{
@@ -109,7 +112,9 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					"provider": schema.StringAttribute{
 						Description: "The backup provider.",
 						Computed:    true,
-						Optional:    true,
+						PlanModifiers: []planmodifier.String{
+							stringplanmodifier.UseStateForUnknown(),
+						},			
 					},
 					"config": schema.ListNestedAttribute{
 						Description: "List of backup configurations.",
