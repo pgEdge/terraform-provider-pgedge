@@ -225,20 +225,20 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				},
 			},
 			"components": schema.ListNestedAttribute{
-			    Description: "List of components in the database.",
-			    Computed:    true,
+				Description: "List of components in the database.",
+				Computed:    true,
 				PlanModifiers: []planmodifier.List{
 					listplanmodifier.UseStateForUnknown(),
 				},
-			    NestedObject: schema.NestedAttributeObject{
-			        Attributes: map[string]schema.Attribute{
-			            "id":           schema.StringAttribute{Computed: true},
-			            "name":         schema.StringAttribute{Computed: true},
-			            "version":      schema.StringAttribute{Computed: true},
-			            "release_date": schema.StringAttribute{Computed: true},
-			            "status":       schema.StringAttribute{Computed: true},
-			        },
-			    },
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"id":           schema.StringAttribute{Computed: true},
+						"name":         schema.StringAttribute{Computed: true},
+						"version":      schema.StringAttribute{Computed: true},
+						"release_date": schema.StringAttribute{Computed: true},
+						"status":       schema.StringAttribute{Computed: true},
+					},
+				},
 			},
 			"extensions": schema.SingleNestedAttribute{
 				Description: "Extensions configuration for the database.",
@@ -257,125 +257,86 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				},
 			},
 			"nodes": schema.ListNestedAttribute{
-    Description: "List of nodes in the database.",
-    Computed:    true,
-    Optional:    true,
-    PlanModifiers: []planmodifier.List{
-        listplanmodifier.UseStateForUnknown(),
-    },
-    NestedObject: schema.NestedAttributeObject{
-        Attributes: map[string]schema.Attribute{
-            "name": schema.StringAttribute{Computed: true, Optional: true},
-            "connection": schema.SingleNestedAttribute{
-                Computed: true,
-                Attributes: map[string]schema.Attribute{
-                    "database":            schema.StringAttribute{Computed: true},
-                    "host":                schema.StringAttribute{Computed: true},
-                    "password":            schema.StringAttribute{Computed: true},
-                    "port":                schema.Int64Attribute{Computed: true},
-                    "username":            schema.StringAttribute{Computed: true},
-                    "external_ip_address": schema.StringAttribute{Computed: true},
-                    "internal_ip_address": schema.StringAttribute{Computed: true},
-                    "internal_host":       schema.StringAttribute{Computed: true},
-                },
-            },
-            "location": schema.SingleNestedAttribute{
-                Computed: true,
-                Attributes: map[string]schema.Attribute{
-                    "code":        schema.StringAttribute{Computed: true},
-                    "country":     schema.StringAttribute{Computed: true},
-                    "latitude":    schema.Float64Attribute{Computed: true},
-                    "longitude":   schema.Float64Attribute{Computed: true},
-                    "name":        schema.StringAttribute{Computed: true},
-                    "region":      schema.StringAttribute{Computed: true},
-                    "region_code": schema.StringAttribute{Computed: true},
-                    "timezone":    schema.StringAttribute{Computed: true},
-                    "postal_code": schema.StringAttribute{Computed: true},
-                    "metro_code":  schema.StringAttribute{Computed: true},
-                    "city":        schema.StringAttribute{Computed: true},
-                },
-            },
-            "region": schema.SingleNestedAttribute{
-                Computed: true,
-                Attributes: map[string]schema.Attribute{
-                    "active":             schema.BoolAttribute{Computed: true},
-                    "availability_zones": schema.ListAttribute{Computed: true, ElementType: types.StringType},
-                    "cloud":              schema.StringAttribute{Computed: true},
-                    "code":               schema.StringAttribute{Computed: true},
-                    "name":               schema.StringAttribute{Computed: true},
-                    "parent":             schema.StringAttribute{Computed: true},
-                },
-            },
-            "extensions": schema.SingleNestedAttribute{
-                Computed: true,
-                Attributes: map[string]schema.Attribute{
-                    "errors":    schema.MapAttribute{Computed: true, ElementType: types.StringType},
-                    "installed": schema.ListAttribute{Computed: true, ElementType: types.StringType},
-                },
-            },
-        },
-    },
-},
-			"roles": schema.ListNestedAttribute{
-			    Description: "List of roles in the database.",
-			    Computed:    true,
-				Optional: true,
+				Description: "List of nodes in the database.",
+				Computed:    true,
+				Optional:    true,
 				PlanModifiers: []planmodifier.List{
 					listplanmodifier.UseStateForUnknown(),
 				},
-			    NestedObject: schema.NestedAttributeObject{
-					PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
-			        Attributes: map[string]schema.Attribute{
-			            "name":             schema.StringAttribute{Computed: true},
-			            "bypass_rls":       schema.BoolAttribute{Computed: true},
-			            "connection_limit": schema.Int64Attribute{Computed: true},
-			            "create_db":        schema.BoolAttribute{Computed: true},
-			            "create_role":      schema.BoolAttribute{Computed: true},
-			            "inherit":          schema.BoolAttribute{Computed: true},
-			            "login":            schema.BoolAttribute{Computed: true},
-			            "replication":      schema.BoolAttribute{Computed: true},
-			            "superuser":        schema.BoolAttribute{Computed: true},
-			        },
-			    },
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"name": schema.StringAttribute{Computed: true, Optional: true},
+						"connection": schema.SingleNestedAttribute{
+							Computed: true,
+							Attributes: map[string]schema.Attribute{
+								"database":            schema.StringAttribute{Computed: true},
+								"host":                schema.StringAttribute{Computed: true},
+								"password":            schema.StringAttribute{Computed: true},
+								"port":                schema.Int64Attribute{Computed: true},
+								"username":            schema.StringAttribute{Computed: true},
+								"external_ip_address": schema.StringAttribute{Computed: true},
+								"internal_ip_address": schema.StringAttribute{Computed: true},
+								"internal_host":       schema.StringAttribute{Computed: true},
+							},
+						},
+						"location": schema.SingleNestedAttribute{
+							Computed: true,
+							Attributes: map[string]schema.Attribute{
+								"code":        schema.StringAttribute{Computed: true},
+								"country":     schema.StringAttribute{Computed: true},
+								"latitude":    schema.Float64Attribute{Computed: true},
+								"longitude":   schema.Float64Attribute{Computed: true},
+								"name":        schema.StringAttribute{Computed: true},
+								"region":      schema.StringAttribute{Computed: true},
+								"region_code": schema.StringAttribute{Computed: true},
+								"timezone":    schema.StringAttribute{Computed: true},
+								"postal_code": schema.StringAttribute{Computed: true},
+								"metro_code":  schema.StringAttribute{Computed: true},
+								"city":        schema.StringAttribute{Computed: true},
+							},
+						},
+						"region": schema.SingleNestedAttribute{
+							Computed: true,
+							Attributes: map[string]schema.Attribute{
+								"active":             schema.BoolAttribute{Computed: true},
+								"availability_zones": schema.ListAttribute{Computed: true, ElementType: types.StringType},
+								"cloud":              schema.StringAttribute{Computed: true},
+								"code":               schema.StringAttribute{Computed: true},
+								"name":               schema.StringAttribute{Computed: true},
+								"parent":             schema.StringAttribute{Computed: true},
+							},
+						},
+						"extensions": schema.SingleNestedAttribute{
+							Computed: true,
+							Attributes: map[string]schema.Attribute{
+								"errors":    schema.MapAttribute{Computed: true, ElementType: types.StringType},
+								"installed": schema.ListAttribute{Computed: true, ElementType: types.StringType},
+							},
+						},
+					},
+				},
 			},
-			"tables": schema.ListNestedAttribute{
-			    Description: "List of tables in the database.",
-			    Computed:    true,
-				// PlanModifiers: []planmodifier.List{
-				// 	listplanmodifier.UseStateForUnknown(),
-				// },
-			    NestedObject: schema.NestedAttributeObject{
-			        Attributes: map[string]schema.Attribute{
-			            "name":             schema.StringAttribute{Computed: true},
-			            "schema":           schema.StringAttribute{Computed: true},
-			            "primary_key":      schema.ListAttribute{Computed: true, ElementType: types.StringType},
-			            "replication_sets": schema.ListAttribute{Computed: true, ElementType: types.StringType},
-			            "columns": schema.ListNestedAttribute{
-			                Computed: true,
-			                NestedObject: schema.NestedAttributeObject{
-			                    Attributes: map[string]schema.Attribute{
-			                        "name":             schema.StringAttribute{Computed: true},
-			                        "data_type":        schema.StringAttribute{Computed: true},
-			                        "default":          schema.StringAttribute{Computed: true},
-			                        "is_nullable":      schema.BoolAttribute{Computed: true},
-			                        "is_primary_key":   schema.BoolAttribute{Computed: true},
-			                        "ordinal_position": schema.Int64Attribute{Computed: true},
-			                    },
-			                },
-			            },
-			            "status": schema.ListNestedAttribute{
-			                Computed: true,
-			                NestedObject: schema.NestedAttributeObject{
-			                    Attributes: map[string]schema.Attribute{
-			                        "aligned":     schema.BoolAttribute{Computed: true},
-			                        "node_name":   schema.StringAttribute{Computed: true},
-			                        "present":     schema.BoolAttribute{Computed: true},
-			                        "replicating": schema.BoolAttribute{Computed: true},
-			                    },
-			                },
-			            },
-			        },
-			    },
+			"roles": schema.ListNestedAttribute{
+				Description: "List of roles in the database.",
+				Computed:    true,
+				Optional:    true,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
+				NestedObject: schema.NestedAttributeObject{
+					PlanModifiers: []planmodifier.Object{objectplanmodifier.UseStateForUnknown()},
+					Attributes: map[string]schema.Attribute{
+						"name":             schema.StringAttribute{Computed: true},
+						"bypass_rls":       schema.BoolAttribute{Computed: true},
+						"connection_limit": schema.Int64Attribute{Computed: true},
+						"create_db":        schema.BoolAttribute{Computed: true},
+						"create_role":      schema.BoolAttribute{Computed: true},
+						"inherit":          schema.BoolAttribute{Computed: true},
+						"login":            schema.BoolAttribute{Computed: true},
+						"replication":      schema.BoolAttribute{Computed: true},
+						"superuser":        schema.BoolAttribute{Computed: true},
+					},
+				},
 			},
 		},
 	}
@@ -591,59 +552,59 @@ func (r *databaseResource) Read(ctx context.Context, req resource.ReadRequest, r
 }
 
 func (r *databaseResource) nodesEqual(planNodes, stateNodes types.List) bool {
-    if planNodes.IsNull() || stateNodes.IsNull() {
-        return planNodes.IsNull() == stateNodes.IsNull()
-    }
+	if planNodes.IsNull() || stateNodes.IsNull() {
+		return planNodes.IsNull() == stateNodes.IsNull()
+	}
 
-    planElements := planNodes.Elements()
-    stateElements := stateNodes.Elements()
+	planElements := planNodes.Elements()
+	stateElements := stateNodes.Elements()
 
-    if len(planElements) != len(stateElements) {
-        return false
-    }
+	if len(planElements) != len(stateElements) {
+		return false
+	}
 
-    planNodeNames := make(map[string]bool)
-    stateNodeNames := make(map[string]bool)
+	planNodeNames := make(map[string]bool)
+	stateNodeNames := make(map[string]bool)
 
-    for _, nodeElem := range planElements {
-        if nodeObj, ok := nodeElem.(types.Object); ok {
-            var node struct {
-                Name types.String `tfsdk:"name"`
-            }
-            diags := nodeObj.As(context.Background(), &node, basetypes.ObjectAsOptions{})
-            if diags.HasError() {
-                continue
-            }
-            planNodeNames[node.Name.ValueString()] = true
-        }
-    }
+	for _, nodeElem := range planElements {
+		if nodeObj, ok := nodeElem.(types.Object); ok {
+			var node struct {
+				Name types.String `tfsdk:"name"`
+			}
+			diags := nodeObj.As(context.Background(), &node, basetypes.ObjectAsOptions{})
+			if diags.HasError() {
+				continue
+			}
+			planNodeNames[node.Name.ValueString()] = true
+		}
+	}
 
-    for _, nodeElem := range stateElements {
-        if nodeObj, ok := nodeElem.(types.Object); ok {
-            var node struct {
-                Name types.String `tfsdk:"name"`
-            }
-            diags := nodeObj.As(context.Background(), &node, basetypes.ObjectAsOptions{})
-            if diags.HasError() {
-                continue
-            }
-            stateNodeNames[node.Name.ValueString()] = true
-        }
-    }
+	for _, nodeElem := range stateElements {
+		if nodeObj, ok := nodeElem.(types.Object); ok {
+			var node struct {
+				Name types.String `tfsdk:"name"`
+			}
+			diags := nodeObj.As(context.Background(), &node, basetypes.ObjectAsOptions{})
+			if diags.HasError() {
+				continue
+			}
+			stateNodeNames[node.Name.ValueString()] = true
+		}
+	}
 
-    for name := range planNodeNames {
-        if !stateNodeNames[name] {
-            return false
-        }
-    }
+	for name := range planNodeNames {
+		if !stateNodeNames[name] {
+			return false
+		}
+	}
 
-    for name := range stateNodeNames {
-        if !planNodeNames[name] {
-            return false
-        }
-    }
+	for name := range stateNodeNames {
+		if !planNodeNames[name] {
+			return false
+		}
+	}
 
-    return true
+	return true
 }
 
 func (r *databaseResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
@@ -976,11 +937,10 @@ func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database)
 		ConfigVersion: types.StringValue(database.ConfigVersion),
 		Options:       convertToListValue(database.Options),
 		Backups:       r.mapBackupsToResourceModel(database.Backups),
-		Components:     r.mapComponentsToResourceModel(database.Components),
-		Extensions: r.mapExtensionsToResourceModel(database.Extensions),
-		Nodes:      r.mapNodesToResourceModel(database.Nodes),
-		Roles:          r.mapRolesToResourceModel(database.Roles),
-		Tables:         r.mapTablesToResourceModel(database.Tables),
+		Components:    r.mapComponentsToResourceModel(database.Components),
+		Extensions:    r.mapExtensionsToResourceModel(database.Extensions),
+		Nodes:         r.mapNodesToResourceModel(database.Nodes),
+		Roles:         r.mapRolesToResourceModel(database.Roles),
 	}
 }
 
@@ -1052,29 +1012,29 @@ func (r *databaseResource) mapBackupsToResourceModel(backups *models.Backups) ty
 
 func (r *databaseResource) mapComponentsToResourceModel(components []*models.DatabaseComponentVersion) types.List {
 	componentsList := []attr.Value{}
-    componentAttrTypes := map[string]attr.Type{
-        "id":           types.StringType,
-        "name":         types.StringType,
-        "version":      types.StringType,
-        "release_date": types.StringType,
-        "status":       types.StringType,
-    }
+	componentAttrTypes := map[string]attr.Type{
+		"id":           types.StringType,
+		"name":         types.StringType,
+		"version":      types.StringType,
+		"release_date": types.StringType,
+		"status":       types.StringType,
+	}
 
-    for _, component := range components {
-        componentObj, _ := types.ObjectValue(
-            componentAttrTypes,
-            map[string]attr.Value{
-                "id":           types.StringValue(component.ID.String()),
-                "name":         types.StringPointerValue(component.Name),
-                "version":      types.StringPointerValue(component.Version),
-                "release_date": types.StringPointerValue(component.ReleaseDate),
-                "status":       types.StringPointerValue(component.Status),
-            },
-        )
-        componentsList = append(componentsList, componentObj)
-    }
+	for _, component := range components {
+		componentObj, _ := types.ObjectValue(
+			componentAttrTypes,
+			map[string]attr.Value{
+				"id":           types.StringValue(component.ID.String()),
+				"name":         types.StringPointerValue(component.Name),
+				"version":      types.StringPointerValue(component.Version),
+				"release_date": types.StringPointerValue(component.ReleaseDate),
+				"status":       types.StringPointerValue(component.Status),
+			},
+		)
+		componentsList = append(componentsList, componentObj)
+	}
 
-    return types.ListValueMust(types.ObjectType{AttrTypes: componentAttrTypes}, componentsList)
+	return types.ListValueMust(types.ObjectType{AttrTypes: componentAttrTypes}, componentsList)
 }
 
 func (r *databaseResource) mapExtensionsToResourceModel(extensions *models.Extensions) types.Object {
@@ -1143,108 +1103,38 @@ func sortNodes(nodes []*models.DatabaseNode) []*models.DatabaseNode {
 
 func (r *databaseResource) mapRolesToResourceModel(roles []*models.DatabaseRole) types.List {
 	rolesList := []attr.Value{}
-    roleAttrTypes := map[string]attr.Type{
-        "name":             types.StringType,
-        "bypass_rls":       types.BoolType,
-        "connection_limit": types.Int64Type,
-        "create_db":        types.BoolType,
-        "create_role":      types.BoolType,
-        "inherit":          types.BoolType,
-        "login":            types.BoolType,
-        "replication":      types.BoolType,
-        "superuser":        types.BoolType,
-    }
+	roleAttrTypes := map[string]attr.Type{
+		"name":             types.StringType,
+		"bypass_rls":       types.BoolType,
+		"connection_limit": types.Int64Type,
+		"create_db":        types.BoolType,
+		"create_role":      types.BoolType,
+		"inherit":          types.BoolType,
+		"login":            types.BoolType,
+		"replication":      types.BoolType,
+		"superuser":        types.BoolType,
+	}
 
-    for _, role := range roles {
-        roleObj, _ := types.ObjectValue(
-            roleAttrTypes,
-            map[string]attr.Value{
-                "name":             types.StringPointerValue(role.Name),
-                "bypass_rls":       types.BoolPointerValue(role.BypassRls),
-                "connection_limit": types.Int64PointerValue(role.ConnectionLimit),
-                "create_db":        types.BoolPointerValue(role.CreateDb),
-                "create_role":      types.BoolPointerValue(role.CreateRole),
-                "inherit":          types.BoolPointerValue(role.Inherit),
-                "login":            types.BoolPointerValue(role.Login),
-                "replication":      types.BoolPointerValue(role.Replication),
-                "superuser":        types.BoolPointerValue(role.Superuser),
-            },
-        )
-        rolesList = append(rolesList, roleObj)
-    }
+	for _, role := range roles {
+		roleObj, _ := types.ObjectValue(
+			roleAttrTypes,
+			map[string]attr.Value{
+				"name":             types.StringPointerValue(role.Name),
+				"bypass_rls":       types.BoolPointerValue(role.BypassRls),
+				"connection_limit": types.Int64PointerValue(role.ConnectionLimit),
+				"create_db":        types.BoolPointerValue(role.CreateDb),
+				"create_role":      types.BoolPointerValue(role.CreateRole),
+				"inherit":          types.BoolPointerValue(role.Inherit),
+				"login":            types.BoolPointerValue(role.Login),
+				"replication":      types.BoolPointerValue(role.Replication),
+				"superuser":        types.BoolPointerValue(role.Superuser),
+			},
+		)
+		rolesList = append(rolesList, roleObj)
+	}
 
-    return types.ListValueMust(types.ObjectType{AttrTypes: roleAttrTypes}, rolesList)
+	return types.ListValueMust(types.ObjectType{AttrTypes: roleAttrTypes}, rolesList)
 }
-
-func (r *databaseResource) mapTablesToResourceModel(tables []*models.DatabaseTable) types.List {
-    if tables == nil {
-        return types.ListNull(types.ObjectType{AttrTypes: r.tableAttrTypes()})
-    }
-
-    tablesList := make([]attr.Value, 0, len(tables))
-    for _, table := range tables {
-        if table == nil {
-            continue
-        }
-
-        tableObj, diags := types.ObjectValue(
-            r.tableAttrTypes(),
-            map[string]attr.Value{
-                "name":             types.StringPointerValue(table.Name),
-                "schema":           types.StringPointerValue(table.Schema),
-                "primary_key":      types.ListValueMust(types.StringType, r.stringSliceToValueSlice(table.PrimaryKey)),
-                "replication_sets": types.ListValueMust(types.StringType, r.stringSliceToValueSlice(table.ReplicationSets)),
-                "columns":          r.mapColumnsToResourceModel(table.Columns),
-                "status":           r.mapTableStatusToResourceModel(table.Status),
-            },
-        )
-
-        if diags.HasError() {
-            continue
-        }
-
-        tablesList = append(tablesList, tableObj)
-    }
-
-    if len(tablesList) == 0 {
-        return types.ListNull(types.ObjectType{AttrTypes: r.tableAttrTypes()})
-    }
-
-    result := types.ListValueMust(types.ObjectType{AttrTypes: r.tableAttrTypes()}, tablesList)
-    return result
-}
-
-func (r *databaseResource) tableStatusAttrTypes() map[string]attr.Type {
-    return map[string]attr.Type{
-        "aligned":     types.BoolType,
-        "node_name":   types.StringType,
-        "present":     types.BoolType,
-        "replicating": types.BoolType,
-    }
-}
-
-func (r *databaseResource) tableAttrTypes() map[string]attr.Type {
-    columnType := map[string]attr.Type{
-        "name":             types.StringType,
-        "data_type":        types.StringType,
-        "default":          types.StringType,
-        "is_nullable":      types.BoolType,
-        "is_primary_key":   types.BoolType,
-        "ordinal_position": types.Int64Type,
-    }
-
-    return map[string]attr.Type{
-        "name":             types.StringType,
-        "schema":           types.StringType,
-        "primary_key":      types.ListType{ElemType: types.StringType},
-        "replication_sets": types.ListType{ElemType: types.StringType},
-        "columns":          types.ListType{ElemType: types.ObjectType{AttrTypes: columnType}},
-        "status":           types.ListType{ElemType: types.ObjectType{AttrTypes: r.tableStatusAttrTypes()}},
-    }
-}
-
-
-
 // Helper functions
 
 func (r *databaseResource) mapBackupRepositoriesToResourceModel(repositories []*models.BackupRepository) types.List {
@@ -1415,79 +1305,6 @@ func (r *databaseResource) mapNodeExtensionsToResourceModel(extensions *models.D
 	)
 	return extensionsObj
 }
-func (r *databaseResource) mapColumnsToResourceModel(columns []*models.DatabaseColumn) types.List {
-    columnsList := make([]attr.Value, 0, len(columns))
-    columnType := map[string]attr.Type{
-        "name":             types.StringType,
-        "data_type":        types.StringType,
-        "default":          types.StringType,
-        "is_nullable":      types.BoolType,
-        "is_primary_key":   types.BoolType,
-        "ordinal_position": types.Int64Type,
-    }
-
-    for _, column := range columns {
-        if column == nil {
-            continue
-        }
-
-        columnObj, diags := types.ObjectValue(
-            columnType,
-            map[string]attr.Value{
-                "name":             types.StringPointerValue(column.Name),
-                "data_type":        types.StringPointerValue(column.DataType),
-                "default":          types.StringPointerValue(column.Default),
-                "is_nullable":      types.BoolPointerValue(column.IsNullable),
-                "is_primary_key":   types.BoolPointerValue(column.IsPrimaryKey),
-                "ordinal_position": types.Int64PointerValue(column.OrdinalPosition),
-            },
-        )
-
-        if diags.HasError() {
-            continue
-        }
-
-        columnsList = append(columnsList, columnObj)
-    }
-
-    return types.ListValueMust(
-        types.ObjectType{AttrTypes: columnType},
-        columnsList,
-    )
-}
-
-func (r *databaseResource) mapTableStatusToResourceModel(status []*models.DatabaseTableStatus) types.List {
-	if status == nil {
-        return types.ListNull(types.ObjectType{AttrTypes: r.tableStatusAttrTypes()})
-    }
-
-    statusList := make([]attr.Value, 0, len(status))
-    for _, s := range status {
-        if s == nil {
-            continue
-        }
-        statusObj, diags := types.ObjectValue(
-            r.tableStatusAttrTypes(),
-            map[string]attr.Value{
-                "aligned":     types.BoolPointerValue(s.Aligned),
-                "node_name":   types.StringPointerValue(s.NodeName),
-                "present":     types.BoolPointerValue(s.Present),
-                "replicating": types.BoolPointerValue(s.Replicating),
-            },
-        )
-        if diags.HasError() {
-            continue
-        }
-        statusList = append(statusList, statusObj)
-    }
-
-    if len(statusList) == 0 {
-        return types.ListNull(types.ObjectType{AttrTypes: r.tableStatusAttrTypes()})
-    }
-
-    return types.ListValueMust(types.ObjectType{AttrTypes: r.tableStatusAttrTypes()}, statusList)
-
-}
 
 func (r *databaseResource) stringSliceToValueSlice(slice []string) []attr.Value {
 	valueSlice := make([]attr.Value, len(slice))
@@ -1514,11 +1331,10 @@ type databaseResourceModel struct {
 	ConfigVersion types.String `tfsdk:"config_version"`
 	Options       types.List   `tfsdk:"options"`
 	Backups       types.Object `tfsdk:"backups"`
-	Components     types.List   `tfsdk:"components"`
-	Extensions types.Object `tfsdk:"extensions"`
-	Nodes      types.List   `tfsdk:"nodes"`
-	Roles          types.List   `tfsdk:"roles"`
-	Tables         types.List   `tfsdk:"tables"`
+	Components    types.List   `tfsdk:"components"`
+	Extensions    types.Object `tfsdk:"extensions"`
+	Nodes         types.List   `tfsdk:"nodes"`
+	Roles         types.List   `tfsdk:"roles"`
 }
 
 func convertToStringSlice(list types.List) []string {
