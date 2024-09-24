@@ -11,7 +11,11 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/float64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/objectplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -272,54 +276,72 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Description: "List of nodes in the database.",
 				Computed:    true,
 				Optional:    true,
+				PlanModifiers: []planmodifier.List{
+					listplanmodifier.UseStateForUnknown(),
+				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"name": schema.StringAttribute{Computed: true, Optional: true},
+						"name": schema.StringAttribute{
+							Computed: true,
+							Optional: true,
+						},
 						"connection": schema.SingleNestedAttribute{
 							Computed: true,
+							PlanModifiers: []planmodifier.Object{
+								objectplanmodifier.UseStateForUnknown(),
+							},
 							Attributes: map[string]schema.Attribute{
-								"database":            schema.StringAttribute{Computed: true},
-								"host":                schema.StringAttribute{Computed: true},
-								"password":            schema.StringAttribute{Computed: true},
-								"port":                schema.Int64Attribute{Computed: true},
-								"username":            schema.StringAttribute{Computed: true},
-								"external_ip_address": schema.StringAttribute{Computed: true},
-								"internal_ip_address": schema.StringAttribute{Computed: true},
-								"internal_host":       schema.StringAttribute{Computed: true},
+								"database":            schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"host":                schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"password":            schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"port":                schema.Int64Attribute{Computed: true, PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()}},
+								"username":            schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"external_ip_address": schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"internal_ip_address": schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"internal_host":       schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 							},
 						},
 						"location": schema.SingleNestedAttribute{
 							Computed: true,
+							PlanModifiers: []planmodifier.Object{
+								objectplanmodifier.UseStateForUnknown(),
+							},
 							Attributes: map[string]schema.Attribute{
-								"code":        schema.StringAttribute{Computed: true},
-								"country":     schema.StringAttribute{Computed: true},
-								"latitude":    schema.Float64Attribute{Computed: true},
-								"longitude":   schema.Float64Attribute{Computed: true},
-								"name":        schema.StringAttribute{Computed: true},
-								"region":      schema.StringAttribute{Computed: true},
-								"region_code": schema.StringAttribute{Computed: true},
-								"timezone":    schema.StringAttribute{Computed: true},
-								"postal_code": schema.StringAttribute{Computed: true},
-								"metro_code":  schema.StringAttribute{Computed: true},
-								"city":        schema.StringAttribute{Computed: true},
+								"code":        schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"country":     schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"latitude":    schema.Float64Attribute{Computed: true, PlanModifiers: []planmodifier.Float64{float64planmodifier.UseStateForUnknown()}},
+								"longitude":   schema.Float64Attribute{Computed: true, PlanModifiers: []planmodifier.Float64{float64planmodifier.UseStateForUnknown()}},
+								"name":        schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"region":      schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"region_code": schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"timezone":    schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"postal_code": schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"metro_code":  schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"city":        schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 							},
 						},
 						"region": schema.SingleNestedAttribute{
 							Computed: true,
+							PlanModifiers: []planmodifier.Object{
+								objectplanmodifier.UseStateForUnknown(),
+							},
 							Attributes: map[string]schema.Attribute{
-								"active":             schema.BoolAttribute{Computed: true},
-								"availability_zones": schema.ListAttribute{Computed: true, ElementType: types.StringType},
-								"cloud":              schema.StringAttribute{Computed: true},
-								"code":               schema.StringAttribute{Computed: true},
-								"name":               schema.StringAttribute{Computed: true},
-								"parent":             schema.StringAttribute{Computed: true},
+								"active":             schema.BoolAttribute{Computed: true, PlanModifiers: []planmodifier.Bool{boolplanmodifier.UseStateForUnknown()}},
+								"availability_zones": schema.ListAttribute{Computed: true, ElementType: types.StringType, PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()}},
+								"cloud":              schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"code":               schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"name":               schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"parent":             schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 							},
 						},
 						"extensions": schema.SingleNestedAttribute{
 							Computed: true,
+							PlanModifiers: []planmodifier.Object{
+								objectplanmodifier.UseStateForUnknown(),
+							},
 							Attributes: map[string]schema.Attribute{
-								"errors":    schema.MapAttribute{Computed: true, ElementType: types.StringType},
-								"installed": schema.ListAttribute{Computed: true, ElementType: types.StringType},
+								"errors":    schema.MapAttribute{Computed: true, ElementType: types.StringType, PlanModifiers: []planmodifier.Map{mapplanmodifier.UseStateForUnknown()}},
+								"installed": schema.ListAttribute{Computed: true, ElementType: types.StringType, PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()}},
 							},
 						},
 					},
@@ -468,7 +490,7 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 					if resp.Diagnostics.HasError() {
 						return
 					}
-	
+					
 					for _, repo := range repositories {
 						backupConfig.Repositories = append(backupConfig.Repositories, &models.BackupRepository{
 							ID:                *repo.ID.ValueStringPointer(),
@@ -488,7 +510,7 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 						})
 					}
 				}
-	
+
 				if !config.Schedules.IsNull() && !config.Schedules.IsUnknown() {
 					var schedules []struct {
 						ID             types.String `tfsdk:"id"`
@@ -500,7 +522,7 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 					if resp.Diagnostics.HasError() {
 						return
 					}
-	
+
 					for _, schedule := range schedules {
 						backupConfig.Schedules = append(backupConfig.Schedules, &models.BackupSchedule{
 							ID:             schedule.ID.ValueStringPointer(),
@@ -1085,33 +1107,42 @@ func (r *databaseResource) mapExtensionsToResourceModel(extensions *models.Exten
 }
 
 func (r *databaseResource) mapNodesToResourceModel(nodes []*models.DatabaseNode) types.List {
-	nodesList := []attr.Value{}
-	nodeAttrTypes := map[string]attr.Type{
-		"name":       types.StringType,
-		"connection": types.ObjectType{AttrTypes: r.connectionAttrTypes()},
-		"location":   types.ObjectType{AttrTypes: r.locationAttrTypes()},
-		"region":     types.ObjectType{AttrTypes: r.regionAttrTypes()},
-		"extensions": types.ObjectType{AttrTypes: r.nodeExtensionsAttrTypes()},
-	}
+    nodesList := []attr.Value{}
+    nodeAttrTypes := map[string]attr.Type{
+        "name":       types.StringType,
+        "connection": types.ObjectType{AttrTypes: r.connectionAttrTypes()},
+        "location":   types.ObjectType{AttrTypes: r.locationAttrTypes()},
+        "region":     types.ObjectType{AttrTypes: r.regionAttrTypes()},
+        "extensions": types.ObjectType{AttrTypes: r.nodeExtensionsAttrTypes()},
+    }
 
-	// Sort nodes by name
-	sortedNodes := sortNodes(nodes)
+    for _, node := range nodes {
+        regionObj := r.mapRegionToResourceModel(node.Region)
+        if regionObj.IsNull() {
+            regionObj, _ = types.ObjectValue(r.regionAttrTypes(), map[string]attr.Value{
+                "active":             types.BoolNull(),
+                "availability_zones": types.ListNull(types.StringType),
+                "cloud":              types.StringNull(),
+                "code":               types.StringNull(),
+                "name":               types.StringNull(),
+                "parent":             types.StringNull(),
+            })
+        }
 
-	for _, node := range sortedNodes {
-		nodeObj, _ := types.ObjectValue(
-			nodeAttrTypes,
-			map[string]attr.Value{
-				"name":       types.StringPointerValue(node.Name),
-				"connection": r.mapConnectionToResourceModel(node.Connection),
-				"location":   r.mapLocationToResourceModel(node.Location),
-				"region":     r.mapRegionToResourceModel(node.Region),
-				"extensions": r.mapNodeExtensionsToResourceModel(node.Extensions),
-			},
-		)
-		nodesList = append(nodesList, nodeObj)
-	}
+        nodeObj, _ := types.ObjectValue(
+            nodeAttrTypes,
+            map[string]attr.Value{
+                "name":       types.StringPointerValue(node.Name),
+                "connection": r.mapConnectionToResourceModel(node.Connection),
+                "location":   r.mapLocationToResourceModel(node.Location),
+                "region":     regionObj,
+                "extensions": r.mapNodeExtensionsToResourceModel(node.Extensions),
+            },
+        )
+        nodesList = append(nodesList, nodeObj)
+    }
 
-	return types.ListValueMust(types.ObjectType{AttrTypes: nodeAttrTypes}, nodesList)
+    return types.ListValueMust(types.ObjectType{AttrTypes: nodeAttrTypes}, nodesList)
 }
 
 func sortNodes(nodes []*models.DatabaseNode) []*models.DatabaseNode {
