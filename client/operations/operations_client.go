@@ -62,6 +62,8 @@ type ClientService interface {
 
 	DeleteDatabasesID(params *DeleteDatabasesIDParams, opts ...ClientOption) (*DeleteDatabasesIDNoContent, error)
 
+	DeleteSSHKeysID(params *DeleteSSHKeysIDParams, opts ...ClientOption) (*DeleteSSHKeysIDNoContent, error)
+
 	GetCloudAccounts(params *GetCloudAccountsParams, opts ...ClientOption) (*GetCloudAccountsOK, error)
 
 	GetCloudAccountsID(params *GetCloudAccountsIDParams, opts ...ClientOption) (*GetCloudAccountsIDOK, error)
@@ -78,6 +80,10 @@ type ClientService interface {
 
 	GetDatabasesID(params *GetDatabasesIDParams, opts ...ClientOption) (*GetDatabasesIDOK, error)
 
+	GetSSHKeys(params *GetSSHKeysParams, opts ...ClientOption) (*GetSSHKeysOK, error)
+
+	GetSSHKeysID(params *GetSSHKeysIDParams, opts ...ClientOption) (*GetSSHKeysIDOK, error)
+
 	PatchClustersID(params *PatchClustersIDParams, opts ...ClientOption) (*PatchClustersIDOK, error)
 
 	PatchDatabasesID(params *PatchDatabasesIDParams, opts ...ClientOption) (*PatchDatabasesIDOK, error)
@@ -89,6 +95,8 @@ type ClientService interface {
 	PostDatabases(params *PostDatabasesParams, opts ...ClientOption) (*PostDatabasesOK, error)
 
 	PostOauthToken(params *PostOauthTokenParams, opts ...ClientOption) (*PostOauthTokenOK, error)
+
+	PostSSHKeys(params *PostSSHKeysParams, opts ...ClientOption) (*PostSSHKeysOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
 }
@@ -210,6 +218,46 @@ func (a *Client) DeleteDatabasesID(params *DeleteDatabasesIDParams, opts ...Clie
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for DeleteDatabasesID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+DeleteSSHKeysID deletes an SSH key
+
+Delete an SSH key.
+*/
+func (a *Client) DeleteSSHKeysID(params *DeleteSSHKeysIDParams, opts ...ClientOption) (*DeleteSSHKeysIDNoContent, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewDeleteSSHKeysIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "DeleteSSHKeysID",
+		Method:             "DELETE",
+		PathPattern:        "/ssh-keys/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &DeleteSSHKeysIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*DeleteSSHKeysIDNoContent)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for DeleteSSHKeysID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
@@ -534,6 +582,86 @@ func (a *Client) GetDatabasesID(params *GetDatabasesIDParams, opts ...ClientOpti
 }
 
 /*
+GetSSHKeys lists SSH keys
+
+List SSH keys.
+*/
+func (a *Client) GetSSHKeys(params *GetSSHKeysParams, opts ...ClientOption) (*GetSSHKeysOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetSSHKeysParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "GetSSHKeys",
+		Method:             "GET",
+		PathPattern:        "/ssh-keys",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetSSHKeysReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetSSHKeysOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetSSHKeys: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetSSHKeysID retrieves an SSH key
+
+Retrieve an SSH key.
+*/
+func (a *Client) GetSSHKeysID(params *GetSSHKeysIDParams, opts ...ClientOption) (*GetSSHKeysIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetSSHKeysIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "GetSSHKeysID",
+		Method:             "GET",
+		PathPattern:        "/ssh-keys/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetSSHKeysIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetSSHKeysIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetSSHKeysID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
 PatchClustersID updates a pg edge database cluster
 
 Update a pgEdge database cluster.
@@ -770,6 +898,46 @@ func (a *Client) PostOauthToken(params *PostOauthTokenParams, opts ...ClientOpti
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for PostOauthToken: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostSSHKeys creates an SSH key
+
+Create an SSH key.
+*/
+func (a *Client) PostSSHKeys(params *PostSSHKeysParams, opts ...ClientOption) (*PostSSHKeysOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostSSHKeysParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "PostSSHKeys",
+		Method:             "POST",
+		PathPattern:        "/ssh-keys",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PostSSHKeysReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostSSHKeysOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for PostSSHKeys: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

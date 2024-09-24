@@ -424,6 +424,69 @@ func (c *Client) DeleteCloudAccount(ctx context.Context, id strfmt.UUID) error {
 	return nil
 }
 
+func (c *Client) GetSSHKeys(ctx context.Context) ([]*models.SSHKey, error) {
+    request := &operations.GetSSHKeysParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+    }
+
+    request.SetAuthorization(c.AuthHeader)
+
+    resp, err := c.PgEdgeAPIClient.Operations.GetSSHKeys(request)
+    if err != nil {
+        return nil, err
+    }
+
+    return resp.Payload, nil
+}
+
+func (c *Client) CreateSSHKey(ctx context.Context, sshKey *models.CreateSSHKeyInput) (*models.SSHKey, error) {
+    request := &operations.PostSSHKeysParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        Body:       sshKey,
+    }
+    request.SetAuthorization(c.AuthHeader)
+
+    resp, err := c.PgEdgeAPIClient.Operations.PostSSHKeys(request)
+    if err != nil {
+        return nil, err
+    }
+
+    return resp.Payload, nil
+}
+
+func (c *Client) GetSSHKey(ctx context.Context, id strfmt.UUID) (*models.SSHKey, error) {
+    request := &operations.GetSSHKeysIDParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        ID:         id,
+    }
+
+    request.SetAuthorization(c.AuthHeader)
+
+    resp, err := c.PgEdgeAPIClient.Operations.GetSSHKeysID(request)
+    if err != nil {
+        return nil, err
+    }
+
+    return resp.Payload, nil
+}
+
+func (c *Client) DeleteSSHKey(ctx context.Context, id strfmt.UUID) error {
+    request := &operations.DeleteSSHKeysIDParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        ID:         id,
+    }
+
+    request.SetAuthorization(c.AuthHeader)
+
+    _, err := c.PgEdgeAPIClient.Operations.DeleteSSHKeysID(request)
+    return err
+}
+
+
 func (c *Client) OAuthToken(ctx context.Context, clientId, clientSecret, grantType string) (*operations.PostOauthTokenOKBody, error) {
 	request := &operations.PostOauthTokenParams{
 		HTTPClient: c.HTTPClient,

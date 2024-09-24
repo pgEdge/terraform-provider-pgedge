@@ -23,6 +23,8 @@ var (
 	DatabaseID     *strfmt.UUID
 	ClusterID      *strfmt.UUID
 	CloudAccountID *strfmt.UUID
+	SSHKeyID *strfmt.UUID
+
 )
 
 func TestOAuthToken(t *testing.T) {
@@ -54,6 +56,61 @@ func TestCreateCloudAccount(t *testing.T) {
 	assert.Nil(t, err)
 	assert.NotNil(t, account)
 	assert.Equal(t, "TestAccount", *account.Name)
+}
+
+func TestCreateSSHKey(t *testing.T) {
+    client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+
+    request := &models.CreateSSHKeyInput{
+        Name:      stringPtr("TestSSHKey"),
+        PublicKey: stringPtr("ssh-rsa AAAA..."),
+    }
+
+    sshKey, err := client.CreateSSHKey(context.Background(), request)
+    assert.Nil(t, err)
+    assert.NotNil(t, sshKey)
+    assert.Equal(t, "TestSSHKey", *sshKey.Name)
+
+    // Store the SSH key ID for use in other tests
+    SSHKeyID = sshKey.ID
+}
+
+func TestGetSSHKey(t *testing.T) {
+    client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+
+    sshKey, err := client.GetSSHKey(context.Background(), *SSHKeyID)
+    assert.Nil(t, err)
+    assert.NotNil(t, sshKey)
+    assert.Equal(t, SSHKeyID.String(), sshKey.ID.String())
+}
+
+func TestGetSSHKeys(t *testing.T) {
+    client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+
+    sshKeys, err := client.GetSSHKeys(context.Background())
+    assert.Nil(t, err)
+    assert.NotEmpty(t, sshKeys)
+
+    // Check if our created SSH key is in the list
+    found := false
+    for _, key := range sshKeys {
+        if key.ID == SSHKeyID {
+            found = true
+            break
+        }
+    }
+    assert.True(t, found, "Created SSH key not found in the list")
+}
+
+func TestDeleteSSHKey(t *testing.T) {
+    client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+
+    err := client.DeleteSSHKey(context.Background(), *SSHKeyID)
+    assert.Nil(t, err)
+
+    // Verify that the SSH key is deleted
+    _, err = client.GetSSHKey(context.Background(), *SSHKeyID)
+    assert.NotNil(t, err) // Expect an error as the SSH key should not exist
 }
 
 func stringPtr(s string) *string {
