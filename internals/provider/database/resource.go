@@ -80,8 +80,8 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Description: "The PostgreSQL version of the database.",
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
-				},			
-				Computed:    true,
+				},
+				Computed: true,
 			},
 			"storage_used": schema.Int64Attribute{
 				Description: "The amount of storage used by the database in bytes.",
@@ -115,7 +115,7 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						Optional:    true,
 						PlanModifiers: []planmodifier.String{
 							stringplanmodifier.UseStateForUnknown(),
-						},			
+						},
 					},
 					"config": schema.ListNestedAttribute{
 						Description: "List of backup configurations.",
@@ -272,9 +272,6 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Description: "List of nodes in the database.",
 				Computed:    true,
 				Optional:    true,
-				PlanModifiers: []planmodifier.List{
-					listplanmodifier.UseStateForUnknown(),
-				},
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{Computed: true, Optional: true},
@@ -386,14 +383,14 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	createInput := &models.CreateDatabaseInput{
-		Name:          plan.Name.ValueStringPointer(),
-		ClusterID:     strfmt.UUID(plan.ClusterID.ValueString()),
-		Options:       convertToStringSlice(plan.Options),
+		Name:      plan.Name.ValueStringPointer(),
+		ClusterID: strfmt.UUID(plan.ClusterID.ValueString()),
+		Options:   convertToStringSlice(plan.Options),
 	}
 
 	if !plan.ConfigVersion.IsNull() && !plan.ConfigVersion.IsUnknown() {
 		createInput.ConfigVersion = plan.ConfigVersion.ValueString()
-	}	
+	}
 
 	// Handle Extensions
 	if !plan.Extensions.IsNull() && !plan.Extensions.IsUnknown() {
@@ -414,12 +411,7 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 	if !plan.Backups.IsNull() && !plan.Backups.IsUnknown() {
 		var backupsData struct {
 			Provider types.String `tfsdk:"provider"`
-			Config   []struct {
-				ID           types.String `tfsdk:"id"`
-				NodeName     types.String `tfsdk:"node_name"`
-				Repositories types.List   `tfsdk:"repositories"`
-				Schedules    types.List   `tfsdk:"schedules"`
-			} `tfsdk:"config"`
+			Config   types.List   `tfsdk:"config"`
 		}
 		diags := plan.Backups.As(ctx, &backupsData, basetypes.ObjectAsOptions{})
 		resp.Diagnostics.Append(diags...)
@@ -429,82 +421,97 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 
 		backups := &models.Backups{
 			Provider: backupsData.Provider.ValueStringPointer(),
-			Config:   make([]*models.BackupConfig, 0),
 		}
 
-		for _, config := range backupsData.Config {
-			backupConfig := &models.BackupConfig{
-				ID:           config.ID.ValueStringPointer(),
-				NodeName:     *config.NodeName.ValueStringPointer(),
-				Repositories: make([]*models.BackupRepository, 0),
-				Schedules:    make([]*models.BackupSchedule, 0),
+		if !backupsData.Config.IsNull() && !backupsData.Config.IsUnknown() {
+			var configData []struct {
+				ID           types.String `tfsdk:"id"`
+				NodeName     types.String `tfsdk:"node_name"`
+				Repositories types.List   `tfsdk:"repositories"`
+				Schedules    types.List   `tfsdk:"schedules"`
+			}
+			diags := backupsData.Config.ElementsAs(ctx, &configData, false)
+			resp.Diagnostics.Append(diags...)
+			if resp.Diagnostics.HasError() {
+				return
 			}
 
-			if !config.Repositories.IsNull() && !config.Repositories.IsUnknown() {
-				var repositories []struct {
-					ID                types.String `tfsdk:"id"`
-					Type              types.String `tfsdk:"type"`
-					BackupStoreID     types.String `tfsdk:"backup_store_id"`
-					BasePath          types.String `tfsdk:"base_path"`
-					S3Bucket          types.String `tfsdk:"s3_bucket"`
-					S3Region          types.String `tfsdk:"s3_region"`
-					S3Endpoint        types.String `tfsdk:"s3_endpoint"`
-					GcsBucket         types.String `tfsdk:"gcs_bucket"`
-					GcsEndpoint       types.String `tfsdk:"gcs_endpoint"`
-					AzureAccount      types.String `tfsdk:"azure_account"`
-					AzureContainer    types.String `tfsdk:"azure_container"`
-					AzureEndpoint     types.String `tfsdk:"azure_endpoint"`
-					RetentionFull     types.Int64  `tfsdk:"retention_full"`
-					RetentionFullType types.String `tfsdk:"retention_full_type"`
-				}
-				diags := config.Repositories.ElementsAs(ctx, &repositories, false)
-				resp.Diagnostics.Append(diags...)
-				if resp.Diagnostics.HasError() {
-					return
+			backups.Config = make([]*models.BackupConfig, 0, len(configData))
+
+			for _, config := range configData {
+				backupConfig := &models.BackupConfig{
+					ID:           config.ID.ValueStringPointer(),
+					NodeName:     *config.NodeName.ValueStringPointer(),
+					Repositories: make([]*models.BackupRepository, 0),
+					Schedules:    make([]*models.BackupSchedule, 0),
 				}
 
-				for _, repo := range repositories {
-					backupConfig.Repositories = append(backupConfig.Repositories, &models.BackupRepository{
-						ID:                *repo.ID.ValueStringPointer(),
-						Type:              *repo.Type.ValueStringPointer(),
-						BackupStoreID:     *repo.BackupStoreID.ValueStringPointer(),
-						BasePath:          *repo.BasePath.ValueStringPointer(),
-						S3Bucket:          *repo.S3Bucket.ValueStringPointer(),
-						S3Region:          *repo.S3Region.ValueStringPointer(),
-						S3Endpoint:        *repo.S3Endpoint.ValueStringPointer(),
-						GcsBucket:         *repo.GcsBucket.ValueStringPointer(),
-						GcsEndpoint:       *repo.GcsEndpoint.ValueStringPointer(),
-						AzureAccount:      *repo.AzureAccount.ValueStringPointer(),
-						AzureContainer:    *repo.AzureContainer.ValueStringPointer(),
-						AzureEndpoint:     *repo.AzureEndpoint.ValueStringPointer(),
-						RetentionFull:     *repo.RetentionFull.ValueInt64Pointer(),
-						RetentionFullType: *repo.RetentionFullType.ValueStringPointer(),
-					})
+				if !config.Repositories.IsNull() && !config.Repositories.IsUnknown() {
+					var repositories []struct {
+						ID                types.String `tfsdk:"id"`
+						Type              types.String `tfsdk:"type"`
+						BackupStoreID     types.String `tfsdk:"backup_store_id"`
+						BasePath          types.String `tfsdk:"base_path"`
+						S3Bucket          types.String `tfsdk:"s3_bucket"`
+						S3Region          types.String `tfsdk:"s3_region"`
+						S3Endpoint        types.String `tfsdk:"s3_endpoint"`
+						GcsBucket         types.String `tfsdk:"gcs_bucket"`
+						GcsEndpoint       types.String `tfsdk:"gcs_endpoint"`
+						AzureAccount      types.String `tfsdk:"azure_account"`
+						AzureContainer    types.String `tfsdk:"azure_container"`
+						AzureEndpoint     types.String `tfsdk:"azure_endpoint"`
+						RetentionFull     types.Int64  `tfsdk:"retention_full"`
+						RetentionFullType types.String `tfsdk:"retention_full_type"`
+					}
+					diags := config.Repositories.ElementsAs(ctx, &repositories, false)
+					resp.Diagnostics.Append(diags...)
+					if resp.Diagnostics.HasError() {
+						return
+					}
+	
+					for _, repo := range repositories {
+						backupConfig.Repositories = append(backupConfig.Repositories, &models.BackupRepository{
+							ID:                *repo.ID.ValueStringPointer(),
+							Type:              *repo.Type.ValueStringPointer(),
+							BackupStoreID:     *repo.BackupStoreID.ValueStringPointer(),
+							BasePath:          *repo.BasePath.ValueStringPointer(),
+							S3Bucket:          *repo.S3Bucket.ValueStringPointer(),
+							S3Region:          *repo.S3Region.ValueStringPointer(),
+							S3Endpoint:        *repo.S3Endpoint.ValueStringPointer(),
+							GcsBucket:         *repo.GcsBucket.ValueStringPointer(),
+							GcsEndpoint:       *repo.GcsEndpoint.ValueStringPointer(),
+							AzureAccount:      *repo.AzureAccount.ValueStringPointer(),
+							AzureContainer:    *repo.AzureContainer.ValueStringPointer(),
+							AzureEndpoint:     *repo.AzureEndpoint.ValueStringPointer(),
+							RetentionFull:     *repo.RetentionFull.ValueInt64Pointer(),
+							RetentionFullType: *repo.RetentionFullType.ValueStringPointer(),
+						})
+					}
 				}
+	
+				if !config.Schedules.IsNull() && !config.Schedules.IsUnknown() {
+					var schedules []struct {
+						ID             types.String `tfsdk:"id"`
+						Type           types.String `tfsdk:"type"`
+						CronExpression types.String `tfsdk:"cron_expression"`
+					}
+					diags := config.Schedules.ElementsAs(ctx, &schedules, false)
+					resp.Diagnostics.Append(diags...)
+					if resp.Diagnostics.HasError() {
+						return
+					}
+	
+					for _, schedule := range schedules {
+						backupConfig.Schedules = append(backupConfig.Schedules, &models.BackupSchedule{
+							ID:             schedule.ID.ValueStringPointer(),
+							Type:           schedule.Type.ValueStringPointer(),
+							CronExpression: schedule.CronExpression.ValueStringPointer(),
+						})
+					}
+				}
+
+				backups.Config = append(backups.Config, backupConfig)
 			}
-
-			if !config.Schedules.IsNull() && !config.Schedules.IsUnknown() {
-				var schedules []struct {
-					ID             types.String `tfsdk:"id"`
-					Type           types.String `tfsdk:"type"`
-					CronExpression types.String `tfsdk:"cron_expression"`
-				}
-				diags := config.Schedules.ElementsAs(ctx, &schedules, false)
-				resp.Diagnostics.Append(diags...)
-				if resp.Diagnostics.HasError() {
-					return
-				}
-
-				for _, schedule := range schedules {
-					backupConfig.Schedules = append(backupConfig.Schedules, &models.BackupSchedule{
-						ID:             schedule.ID.ValueStringPointer(),
-						Type:           schedule.Type.ValueStringPointer(),
-						CronExpression: schedule.CronExpression.ValueStringPointer(),
-					})
-				}
-			}
-
-			backups.Config = append(backups.Config, backupConfig)
 		}
 
 		createInput.Backups = backups
@@ -1150,6 +1157,7 @@ func (r *databaseResource) mapRolesToResourceModel(roles []*models.DatabaseRole)
 
 	return types.ListValueMust(types.ObjectType{AttrTypes: roleAttrTypes}, rolesList)
 }
+
 // Helper functions
 
 func (r *databaseResource) mapBackupRepositoriesToResourceModel(repositories []*models.BackupRepository) types.List {
