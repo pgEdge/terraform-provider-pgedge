@@ -15,6 +15,7 @@ import (
 	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/cloud-account"
 	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/cluster"
 	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/database"
+	sshkey "github.com/pgEdge/terraform-provider-pgedge/internals/provider/ssh-key"
 )
 
 var _ provider.Provider = &PgEdgeProvider{}
@@ -134,6 +135,7 @@ func (p *PgEdgeProvider) Resources(ctx context.Context) []func() resource.Resour
 		database.NewDatabaseResource,
 		cluster.NewClusterResource,
 		cloudaccount.NewCloudAccountResource,
+		sshkey.NewSSHKeyResource,
 	}
 }
 
@@ -142,5 +144,6 @@ func (p *PgEdgeProvider) DataSources(ctx context.Context) []func() datasource.Da
 		database.NewDatabasesDataSource,
 		cluster.NewClustersDataSource,
 		cloudaccount.NewCloudAccountsDataSource,
+		sshkey.NewSSHKeysDataSource,
 	}
 }
