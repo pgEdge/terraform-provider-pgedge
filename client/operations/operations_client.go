@@ -56,6 +56,8 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
+	DeleteBackupStoresID(params *DeleteBackupStoresIDParams, opts ...ClientOption) (*DeleteBackupStoresIDNoContent, error)
+
 	DeleteCloudAccountsID(params *DeleteCloudAccountsIDParams, opts ...ClientOption) (*DeleteCloudAccountsIDNoContent, error)
 
 	DeleteClustersID(params *DeleteClustersIDParams, opts ...ClientOption) (*DeleteClustersIDNoContent, error)
@@ -63,6 +65,10 @@ type ClientService interface {
 	DeleteDatabasesID(params *DeleteDatabasesIDParams, opts ...ClientOption) (*DeleteDatabasesIDNoContent, error)
 
 	DeleteSSHKeysID(params *DeleteSSHKeysIDParams, opts ...ClientOption) (*DeleteSSHKeysIDNoContent, error)
+
+	GetBackupStores(params *GetBackupStoresParams, opts ...ClientOption) (*GetBackupStoresOK, error)
+
+	GetBackupStoresID(params *GetBackupStoresIDParams, opts ...ClientOption) (*GetBackupStoresIDOK, error)
 
 	GetCloudAccounts(params *GetCloudAccountsParams, opts ...ClientOption) (*GetCloudAccountsOK, error)
 
@@ -88,6 +94,8 @@ type ClientService interface {
 
 	PatchDatabasesID(params *PatchDatabasesIDParams, opts ...ClientOption) (*PatchDatabasesIDOK, error)
 
+	PostBackupStores(params *PostBackupStoresParams, opts ...ClientOption) (*PostBackupStoresOK, error)
+
 	PostCloudAccounts(params *PostCloudAccountsParams, opts ...ClientOption) (*PostCloudAccountsOK, error)
 
 	PostClusters(params *PostClustersParams, opts ...ClientOption) (*PostClustersOK, error)
@@ -99,6 +107,46 @@ type ClientService interface {
 	PostSSHKeys(params *PostSSHKeysParams, opts ...ClientOption) (*PostSSHKeysOK, error)
 
 	SetTransport(transport runtime.ClientTransport)
+}
+
+/*
+DeleteBackupStoresID deletes a backup store
+
+Delete a backup store.
+*/
+func (a *Client) DeleteBackupStoresID(params *DeleteBackupStoresIDParams, opts ...ClientOption) (*DeleteBackupStoresIDNoContent, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewDeleteBackupStoresIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "DeleteBackupStoresID",
+		Method:             "DELETE",
+		PathPattern:        "/backup-stores/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &DeleteBackupStoresIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*DeleteBackupStoresIDNoContent)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for DeleteBackupStoresID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
@@ -258,6 +306,86 @@ func (a *Client) DeleteSSHKeysID(params *DeleteSSHKeysIDParams, opts ...ClientOp
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for DeleteSSHKeysID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetBackupStores lists backup stores
+
+List backup stores.
+*/
+func (a *Client) GetBackupStores(params *GetBackupStoresParams, opts ...ClientOption) (*GetBackupStoresOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetBackupStoresParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "GetBackupStores",
+		Method:             "GET",
+		PathPattern:        "/backup-stores",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetBackupStoresReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetBackupStoresOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetBackupStores: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetBackupStoresID retrieves a backup store
+
+Retrieve a backup store.
+*/
+func (a *Client) GetBackupStoresID(params *GetBackupStoresIDParams, opts ...ClientOption) (*GetBackupStoresIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetBackupStoresIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "GetBackupStoresID",
+		Method:             "GET",
+		PathPattern:        "/backup-stores/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetBackupStoresIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetBackupStoresIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetBackupStoresID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
@@ -738,6 +866,46 @@ func (a *Client) PatchDatabasesID(params *PatchDatabasesIDParams, opts ...Client
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for PatchDatabasesID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostBackupStores creates a backup store
+
+Create a backup store.
+*/
+func (a *Client) PostBackupStores(params *PostBackupStoresParams, opts ...ClientOption) (*PostBackupStoresOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostBackupStoresParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "PostBackupStores",
+		Method:             "POST",
+		PathPattern:        "/backup-stores",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PostBackupStoresReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostBackupStoresOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for PostBackupStores: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

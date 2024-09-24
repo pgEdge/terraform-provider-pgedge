@@ -486,6 +486,97 @@ func (c *Client) DeleteSSHKey(ctx context.Context, id strfmt.UUID) error {
     return err
 }
 
+func (c *Client) GetBackupStores(ctx context.Context, createdAfter, createdBefore *string, limit, offset *int64, descending *bool) ([]*models.BackupStore, error) {
+    request := &operations.GetBackupStoresParams{
+        HTTPClient:    c.HTTPClient,
+        Context:       ctx,
+        CreatedAfter:  createdAfter,
+        CreatedBefore: createdBefore,
+        Limit:         limit,
+        Offset:        offset,
+        Descending:    descending,
+    }
+
+    request.SetAuthorization(c.AuthHeader)
+
+    resp, err := c.PgEdgeAPIClient.Operations.GetBackupStores(request)
+    if err != nil {
+        return nil, err
+    }
+
+    return resp.Payload, nil
+}
+
+func (c *Client) CreateBackupStore(ctx context.Context, input *models.CreateBackupStoreInput) (*models.BackupStore, error) {
+    request := &operations.PostBackupStoresParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        Body:       input,
+    }
+
+    request.SetAuthorization(c.AuthHeader)
+
+    resp, err := c.PgEdgeAPIClient.Operations.PostBackupStores(request)
+    if err != nil {
+        return nil, err
+    }
+
+	if resp == nil || resp.Payload == nil {
+        return nil, fmt.Errorf("received nil response or payload")
+    }
+
+	backupStore := resp.Payload
+
+    for {
+        updatedStore, err := c.GetBackupStore(ctx, *backupStore.ID)
+        if err != nil {
+            return nil, fmt.Errorf("error checking backup store status: %w", err)
+        }
+
+        switch *updatedStore.Status {
+        case "available":
+            return updatedStore, nil
+        case "failed":
+            return nil, errors.New("backup store creation failed")
+        case "creating":
+            time.Sleep(5 * time.Second)
+        default:
+            return nil, fmt.Errorf("unexpected backup store status: %s", *updatedStore.Status)
+        }
+    }
+}
+
+func (c *Client) GetBackupStore(ctx context.Context, id strfmt.UUID) (*models.BackupStore, error) {
+    request := &operations.GetBackupStoresIDParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        ID:         id,
+    }
+
+    request.SetAuthorization(c.AuthHeader)
+
+    resp, err := c.PgEdgeAPIClient.Operations.GetBackupStoresID(request)
+    if err != nil {
+        return nil, err
+    }
+
+    return resp.Payload, nil
+}
+
+func (c *Client) DeleteBackupStore(ctx context.Context, id strfmt.UUID) error {
+    request := &operations.DeleteBackupStoresIDParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        ID:         id,
+    }
+
+    request.SetAuthorization(c.AuthHeader)
+
+    _, err := c.PgEdgeAPIClient.Operations.DeleteBackupStoresID(request)
+    return err
+}
+
+
 
 func (c *Client) OAuthToken(ctx context.Context, clientId, clientSecret, grantType string) (*operations.PostOauthTokenOKBody, error) {
 	request := &operations.PostOauthTokenParams{

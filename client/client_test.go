@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -24,6 +25,7 @@ var (
 	ClusterID      *strfmt.UUID
 	CloudAccountID *strfmt.UUID
 	SSHKeyID *strfmt.UUID
+	BackupStoreID *strfmt.UUID
 
 )
 
@@ -63,7 +65,7 @@ func TestCreateSSHKey(t *testing.T) {
 
     request := &models.CreateSSHKeyInput{
         Name:      stringPtr("TestSSHKey"),
-        PublicKey: stringPtr("ssh-rsa AAAA..."),
+        PublicKey: stringPtr("ssh-rsa "),
     }
 
     sshKey, err := client.CreateSSHKey(context.Background(), request)
@@ -111,6 +113,64 @@ func TestDeleteSSHKey(t *testing.T) {
     // Verify that the SSH key is deleted
     _, err = client.GetSSHKey(context.Background(), *SSHKeyID)
     assert.NotNil(t, err) // Expect an error as the SSH key should not exist
+}
+
+
+func TestCreateBackupStore(t *testing.T) {
+    client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+
+    input := &models.CreateBackupStoreInput{
+        Name:           stringPtr("teststore11"),
+        CloudAccountID: stringPtr(CloudAccountID.String()),
+        Region:         "us-east-2",
+    }
+
+    backupStore, err := client.CreateBackupStore(context.Background(), input)
+    assert.Nil(t, err)
+    assert.NotNil(t, backupStore)
+
+    BackupStoreID = backupStore.ID
+}
+
+func TestGetBackupStore(t *testing.T) {
+    client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+
+    backupStore, err := client.GetBackupStore(context.Background(), *BackupStoreID)
+    assert.Nil(t, err)
+    assert.NotNil(t, backupStore)
+    assert.Equal(t, BackupStoreID.String(), backupStore.ID.String())
+}
+
+func TestGetBackupStores(t *testing.T) {
+    client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+
+    createdAfter := time.Now().Add(-24 * time.Hour).Format(time.RFC3339)
+    limit := int64(10)
+
+    backupStores, err := client.GetBackupStores(context.Background(), &createdAfter, nil, &limit, nil, nil)
+    assert.Nil(t, err)
+    assert.NotEmpty(t, backupStores)
+
+    found := false
+    for _, store := range backupStores {
+	fmt.Println(store.ID.String(), "list id")
+        if store.ID.String() == BackupStoreID.String() {
+            found = true
+            break
+        }
+    }
+    assert.True(t, found, "Created backup store not found in the list")
+}
+
+func TestDeleteBackupStore(t *testing.T) {
+    client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+
+    err := client.DeleteBackupStore(context.Background(), *BackupStoreID)
+    assert.Nil(t, err)
+
+    time.Sleep(5 * time.Second)
+    _, err = client.GetBackupStore(context.Background(), *BackupStoreID)
+    assert.NotNil(t, err)
 }
 
 func stringPtr(s string) *string {
