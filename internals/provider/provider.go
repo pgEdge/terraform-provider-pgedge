@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	"github.com/pgEdge/terraform-provider-pgedge/client"
+	backupstore "github.com/pgEdge/terraform-provider-pgedge/internals/provider/backup-store"
 	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/cloud-account"
 	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/cluster"
 	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/database"
@@ -136,6 +137,7 @@ func (p *PgEdgeProvider) Resources(ctx context.Context) []func() resource.Resour
 		cluster.NewClusterResource,
 		cloudaccount.NewCloudAccountResource,
 		sshkey.NewSSHKeyResource,
+		backupstore.NewBackupStoreResource,
 	}
 }
 
@@ -145,5 +147,6 @@ func (p *PgEdgeProvider) DataSources(ctx context.Context) []func() datasource.Da
 		cluster.NewClustersDataSource,
 		cloudaccount.NewCloudAccountsDataSource,
 		sshkey.NewSSHKeysDataSource,
+		backupstore.NewBackupStoresDataSource,
 	}
 }
