@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	// "github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -337,7 +338,7 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						"extensions": schema.SingleNestedAttribute{
 							Computed: true,
 							PlanModifiers: []planmodifier.Object{
-								objectplanmodifier.UseStateForUnknown(),
+								conditionalUseStateForUnknownModifier{},
 							},
 							Attributes: map[string]schema.Attribute{
 								"errors":    schema.MapAttribute{Computed: true, ElementType: types.StringType, PlanModifiers: []planmodifier.Map{mapplanmodifier.UseStateForUnknown()}},
@@ -371,6 +372,102 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 		},
 	}
+}
+// Plan modifier for node extensions
+type conditionalUseStateForUnknownModifier struct{}
+
+func (m conditionalUseStateForUnknownModifier) Description(_ context.Context) string {
+	return "Uses the prior state for nodeextensions if extensions hasn't been modified."
+}
+
+func (m conditionalUseStateForUnknownModifier) MarkdownDescription(_ context.Context) string {
+	return "Uses the prior state for nodeextensions if extensions hasn't been modified."
+}
+
+func (m conditionalUseStateForUnknownModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+	if req.StateValue.IsNull() {
+		return
+	}
+
+	if !req.PlanValue.IsUnknown() {
+		return
+	}
+
+	var configRequested, stateInstalled []string
+
+	if !req.Config.Raw.IsNull() {
+		var configData map[string]tftypes.Value
+		err := req.Config.Raw.As(&configData)
+		if err == nil {
+			if extVal, ok := configData["extensions"]; ok {
+				var extMap map[string]tftypes.Value
+				err = extVal.As(&extMap)
+				if err == nil {
+					if reqVal, ok := extMap["requested"]; ok {
+						var requestedList []tftypes.Value
+						err = reqVal.As(&requestedList)
+						if err == nil {
+							for _, v := range requestedList {
+								var s string
+								if err := v.As(&s); err == nil {
+									configRequested = append(configRequested, s)
+								}
+							}
+						} else {
+							// TODO: log error
+						}
+					}
+				}
+			}
+		}
+	}
+
+	if !req.StateValue.IsNull() {
+		stateData := req.StateValue.Attributes()
+		if installedVal, ok := stateData["installed"].(types.List); ok {
+			stateInstalled = make([]string, 0, len(installedVal.Elements()))
+			for _, elem := range installedVal.Elements() {
+				if strVal, ok := elem.(types.String); ok {
+					stateInstalled = append(stateInstalled, strVal.ValueString())
+				}
+			}
+		}
+	}
+
+	if len(stateInstalled) == 0 {
+		return
+	}
+
+	if compareStringSlices(configRequested, stateInstalled) {
+		resp.PlanValue = req.StateValue
+		return
+	}
+
+}
+
+func compareStringSlices(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	countMap := make(map[string]int)
+
+	for _, v := range a {
+		countMap[v]++
+	}
+
+	for _, v := range b {
+		countMap[v]--
+		if countMap[v] == 0 {
+			delete(countMap, v)
+		}
+	}
+
+	return len(countMap) == 0
+}
+
+func New() planmodifier.Object {
+	return &conditionalUseStateForUnknownModifier{}
 }
 
 func (r *databaseResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
