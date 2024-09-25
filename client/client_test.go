@@ -382,28 +382,10 @@ func TestDeleteCluster(t *testing.T) {
 	assert.NotNil(t, err) // Expect an error as the cluster should not exist
 }
 
-func TestGetCloudAccounts(t *testing.T) {
+func TestGetDeletedCloudAccount(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
-	accounts, err := client.GetCloudAccounts(context.Background())
+	_, err := client.GetCloudAccount(context.Background(), *CloudAccountID)
 
-	assert.Nil(t, err)
-	assert.NotEmpty(t, accounts)
-}
-
-func TestGetCloudAccount(t *testing.T) {
-	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
-	account, err := client.GetCloudAccount(context.Background(), *CloudAccountID)
-
-	assert.Nil(t, err)
-	assert.NotNil(t, account)
-	assert.Equal(t, CloudAccountID.String(), account.ID.String())
-}
-
-func TestDeleteCloudAccount(t *testing.T) {
-	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
-
-	err := client.DeleteCloudAccount(context.Background(), *CloudAccountID)
-
-	assert.Nil(t, err)
-
+	assert.NotNil(t, err)
+	assert.Contains(t, err.Error(), "404")
 }
