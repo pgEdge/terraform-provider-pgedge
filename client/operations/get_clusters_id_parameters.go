@@ -66,9 +66,12 @@ type GetClustersIDParams struct {
 	// Format: Bearer {access_token}
 	Authorization string
 
-	// ID.
-	//
-	// Format: uuid
+	/* ID.
+
+	   ID of the cluster to retrieve.
+
+	   Format: uuid
+	*/
 	ID strfmt.UUID
 
 	timeout    time.Duration

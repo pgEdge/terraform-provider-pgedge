@@ -66,10 +66,19 @@ type GetDatabasesIDParams struct {
 	// Format: Bearer {access_token}
 	Authorization string
 
-	// ID.
-	//
-	// Format: uuid
+	/* ID.
+
+	   ID of the database to retrieve.
+
+	   Format: uuid
+	*/
 	ID strfmt.UUID
+
+	/* UserType.
+
+	   The user type whose credentials will be returned.
+	*/
+	UserType *string
 
 	timeout    time.Duration
 	Context    context.Context
@@ -146,6 +155,17 @@ func (o *GetDatabasesIDParams) SetID(id strfmt.UUID) {
 	o.ID = id
 }
 
+// WithUserType adds the userType to the get databases ID params
+func (o *GetDatabasesIDParams) WithUserType(userType *string) *GetDatabasesIDParams {
+	o.SetUserType(userType)
+	return o
+}
+
+// SetUserType adds the userType to the get databases ID params
+func (o *GetDatabasesIDParams) SetUserType(userType *string) {
+	o.UserType = userType
+}
+
 // WriteToRequest writes these params to a swagger request
 func (o *GetDatabasesIDParams) WriteToRequest(r runtime.ClientRequest, reg strfmt.Registry) error {
 
@@ -162,6 +182,23 @@ func (o *GetDatabasesIDParams) WriteToRequest(r runtime.ClientRequest, reg strfm
 	// path param id
 	if err := r.SetPathParam("id", o.ID.String()); err != nil {
 		return err
+	}
+
+	if o.UserType != nil {
+
+		// query param user_type
+		var qrUserType string
+
+		if o.UserType != nil {
+			qrUserType = *o.UserType
+		}
+		qUserType := qrUserType
+		if qUserType != "" {
+
+			if err := r.SetQueryParam("user_type", qUserType); err != nil {
+				return err
+			}
+		}
 	}
 
 	if len(res) > 0 {

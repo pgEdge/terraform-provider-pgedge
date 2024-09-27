@@ -70,13 +70,16 @@ type PatchClustersIDParams struct {
 
 	/* Body.
 
-	   Cluster update request body
+	   The cluster definition.
 	*/
-	Body *models.ClusterUpdateRequest
+	Body *models.UpdateClusterInput
 
-	// ID.
-	//
-	// Format: uuid
+	/* ID.
+
+	   ID of the cluster to update.
+
+	   Format: uuid
+	*/
 	ID strfmt.UUID
 
 	timeout    time.Duration
@@ -144,13 +147,13 @@ func (o *PatchClustersIDParams) SetAuthorization(authorization string) {
 }
 
 // WithBody adds the body to the patch clusters ID params
-func (o *PatchClustersIDParams) WithBody(body *models.ClusterUpdateRequest) *PatchClustersIDParams {
+func (o *PatchClustersIDParams) WithBody(body *models.UpdateClusterInput) *PatchClustersIDParams {
 	o.SetBody(body)
 	return o
 }
 
 // SetBody adds the body to the patch clusters ID params
-func (o *PatchClustersIDParams) SetBody(body *models.ClusterUpdateRequest) {
+func (o *PatchClustersIDParams) SetBody(body *models.UpdateClusterInput) {
 	o.Body = body
 }
 

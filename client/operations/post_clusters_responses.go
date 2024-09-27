@@ -42,12 +42,6 @@ func (o *PostClustersReader) ReadResponse(response runtime.ClientResponse, consu
 			return nil, err
 		}
 		return nil, result
-	case 500:
-		result := NewPostClustersInternalServerError()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
 	default:
 		return nil, runtime.NewAPIError("[POST /clusters] PostClusters", response, response.Code())
 	}
@@ -61,10 +55,10 @@ func NewPostClustersOK() *PostClustersOK {
 /*
 PostClustersOK describes a response with status code 200, with default header values.
 
-Successful response
+Response containing the cluster definition.
 */
 type PostClustersOK struct {
-	Payload *models.ClusterCreationResponse
+	Payload *models.Cluster
 }
 
 // IsSuccess returns true when this post clusters o k response has a 2xx status code
@@ -107,13 +101,13 @@ func (o *PostClustersOK) String() string {
 	return fmt.Sprintf("[POST /clusters][%d] postClustersOK %s", 200, payload)
 }
 
-func (o *PostClustersOK) GetPayload() *models.ClusterCreationResponse {
+func (o *PostClustersOK) GetPayload() *models.Cluster {
 	return o.Payload
 }
 
 func (o *PostClustersOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.ClusterCreationResponse)
+	o.Payload = new(models.Cluster)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
@@ -131,7 +125,7 @@ func NewPostClustersBadRequest() *PostClustersBadRequest {
 /*
 PostClustersBadRequest describes a response with status code 400, with default header values.
 
-Bad Request
+Bad request.
 */
 type PostClustersBadRequest struct {
 	Payload *models.Error
@@ -201,7 +195,7 @@ func NewPostClustersUnauthorized() *PostClustersUnauthorized {
 /*
 PostClustersUnauthorized describes a response with status code 401, with default header values.
 
-Unauthorized
+Authorization information is missing or invalid.
 */
 type PostClustersUnauthorized struct {
 	Payload *models.Error
@@ -252,76 +246,6 @@ func (o *PostClustersUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PostClustersUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Error)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewPostClustersInternalServerError creates a PostClustersInternalServerError with default headers values
-func NewPostClustersInternalServerError() *PostClustersInternalServerError {
-	return &PostClustersInternalServerError{}
-}
-
-/*
-PostClustersInternalServerError describes a response with status code 500, with default header values.
-
-Internal Server Error
-*/
-type PostClustersInternalServerError struct {
-	Payload *models.Error
-}
-
-// IsSuccess returns true when this post clusters internal server error response has a 2xx status code
-func (o *PostClustersInternalServerError) IsSuccess() bool {
-	return false
-}
-
-// IsRedirect returns true when this post clusters internal server error response has a 3xx status code
-func (o *PostClustersInternalServerError) IsRedirect() bool {
-	return false
-}
-
-// IsClientError returns true when this post clusters internal server error response has a 4xx status code
-func (o *PostClustersInternalServerError) IsClientError() bool {
-	return false
-}
-
-// IsServerError returns true when this post clusters internal server error response has a 5xx status code
-func (o *PostClustersInternalServerError) IsServerError() bool {
-	return true
-}
-
-// IsCode returns true when this post clusters internal server error response a status code equal to that given
-func (o *PostClustersInternalServerError) IsCode(code int) bool {
-	return code == 500
-}
-
-// Code gets the status code for the post clusters internal server error response
-func (o *PostClustersInternalServerError) Code() int {
-	return 500
-}
-
-func (o *PostClustersInternalServerError) Error() string {
-	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[POST /clusters][%d] postClustersInternalServerError %s", 500, payload)
-}
-
-func (o *PostClustersInternalServerError) String() string {
-	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[POST /clusters][%d] postClustersInternalServerError %s", 500, payload)
-}
-
-func (o *PostClustersInternalServerError) GetPayload() *models.Error {
-	return o.Payload
-}
-
-func (o *PostClustersInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

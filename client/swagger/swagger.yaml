@@ -32,12 +32,115 @@ definitions:
         type: string
       repositories:
         items:
-          $ref: '#/definitions/Repository'
+          $ref: '#/definitions/BackupRepository'
         type: array
       schedules:
         items:
-          $ref: '#/definitions/Schedule'
+          $ref: '#/definitions/BackupSchedule'
         type: array
+    required:
+    - id
+    type: object
+  BackupRepository:
+    properties:
+      azure_account:
+        type: string
+      azure_container:
+        type: string
+      azure_endpoint:
+        type: string
+      backup_store_id:
+        type: string
+      base_path:
+        type: string
+      created_at:
+        type: string
+      database_id:
+        format: uuid
+        type: string
+      gcs_bucket:
+        type: string
+      gcs_endpoint:
+        type: string
+      id:
+        type: string
+      retention_full:
+        type: integer
+      retention_full_type:
+        type: string
+      s3_bucket:
+        type: string
+      s3_endpoint:
+        type: string
+      s3_region:
+        type: string
+      type:
+        type: string
+    type: object
+  BackupSchedule:
+    properties:
+      cron_expression:
+        type: string
+      id:
+        type: string
+      type:
+        type: string
+    required:
+    - id
+    - type
+    - cron_expression
+    type: object
+  BackupStore:
+    properties:
+      cloud_account_id:
+        description: The ID of the cloud account used for the backup store.
+        type: string
+      cloud_account_type:
+        description: The type of the cloud account used for the backup store.
+        type: string
+      cluster_ids:
+        description: The IDs of the clusters that use the backup store.
+        items:
+          type: string
+        type: array
+      created_at:
+        description: The time the backup store was created.
+        type: string
+      id:
+        description: The ID of the backup store.
+        format: uuid
+        type: string
+      name:
+        description: The name of the backup store.
+        type: string
+      properties:
+        description: The computed properties of the backup store.
+        type: object
+      status:
+        description: The status of the backup store.
+        type: string
+      updated_at:
+        description: The time the backup store was last updated.
+        type: string
+    required:
+    - id
+    - cloud_account_id
+    - cloud_account_type
+    - created_at
+    - updated_at
+    - status
+    - name
+    type: object
+  Backups:
+    properties:
+      config:
+        items:
+          $ref: '#/definitions/BackupConfig'
+        type: array
+      provider:
+        type: string
+    required:
+    - provider
     type: object
   CloudAccount:
     properties:
@@ -65,64 +168,32 @@ definitions:
     - type
     - properties
     type: object
-  ClusterCreationRequest:
+  CloudAccountProperties:
     properties:
-      cloud_account:
-        properties:
-          id:
-            format: uuid
-            type: string
-          name:
-            type: string
-          type:
-            type: string
-        type: object
-      cloud_account_id:
+      id:
         type: string
-      firewall_rules:
-        items:
-          $ref: '#/definitions/FirewallRule'
-        type: array
       name:
         type: string
-      networks:
-        items:
-          $ref: '#/definitions/Network'
-        type: array
-      node_location:
+      type:
         type: string
-      nodes:
-        items:
-          $ref: '#/definitions/ClusterNode'
-        type: array
-      regions:
-        items:
-          type: string
-        type: array
-      resource_tags:
-        additionalProperties:
-          type: string
-        type: object
-      ssh_key_id:
-        type: string
+    required:
+    - id
     type: object
-  ClusterCreationResponse:
+  Cluster:
     properties:
+      backup_store_ids:
+        items:
+          type: string
+        type: array
+      capacity:
+        type: integer
       cloud_account:
-        properties:
-          id:
-            type: string
-          name:
-            type: string
-          type:
-            type: string
-        type: object
+        $ref: '#/definitions/CloudAccountProperties'
       created_at:
-        format: date-time
         type: string
       firewall_rules:
         items:
-          $ref: '#/definitions/FirewallRule'
+          $ref: '#/definitions/ClusterFirewallRuleSettings'
         type: array
       id:
         format: uuid
@@ -131,13 +202,13 @@ definitions:
         type: string
       networks:
         items:
-          $ref: '#/definitions/Network'
+          $ref: '#/definitions/ClusterNetworkSettings'
         type: array
       node_location:
         type: string
       nodes:
         items:
-          $ref: '#/definitions/ClusterNode'
+          $ref: '#/definitions/ClusterNodeSettings'
         type: array
       regions:
         items:
@@ -151,55 +222,127 @@ definitions:
         type: string
       status:
         type: string
+    required:
+    - id
+    - name
+    - status
+    - created_at
+    - regions
+    - cloud_account
+    - node_location
     type: object
-  ClusterDetails:
+  ClusterFirewallRuleSettings:
     properties:
-      cloud_account:
-        properties:
-          id:
-            format: uuid
-            type: string
-          name:
-            type: string
-          type:
-            type: string
-        type: object
-      created_at:
-        format: date-time
+      name:
         type: string
-      firewall_rules:
+      port:
+        type: integer
+      sources:
         items:
-          $ref: '#/definitions/FirewallRule'
+          type: string
         type: array
-      id:
-        format: uuid
+    required:
+    - port
+    - sources
+    type: object
+  ClusterNetworkSettings:
+    properties:
+      cidr:
+        type: string
+      external:
+        type: boolean
+      external_id:
         type: string
       name:
         type: string
-      networks:
-        items:
-          $ref: '#/definitions/Network'
-        type: array
-      node_location:
-        type: string
-      nodes:
-        items:
-          $ref: '#/definitions/ClusterNode'
-        type: array
-      regions:
+      private_subnets:
         items:
           type: string
         type: array
-      resource_tags:
-        additionalProperties:
+      public_subnets:
+        items:
           type: string
-        type: object
-      ssh_key_id:
+        type: array
+      region:
         type: string
-      status:
-        type: string
+    required:
+    - region
     type: object
   ClusterNode:
+    properties:
+      availability_zone:
+        type: string
+      display_name:
+        type: string
+      distance_measurement:
+        $ref: '#/definitions/DistanceMeasurement'
+      id:
+        type: string
+      image_id:
+        type: string
+      instance_id:
+        type: string
+      instance_type:
+        type: string
+      ip_address:
+        type: string
+      is_active:
+        type: boolean
+      key_name:
+        type: string
+      location:
+        $ref: '#/definitions/Location'
+      name:
+        type: string
+      pg_version:
+        type: string
+      public_ip_address:
+        type: string
+      region:
+        type: string
+      region_detail:
+        $ref: '#/definitions/Region'
+      volume_iops:
+        type: integer
+      volume_size:
+        type: integer
+      volume_type:
+        type: string
+    required:
+    - id
+    - availability_zone
+    - image_id
+    - instance_id
+    - instance_type
+    - ip_address
+    - is_active
+    - key_name
+    - name
+    - pg_version
+    - region
+    - region_detail
+    - volume_size
+    - volume_type
+    - volume_iops
+    - location
+    type: object
+  ClusterNodeLogMessage:
+    properties:
+      level:
+        type: string
+      message:
+        type: string
+      raw_text:
+        type: string
+      time:
+        type: string
+    required:
+    - time
+    - level
+    - message
+    - raw_text
+    type: object
+  ClusterNodeSettings:
     properties:
       availability_zone:
         type: string
@@ -221,59 +364,47 @@ definitions:
         type: integer
       volume_type:
         type: string
+    required:
+    - region
     type: object
-  ClusterUpdateRequest:
+  Connection:
     properties:
-      firewall_rules:
-        items:
-          $ref: '#/definitions/FirewallRule'
-        type: array
-      networks:
-        items:
-          $ref: '#/definitions/Network'
-        type: array
-      nodes:
-        items:
-          $ref: '#/definitions/ClusterNode'
-        type: array
-      regions:
-        items:
-          type: string
-        type: array
-      resource_tags:
-        additionalProperties:
-          type: string
-        type: object
-      ssh_key_id:
+      database:
         type: string
-    type: object
-  Column:
-    properties:
-      data_type:
+      external_ip_address:
         type: string
-      default:
+      host:
         type: string
-      is_nullable:
-        type: boolean
-      is_primary_key:
-        type: boolean
-      name:
+      internal_host:
         type: string
-      ordinal_position:
+      internal_ip_address:
+        type: string
+      password:
+        type: string
+      port:
         type: integer
+      username:
+        type: string
+    required:
+    - username
+    - password
+    - port
+    - database
     type: object
-  Component:
+  CreateBackupStoreInput:
     properties:
-      id:
+      cloud_account_id:
+        description: The ID of the cloud account to use for the backup store.
         type: string
       name:
+        description: The name of the backup store.
         type: string
-      release_date:
+      region:
+        description: The region to use for the backup store.
         type: string
-      status:
-        type: string
-      version:
-        type: string
+    required:
+    - name
+    - cloud_account_id
     type: object
   CreateCloudAccountInput:
     properties:
@@ -290,230 +421,95 @@ definitions:
     - type
     - credentials
     type: object
-  Database:
+  CreateClusterInput:
     properties:
-      backups:
-        properties:
-          config:
-            items:
-              properties:
-                id:
-                  type: string
-                node_name:
-                  type: string
-                repositories:
-                  items:
-                    properties:
-                      base_path:
-                        type: string
-                      id:
-                        type: integer
-                      namespace:
-                        type: string
-                      retention_full:
-                        type: integer
-                      retention_full_type:
-                        type: string
-                      s3_bucket:
-                        type: string
-                      s3_region:
-                        type: string
-                      type:
-                        type: string
-                    type: object
-                  type: array
-                schedules:
-                  items:
-                    properties:
-                      cron_expression:
-                        type: string
-                      id:
-                        type: string
-                      type:
-                        type: string
-                    type: object
-                  type: array
-              type: object
-            type: array
-          provider:
-            type: string
-        type: object
-      cluster_id:
-        format: uuid
-        type: string
-      components:
-        items:
-          properties:
-            id:
-              type: string
-            name:
-              type: string
-            release_date:
-              type: string
-            status:
-              type: string
-            version:
-              type: string
-          type: object
-        type: array
-      created_at:
-        type: string
-      domain:
-        type: string
-      extensions:
-        properties:
-          auto_manage:
-            type: boolean
-          available:
-            items:
-              type: string
-            type: array
-          requested:
-            items:
-              type: string
-            type: array
-        type: object
-      id:
-        format: uuid
-        type: string
-      name:
-        type: string
-      nodes:
-        items:
-          $ref: '#/definitions/Node'
-        type: array
-      options:
+      backup_store_ids:
         items:
           type: string
         type: array
-      pg_version:
-        type: string
-      roles:
-        items:
-          properties:
-            bypass_rls:
-              type: boolean
-            connection_limit:
-              type: integer
-            create_db:
-              type: boolean
-            create_role:
-              type: boolean
-            inherit:
-              type: boolean
-            login:
-              type: boolean
-            name:
-              type: string
-            replication:
-              type: boolean
-            superuser:
-              type: boolean
-          type: object
-        type: array
-      status:
-        type: string
-      storage_used:
+      capacity:
         type: integer
-      tables:
-        items:
-          properties:
-            columns:
-              items:
-                properties:
-                  data_type:
-                    type: string
-                  default:
-                    type: string
-                  is_nullable:
-                    type: boolean
-                  is_primary_key:
-                    type: boolean
-                  name:
-                    type: string
-                  ordinal_position:
-                    type: integer
-                type: object
-              type: array
-            name:
-              type: string
-            primary_key:
-              items:
-                type: string
-              type: array
-            replication_sets:
-              items:
-                type: string
-              type: array
-            schema:
-              type: string
-            status:
-              items:
-                properties:
-                  aligned:
-                    type: boolean
-                  node_name:
-                    type: string
-                  present:
-                    type: boolean
-                  replicating:
-                    type: boolean
-                type: object
-              type: array
-          type: object
-        type: array
-      updated_at:
+      cloud_account:
+        $ref: '#/definitions/CloudAccountProperties'
+      cloud_account_id:
         type: string
+      firewall_rules:
+        items:
+          $ref: '#/definitions/ClusterFirewallRuleSettings'
+        type: array
+      name:
+        type: string
+      networks:
+        items:
+          $ref: '#/definitions/ClusterNetworkSettings'
+        type: array
+      node_location:
+        type: string
+      nodes:
+        items:
+          $ref: '#/definitions/ClusterNodeSettings'
+        type: array
+      regions:
+        items:
+          type: string
+        type: array
+      resource_tags:
+        additionalProperties:
+          type: string
+        type: object
+      ssh_key_id:
+        type: string
+    required:
+    - name
+    - regions
+    - node_location
     type: object
-  DatabaseCreationRequest:
+  CreateDatabaseInput:
     properties:
       backups:
-        properties:
-          config:
-            items:
-              $ref: '#/definitions/BackupConfig'
-            type: array
-          provider:
-            type: string
-        type: object
+        $ref: '#/definitions/Backups'
       cluster_id:
         format: uuid
         type: string
       config_version:
         type: string
       extensions:
-        properties:
-          auto_manage:
-            type: boolean
-          available:
-            items:
-              type: string
-            type: array
-          requested:
-            items:
-              type: string
-            type: array
-        type: object
+        $ref: '#/definitions/Extensions'
       name:
         type: string
       options:
         items:
           type: string
         type: array
+    required:
+    - name
     type: object
-  DatabaseCreationResponse:
+  CreateSshKeyInput:
+    properties:
+      name:
+        description: The name of the SSH key.
+        type: string
+      public_key:
+        description: The public key of the SSH key.
+        type: string
+    required:
+    - name
+    - public_key
+    type: object
+  Database:
     properties:
       backups:
-        $ref: '#/definitions/BackupConfig'
+        $ref: '#/definitions/Backups'
       cluster_id:
         format: uuid
         type: string
       components:
         items:
-          $ref: '#/definitions/Component'
+          $ref: '#/definitions/DatabaseComponentVersion'
         type: array
+      config_version:
+        type: string
       created_at:
-        format: date-time
         type: string
       domain:
         type: string
@@ -526,7 +522,7 @@ definitions:
         type: string
       nodes:
         items:
-          $ref: '#/definitions/Node'
+          $ref: '#/definitions/DatabaseNode'
         type: array
       options:
         items:
@@ -536,112 +532,195 @@ definitions:
         type: string
       roles:
         items:
-          $ref: '#/definitions/Role'
+          $ref: '#/definitions/DatabaseRole'
         type: array
       status:
         type: string
       storage_used:
-        format: integer
-        type: string
+        format: int64
+        type: integer
       tables:
         items:
-          $ref: '#/definitions/Table'
+          $ref: '#/definitions/DatabaseTable'
         type: array
       updated_at:
-        format: date-time
         type: string
+    required:
+    - id
+    - cluster_id
+    - name
+    - status
+    - created_at
+    - updated_at
     type: object
-  DatabaseDetails:
+  DatabaseColumn:
     properties:
-      backups:
-        properties:
-          config:
-            items:
-              $ref: '#/definitions/BackupConfig'
-            type: array
-          provider:
-            type: string
-        type: object
-      cluster_id:
-        format: uuid
+      data_type:
         type: string
-      components:
-        items:
-          $ref: '#/definitions/Component'
-        type: array
-      created_at:
-        format: date-time
+      default:
         type: string
-      domain:
+      is_nullable:
+        type: boolean
+      is_primary_key:
+        type: boolean
+      name:
         type: string
-      extensions:
-        properties:
-          auto_manage:
-            type: boolean
-          available:
-            items:
-              type: string
-            type: array
-          requested:
-            items:
-              type: string
-            type: array
-        type: object
+      ordinal_position:
+        type: integer
+    required:
+    - name
+    - ordinal_position
+    - data_type
+    - default
+    - is_nullable
+    - is_primary_key
+    type: object
+  DatabaseComponentVersion:
+    properties:
       id:
         format: uuid
         type: string
       name:
         type: string
-      nodes:
-        items:
-          $ref: '#/definitions/Node'
-        type: array
-      options:
-        items:
-          type: string
-        type: array
-      pg_version:
+      release_date:
         type: string
-      roles:
-        items:
-          $ref: '#/definitions/Role'
-        type: array
       status:
         type: string
-      storage_used:
-        type: integer
-      tables:
-        items:
-          $ref: '#/definitions/Table'
-        type: array
-      updated_at:
-        format: date-time
+      version:
         type: string
+    required:
+    - id
+    - name
+    - version
+    - release_date
+    - status
     type: object
-  DatabaseScripts:
+  DatabaseNode:
     properties:
-      init:
-        type: string
-    type: object
-  DatabaseUpdateRequest:
-    properties:
+      connection:
+        $ref: '#/definitions/Connection'
+      distance_measurement:
+        $ref: '#/definitions/DistanceMeasurement'
       extensions:
-        properties:
-          auto_manage:
-            type: boolean
-          available:
-            items:
-              type: string
-            type: array
-          requested:
-            items:
-              type: string
-            type: array
+        $ref: '#/definitions/DatabaseNodeExtensions'
+      location:
+        $ref: '#/definitions/Location'
+      name:
+        type: string
+      region:
+        $ref: '#/definitions/Region'
+    required:
+    - name
+    - connection
+    - location
+    type: object
+  DatabaseNodeExtensions:
+    properties:
+      errors:
+        additionalProperties:
+          type: string
         type: object
-      options:
+      installed:
         items:
           type: string
         type: array
+    required:
+    - installed
+    type: object
+  DatabaseRole:
+    properties:
+      bypass_rls:
+        type: boolean
+      connection_limit:
+        type: integer
+      create_db:
+        type: boolean
+      create_role:
+        type: boolean
+      inherit:
+        type: boolean
+      login:
+        type: boolean
+      name:
+        type: string
+      replication:
+        type: boolean
+      superuser:
+        type: boolean
+    required:
+    - name
+    - connection_limit
+    - superuser
+    - create_role
+    - create_db
+    - login
+    - inherit
+    - replication
+    - bypass_rls
+    type: object
+  DatabaseTable:
+    properties:
+      columns:
+        items:
+          $ref: '#/definitions/DatabaseColumn'
+        type: array
+      name:
+        type: string
+      primary_key:
+        items:
+          type: string
+        type: array
+      replication_sets:
+        items:
+          type: string
+        type: array
+      schema:
+        type: string
+      status:
+        items:
+          $ref: '#/definitions/DatabaseTableStatus'
+        type: array
+    required:
+    - schema
+    - name
+    - primary_key
+    - replication_sets
+    - status
+    type: object
+  DatabaseTableStatus:
+    properties:
+      aligned:
+        type: boolean
+      node_name:
+        type: string
+      present:
+        type: boolean
+      replicating:
+        type: boolean
+    required:
+    - node_name
+    - present
+    - aligned
+    - replicating
+    type: object
+  DistanceMeasurement:
+    properties:
+      distance:
+        format: double
+        type: number
+      from_latitude:
+        format: double
+        type: number
+      from_longitude:
+        format: double
+        type: number
+      unit:
+        type: string
+    required:
+    - distance
+    - unit
+    - from_latitude
+    - from_longitude
     type: object
   Error:
     properties:
@@ -663,17 +742,6 @@ definitions:
           type: string
         type: array
     type: object
-  FirewallRule:
-    properties:
-      name:
-        type: string
-      port:
-        type: integer
-      sources:
-        items:
-          type: string
-        type: array
-    type: object
   GoogleCredentials:
     properties:
       project_id:
@@ -687,216 +755,255 @@ definitions:
     - service_account
     - provider
     type: object
-  Network:
+  Location:
     properties:
-      cidr:
+      city:
         type: string
-      external:
-        type: boolean
-      external_id:
+      code:
+        type: string
+      country:
+        type: string
+      latitude:
+        format: double
+        type: number
+      longitude:
+        format: double
+        type: number
+      metro_code:
         type: string
       name:
         type: string
-      private_subnets:
-        items:
-          type: string
-        type: array
-      public_subnets:
-        items:
-          type: string
-        type: array
+      postal_code:
+        type: string
       region:
         type: string
+      region_code:
+        type: string
+      timezone:
+        type: string
+    required:
+    - latitude
+    - longitude
     type: object
-  Node:
+  Region:
     properties:
-      connection:
-        properties:
-          database:
-            type: string
-          external_ip_address:
-            type: string
-          host:
-            type: string
-          internal_host:
-            type: string
-          internal_ip_address:
-            type: string
-          password:
-            type: string
-          port:
-            type: integer
-          username:
-            type: string
+      active:
+        type: boolean
+      availability_zones:
+        items:
+          type: string
+        type: array
+      cloud:
+        type: string
+      code:
+        type: string
+      name:
+        type: string
+      parent:
+        type: string
+    required:
+    - cloud
+    - code
+    - name
+    - availability_zones
+    type: object
+  SshKey:
+    properties:
+      created_at:
+        description: The date and time when the SSH key was created.
+        type: string
+      id:
+        description: The unique identifier of the SSH key.
+        format: uuid
+        type: string
+      name:
+        description: The name of the SSH key.
+        type: string
+      public_key:
+        description: The public key of the SSH key.
+        type: string
+    required:
+    - id
+    - name
+    - public_key
+    - created_at
+    type: object
+  UpdateClusterInput:
+    properties:
+      backup_store_ids:
+        items:
+          type: string
+        type: array
+      firewall_rules:
+        items:
+          $ref: '#/definitions/ClusterFirewallRuleSettings'
+        type: array
+      networks:
+        items:
+          $ref: '#/definitions/ClusterNetworkSettings'
+        type: array
+      nodes:
+        items:
+          $ref: '#/definitions/ClusterNodeSettings'
+        type: array
+      regions:
+        items:
+          type: string
+        type: array
+      resource_tags:
+        additionalProperties:
+          type: string
         type: object
-      distance_measurement:
-        properties:
-          distance:
-            type: number
-          from_latitude:
-            type: number
-          from_longitude:
-            type: number
-          unit:
-            type: string
-        type: object
+      ssh_key_id:
+        type: string
+    required:
+    - regions
+    type: object
+  UpdateDatabaseInput:
+    properties:
       extensions:
-        properties:
-          errors:
-            properties:
-              anim9ef:
-                type: string
-              enim3b:
-                type: string
-              laborum_d:
-                type: string
-              mollit267:
-                type: string
-            type: object
-          installed:
-            items:
-              type: string
-            type: array
-        type: object
-      location:
-        properties:
-          city:
-            type: string
-          code:
-            type: string
-          country:
-            type: string
-          latitude:
-            type: number
-          longitude:
-            type: number
-          metro_code:
-            type: string
-          name:
-            type: string
-          postal_code:
-            type: string
-          region:
-            type: string
-          region_code:
-            type: string
-          timezone:
-            type: string
-        type: object
-      name:
-        type: string
-      region:
-        properties:
-          active:
-            type: boolean
-          availability_zones:
-            items:
-              type: string
-            type: array
-          cloud:
-            type: string
-          code:
-            type: string
-          name:
-            type: string
-          parent:
-            type: string
-        type: object
-    type: object
-  ReplicationResponse:
-    properties:
-      message:
-        type: string
-      status:
-        type: string
-    type: object
-  Repository:
-    properties:
-      base_path:
-        type: string
-      id:
-        type: integer
-      namespace:
-        type: string
-      retention_full:
-        type: integer
-      retention_full_type:
-        type: string
-      s3_bucket:
-        type: string
-      s3_region:
-        type: string
-      type:
-        type: string
-    type: object
-  Role:
-    properties:
-      bypass_rls:
-        type: boolean
-      connection_limit:
-        type: integer
-      create_db:
-        type: boolean
-      create_role:
-        type: boolean
-      inherit:
-        type: boolean
-      login:
-        type: boolean
-      name:
-        type: string
-      replication:
-        type: boolean
-      superuser:
-        type: boolean
-    type: object
-  Schedule:
-    properties:
-      cron_expression:
-        type: string
-      id:
-        type: string
-      type:
-        type: string
-    type: object
-  Table:
-    properties:
-      columns:
+        $ref: '#/definitions/Extensions'
+      nodes:
         items:
-          $ref: '#/definitions/Column'
+          $ref: '#/definitions/DatabaseNode'
         type: array
-      name:
-        type: string
-      primary_key:
+      options:
         items:
           type: string
         type: array
-      replication_sets:
-        items:
-          type: string
-        type: array
-      schema:
-        type: string
-      status:
-        items:
-          $ref: '#/definitions/TableStatus'
-        type: array
-    type: object
-  TableStatus:
-    properties:
-      aligned:
-        type: boolean
-      node_name:
-        type: string
-      present:
-        type: boolean
-      replicating:
-        type: boolean
     type: object
 info:
   title: pgEdge API
   version: 1.0.0
 paths:
+  /backup-stores:
+    get:
+      description: List backup stores.
+      parameters:
+      - format: Bearer {access_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Start time for backup stores retrieval as an RFC3339 timestamp.
+        in: query
+        name: created_after
+        type: string
+      - description: End time for backup stores retrieval as an RFC3339 timestamp.
+        in: query
+        name: created_before
+        type: string
+      - description: Maximum number of results to return.
+        in: query
+        name: limit
+        type: integer
+      - description: Offset into the results, for pagination.
+        in: query
+        name: offset
+        type: integer
+      - description: Whether to sort in descending order.
+        in: query
+        name: descending
+        type: boolean
+      responses:
+        '200':
+          description: List backup stores response
+          schema:
+            items:
+              $ref: '#/definitions/BackupStore'
+            type: array
+        '400':
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: '#/definitions/Error'
+      summary: List backup stores.
+    post:
+      description: Create a backup store.
+      parameters:
+      - format: Bearer {access_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: The backup store details.
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateBackupStoreInput'
+      responses:
+        '200':
+          description: Response containing the backup store details.
+          schema:
+            $ref: '#/definitions/BackupStore'
+        '400':
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Create a backup store.
+  /backup-stores/{id}:
+    delete:
+      description: Delete a backup store.
+      parameters:
+      - format: Bearer {access_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: The ID of the backup store to delete.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        '204':
+          description: Backup store deleted.
+        '400':
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete a backup store.
+    get:
+      description: Retrieve a backup store.
+      parameters:
+      - format: Bearer {access_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: The ID of the backup store to get.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Response containing the backup store details.
+          schema:
+            $ref: '#/definitions/BackupStore'
+        '400':
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Retrieve a backup store.
   /cloud-accounts:
     get:
       description: Lists cloud accounts known to pgEdge.
@@ -1007,180 +1114,275 @@ paths:
       summary: Retrieve a cloud account.
   /clusters:
     get:
-      description: Retrieve a list of clusters with optional limit and offset
+      description: Lists existing pgEdge database clusters.
       parameters:
-      - format: Bearer {access_token}
-        in: header
+      - in: header
         name: Authorization
         required: true
         type: string
-      - description: Number of clusters to retrieve (default is 10)
-        format: int32
+      - description: Maximum number of results to return.
         in: query
         name: limit
         type: integer
-      - description: Offset for pagination (default is 0)
-        format: int32
+      - description: Offset into the results, for pagination.
         in: query
         name: offset
         type: integer
       responses:
         '200':
-          description: Successful response
+          description: Response containing an array of clusters.
           schema:
             items:
-              $ref: '#/definitions/ClusterDetails'
+              $ref: '#/definitions/Cluster'
             type: array
         '400':
-          description: Bad Request
+          description: Bad request.
           schema:
             $ref: '#/definitions/Error'
         '401':
-          description: Unauthorized
+          description: Authorization information is missing or invalid.
           schema:
             $ref: '#/definitions/Error'
-        '500':
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/Error'
-      summary: Get All Clusters
+      summary: Lists existing pgEdge database clusters.
     post:
-      consumes:
-      - application/json
-      description: Create a new cluster with the specified options
+      description: Creates a new pgEdge database cluster.
       parameters:
-      - format: Bearer {access_token}
-        in: header
+      - in: header
         name: Authorization
         required: true
         type: string
-      - description: Cluster creation request body
+      - description: The cluster definition.
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/ClusterCreationRequest'
-      produces:
-      - application/json
+          $ref: '#/definitions/CreateClusterInput'
       responses:
         '200':
-          description: Successful response
+          description: Response containing the cluster definition.
           schema:
-            $ref: '#/definitions/ClusterCreationResponse'
+            $ref: '#/definitions/Cluster'
         '400':
-          description: Bad Request
+          description: Bad request.
           schema:
             $ref: '#/definitions/Error'
         '401':
-          description: Unauthorized
+          description: Authorization information is missing or invalid.
           schema:
             $ref: '#/definitions/Error'
-        '500':
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/Error'
-      summary: Create a new Cluster
+      summary: Creates a new pgEdge database cluster.
   /clusters/{id}:
     delete:
-      description: Delete the cluster with the specified ID
+      description: Deletes a pgEdge database cluster.
       parameters:
-      - format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
       - format: Bearer {access_token}
         in: header
         name: Authorization
+        required: true
+        type: string
+      - description: ID of the cluster to delete.
+        format: uuid
+        in: path
+        name: id
         required: true
         type: string
       responses:
         '204':
-          description: No Content (successful deletion)
+          description: Empty response indicating that the cluster was deleted.
         '400':
-          description: Bad Request
+          description: Bad request.
           schema:
             $ref: '#/definitions/Error'
         '401':
-          description: Unauthorized
+          description: Authorization information is missing or invalid.
           schema:
             $ref: '#/definitions/Error'
-        '500':
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/Error'
-      summary: Delete Cluster by ID
+      summary: Deletes a pgEdge database cluster.
     get:
-      description: Retrieve detailed information about a specific cluster
+      description: Retrieve a pgEdge database cluster given its ID.
       parameters:
-      - format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
       - format: Bearer {access_token}
         in: header
         name: Authorization
+        required: true
+        type: string
+      - description: ID of the cluster to retrieve.
+        format: uuid
+        in: path
+        name: id
         required: true
         type: string
       responses:
         '200':
-          description: Successful response
+          description: Response containing the cluster definition.
           schema:
-            $ref: '#/definitions/ClusterDetails'
+            $ref: '#/definitions/Cluster'
         '400':
-          description: Bad Request
+          description: Bad request.
           schema:
             $ref: '#/definitions/Error'
         '401':
-          description: Unauthorized
+          description: Authorization information is missing or invalid.
           schema:
             $ref: '#/definitions/Error'
-        '500':
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/Error'
-      summary: Get Cluster by ID
+      summary: Retrieve a pgEdge database cluster given its ID.
     patch:
-      description: Update the cluster with the specified ID
+      description: Update a pgEdge database cluster.
       parameters:
-      - format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
       - format: Bearer {access_token}
         in: header
         name: Authorization
         required: true
         type: string
-      - description: Cluster update request body
+      - description: ID of the cluster to update.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: The cluster definition.
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/ClusterUpdateRequest'
+          $ref: '#/definitions/UpdateClusterInput'
       responses:
         '200':
-          description: Successful response
+          description: Response containing the cluster definition.
           schema:
-            $ref: '#/definitions/ClusterDetails'
+            $ref: '#/definitions/Cluster'
         '400':
-          description: Bad Request
+          description: Bad request.
           schema:
             $ref: '#/definitions/Error'
         '401':
-          description: Unauthorized
+          description: Authorization information is missing or invalid.
           schema:
             $ref: '#/definitions/Error'
-        '500':
-          description: Internal Server Error
+      summary: Update a pgEdge database cluster.
+  /clusters/{id}/nodes:
+    get:
+      description: Lists nodes belonging to a specific cluster.
+      parameters:
+      - format: Bearer {access_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of the cluster.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Latitude of the caller, when sorting by distance
+        in: query
+        name: near_lat
+        type: string
+      - description: Longitude of the caller, when sorting by distance
+        in: query
+        name: near_lon
+        type: string
+      - description: Order by specification
+        in: query
+        name: order_by
+        type: string
+      responses:
+        '200':
+          description: Response containing the cluster nodes.
+          schema:
+            items:
+              $ref: '#/definitions/ClusterNode'
+            type: array
+        '400':
+          description: Bad request.
           schema:
             $ref: '#/definitions/Error'
-      summary: Update Cluster by ID
+        '401':
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Lists nodes belonging to a specific cluster.
+  /clusters/{id}/nodes/{node_id}/logs/{log_name}:
+    get:
+      description: Retrieve messages from log file on a database node.
+      parameters:
+      - format: Bearer {access_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of the cluster.
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: ID of the node.
+        in: path
+        name: node_id
+        required: true
+        type: string
+      - description: Name of the log file.
+        in: path
+        name: log_name
+        required: true
+        type: string
+      - description: Number of lines to return.
+        in: query
+        name: lines
+        type: integer
+      - description: Start showing entries on or newer than the specified date.
+        in: query
+        name: since
+        type: string
+      - description: Start showing entries on or older than the specified date.
+        in: query
+        name: until
+        type: string
+      - description: Filter output by message priority.
+        in: query
+        name: priority
+        type: string
+      - description: Filter output to entries where the message field matches this
+          regular expression.
+        in: query
+        name: grep
+        type: string
+      - description: Make pattern matching case sensitive or case insensitive.
+        in: query
+        name: case_sensitive
+        type: boolean
+      - description: Reverse output so that the newest entries are displayed first.
+        in: query
+        name: reverse
+        type: boolean
+      - description: Show only kernel messages.
+        in: query
+        name: dmesg
+        type: boolean
+      - description: Controls the formatting of the journal entries that are shown.
+        in: query
+        name: output
+        type: string
+      responses:
+        '200':
+          description: Response containing log file messages
+          schema:
+            items:
+              $ref: '#/definitions/ClusterNodeLogMessage'
+            type: array
+        '400':
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Retrieve messages from log file on a database node.
   /databases:
     get:
-      description: Retrieve a list of all databases
+      description: Lists databases.
       parameters:
       - format: Bearer {access_token}
         in: header
@@ -1189,184 +1391,142 @@ paths:
         type: string
       responses:
         '200':
-          description: Successful response
+          description: Response containing an array of databases.
           schema:
             items:
               $ref: '#/definitions/Database'
             type: array
         '400':
-          description: Bad request
+          description: Bad request.
           schema:
             $ref: '#/definitions/Error'
         '401':
-          description: Unauthorized
+          description: Authorization information is missing or invalid.
           schema:
             $ref: '#/definitions/Error'
-        '500':
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/Error'
-      summary: Get All Databases
+      summary: Lists databases.
     post:
-      consumes:
-      - application/json
-      description: Create a new database with the specified options
+      description: Creates a new database.
       parameters:
       - format: Bearer {access_token}
         in: header
         name: Authorization
         required: true
         type: string
-      - description: Database creation request body
+      - description: The database definition.
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/DatabaseCreationRequest'
-      produces:
-      - application/json
+          $ref: '#/definitions/CreateDatabaseInput'
       responses:
         '200':
-          description: Successful response
+          description: Response containing the database definition.
           schema:
-            $ref: '#/definitions/DatabaseCreationResponse'
+            $ref: '#/definitions/Database'
         '400':
-          description: Bad Request
+          description: Bad request.
           schema:
             $ref: '#/definitions/Error'
         '401':
-          description: Unauthorized
+          description: Authorization information is missing or invalid.
           schema:
             $ref: '#/definitions/Error'
-        '500':
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/Error'
-      summary: Create a new Database
+      summary: Creates a new database.
   /databases/{id}:
     delete:
-      description: Delete the database with the specified ID
+      description: Deletes a database.
       parameters:
-      - format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
       - format: Bearer {access_token}
         in: header
         name: Authorization
+        required: true
+        type: string
+      - description: ID of the database to delete.
+        format: uuid
+        in: path
+        name: id
         required: true
         type: string
       responses:
         '204':
-          description: No Content (successful deletion)
+          description: Empty response indicating that the database was deleted.
         '400':
-          description: Bad Request
+          description: Bad request.
           schema:
             $ref: '#/definitions/Error'
         '401':
-          description: Unauthorized
+          description: Authorization information is missing or invalid.
           schema:
             $ref: '#/definitions/Error'
-        '500':
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/Error'
-      summary: Delete a Database
+      summary: Deletes a database.
     get:
-      description: Retrieve detailed information about a specific database
+      description: Retrieve a database given its ID.
       parameters:
-      - format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
       - format: Bearer {access_token}
         in: header
         name: Authorization
         required: true
+        type: string
+      - description: ID of the database to retrieve.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: The user type whose credentials will be returned.
+        in: query
+        name: user_type
+        required: false
         type: string
       responses:
         '200':
-          description: Successful response
+          description: Response containing the database definition.
           schema:
-            $ref: '#/definitions/DatabaseDetails'
+            $ref: '#/definitions/Database'
         '400':
-          description: Bad Request
+          description: Bad request.
           schema:
             $ref: '#/definitions/Error'
         '401':
-          description: Unauthorized
+          description: Authorization information is missing or invalid.
           schema:
             $ref: '#/definitions/Error'
-        '500':
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/Error'
-      summary: Get Database by ID
+      summary: Retrieve a database given its ID.
     patch:
-      description: Update the database with the specified ID
+      description: Updates a database.
       parameters:
-      - format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
       - format: Bearer {access_token}
         in: header
         name: Authorization
         required: true
         type: string
-      - description: Database creation request body
+      - description: ID of the database to update.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: The database parameters to update.
         in: body
         name: body
         required: true
         schema:
-          $ref: '#/definitions/DatabaseUpdateRequest'
+          $ref: '#/definitions/UpdateDatabaseInput'
       responses:
         '200':
-          description: Successful response
+          description: Response containing the updated database definition.
           schema:
-            $ref: '#/definitions/DatabaseDetails'
+            $ref: '#/definitions/Database'
         '400':
-          description: Bad Request
+          description: Bad request.
           schema:
             $ref: '#/definitions/Error'
         '401':
-          description: Unauthorized
+          description: Authorization information is missing or invalid.
           schema:
             $ref: '#/definitions/Error'
-        '500':
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/Error'
-      summary: Update a Database
-  /databases/{id}/replicate:
-    post:
-      description: Replicate the database with the specified ID
-      parameters:
-      - format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - format: Bearer {access_token}
-        in: header
-        name: Authorization
-        required: true
-        type: string
-      responses:
-        '200':
-          description: Successful response
-          schema:
-            $ref: '#/definitions/ReplicationResponse'
-        '401':
-          description: Unauthorized
-        '404':
-          description: Database not found
-        '500':
-          description: Internal Server Error
-      summary: Replicate Database
+      summary: Updates a database.
   /oauth/token:
     post:
       consumes:
@@ -1419,4 +1579,112 @@ paths:
                 type: string
             type: object
       summary: Obtain OAuth Token
+  /ssh-keys:
+    get:
+      description: List SSH keys.
+      parameters:
+      - format: Bearer {access_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      responses:
+        '200':
+          description: List SSH keys response
+          schema:
+            items:
+              $ref: '#/definitions/SshKey'
+            type: array
+        '400':
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: '#/definitions/Error'
+      summary: List SSH keys.
+    post:
+      description: Create an SSH key.
+      parameters:
+      - format: Bearer {access_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: The SSH key details.
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/CreateSshKeyInput'
+      responses:
+        '200':
+          description: Response containing the SSH key details.
+          schema:
+            $ref: '#/definitions/SshKey'
+        '400':
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Create an SSH key.
+  /ssh-keys/{id}:
+    delete:
+      description: Delete an SSH key.
+      parameters:
+      - format: Bearer {access_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of the SSH key to offboard.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        '204':
+          description: Empty response indicating that the SSH key was offboarded.
+        '400':
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Delete an SSH key.
+    get:
+      description: Retrieve an SSH key.
+      parameters:
+      - format: Bearer {access_token}
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: ID of the SSH key to retrieve.
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        '200':
+          description: Response containing the SSH key details.
+          schema:
+            $ref: '#/definitions/SshKey'
+        '400':
+          description: Bad request.
+          schema:
+            $ref: '#/definitions/Error'
+        '401':
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: '#/definitions/Error'
+      summary: Retrieve an SSH key.
 swagger: '2.0'

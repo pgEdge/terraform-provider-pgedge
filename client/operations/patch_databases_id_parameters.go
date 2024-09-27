@@ -70,13 +70,16 @@ type PatchDatabasesIDParams struct {
 
 	/* Body.
 
-	   Database creation request body
+	   The database parameters to update.
 	*/
-	Body *models.DatabaseUpdateRequest
+	Body *models.UpdateDatabaseInput
 
-	// ID.
-	//
-	// Format: uuid
+	/* ID.
+
+	   ID of the database to update.
+
+	   Format: uuid
+	*/
 	ID strfmt.UUID
 
 	timeout    time.Duration
@@ -144,13 +147,13 @@ func (o *PatchDatabasesIDParams) SetAuthorization(authorization string) {
 }
 
 // WithBody adds the body to the patch databases ID params
-func (o *PatchDatabasesIDParams) WithBody(body *models.DatabaseUpdateRequest) *PatchDatabasesIDParams {
+func (o *PatchDatabasesIDParams) WithBody(body *models.UpdateDatabaseInput) *PatchDatabasesIDParams {
 	o.SetBody(body)
 	return o
 }
 
 // SetBody adds the body to the patch databases ID params
-func (o *PatchDatabasesIDParams) SetBody(body *models.DatabaseUpdateRequest) {
+func (o *PatchDatabasesIDParams) SetBody(body *models.UpdateDatabaseInput) {
 	o.Body = body
 }
 

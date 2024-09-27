@@ -60,9 +60,12 @@ type ClusterDetails struct {
 	SSHKeyID       types.String   `tfsdk:"ssh_key_id"`
 	Regions        types.List     `tfsdk:"regions"`
 	NodeLocation   types.String   `tfsdk:"node_location"`
-	Firewall       []types.Object `tfsdk:"firewall_rules"`
+	Capacity       types.Int64    `tfsdk:"capacity"`
+	FirewallRules  []types.Object `tfsdk:"firewall_rules"`
 	Nodes          []types.Object `tfsdk:"nodes"`
 	Networks       []types.Object `tfsdk:"networks"`
+	BackupStoreIDs types.List     `tfsdk:"backup_store_ids"`
+	ResourceTags   types.Map      `tfsdk:"resource_tags"`
 }
 
 type FirewallRule struct {
@@ -178,12 +181,8 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 							Computed:    true,
 							Description: "ID of the cluster",
 						},
-						// "last_updated": schema.StringAttribute{
-						// 	Computed: true,
-						// 	Optional: true,
-						// },
 						"name": schema.StringAttribute{
-							Required:    true,
+							Computed:    true,
 							Description: "Name of the cluster",
 						},
 						"cloud_account_id": schema.StringAttribute{
@@ -202,10 +201,6 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 							Computed:    true,
 							Description: "SSH key ID of the cluster",
 						},
-						// "resource_tags": schema.MapAttribute{
-						// 	ElementType: types.StringType,
-						// 	Computed:    true,
-						// },
 						"regions": schema.ListAttribute{
 							ElementType: types.StringType,
 							Computed:    true,
@@ -214,23 +209,9 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 							Computed:    true,
 							Description: "Node location of the cluster",
 						},
-						"cloud_account": schema.SingleNestedAttribute{
-							Computed: true,
-							Optional: true,
-							Attributes: map[string]schema.Attribute{
-								"id": schema.StringAttribute{
-									Computed:    true,
-									Description: "Display name of the node",
-								},
-								"name": schema.StringAttribute{
-									Computed:    true,
-									Description: "IP address of the node",
-								},
-								"type": schema.StringAttribute{
-									Computed:    true,
-									Description: "Type of the node",
-								},
-							},
+						"capacity": schema.Int64Attribute{
+							Computed:    true,
+							Description: "Capacity of the cluster",
 						},
 						"firewall_rules": schema.ListNestedAttribute{
 							Computed: true,
@@ -275,7 +256,7 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 									},
 									"cidr": schema.StringAttribute{
 										Computed:    true,
-										Description: "CIDR of the AWS node group",
+										Description: "CIDR of the network",
 									},
 									"public_subnets": schema.ListAttribute{
 										ElementType: types.StringType,
@@ -288,21 +269,27 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 								},
 							},
 						},
+						"backup_store_ids": schema.ListAttribute{
+							ElementType: types.StringType,
+							Computed:    true,
+							Description: "Backup store IDs of the cluster",
+						},
+						"resource_tags": schema.MapAttribute{
+							ElementType: types.StringType,
+							Computed:    true,
+							Description: "Resource tags of the cluster",
+						},
 					},
 				},
 			},
 		},
-		Description: "Interface with the pgEdge service API for clusters.",
+		Description: "Data source for pgEdge clusters.",
 	}
 }
 
+
 func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
 	var state ClustersDataSourceModel
-	diags := resp.State.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
 
 	clusters, err := c.client.GetAllClusters(ctx)
 	if err != nil {
@@ -316,150 +303,154 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 	for _, cluster := range clusters {
 		var clusterDetails ClusterDetails
 		clusterDetails.ID = types.StringValue(cluster.ID.String())
-		clusterDetails.Name = types.StringValue(cluster.Name)
-		clusterDetails.CloudAccountID = types.StringValue(cluster.CloudAccount.ID.String())
-		clusterDetails.CreatedAt = types.StringValue(cluster.CreatedAt.String())
-		clusterDetails.Status = types.StringValue(cluster.Status)
-
-		for _, rule := range cluster.FirewallRules {
-			var firewallRule FirewallRule
-			var firewallSources []attr.Value
-			for _, source := range rule.Sources {
-				firewallSources = append(firewallSources, types.StringValue(source))
-			}
-			firewallRule.Port = types.Int64Value(rule.Port)
-			firewallRule.Sources, diags = types.ListValue(types.StringType, firewallSources)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			firewallElements := map[string]attr.Value{
-				"port":    types.Int64Value(rule.Port),
-				"sources": firewallRule.Sources,
-			}
-			firewallObjectValue, diags := types.ObjectValue(FireWallType, firewallElements)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-			clusterDetails.Firewall = append(clusterDetails.Firewall, firewallObjectValue)
-		}
-
-		for _, node := range cluster.Nodes {
-			var clusterNode ClusterNode
-			clusterNode.Region = types.StringValue(node.Region)
-			clusterNode.Name = types.StringValue(node.Name)
-			clusterNode.AvailabilityZone = types.StringValue(node.AvailabilityZone)
-
-			var options []attr.Value
-			for _, option := range node.Options {
-				options = append(options, types.StringValue(option))
-			}
-			clusterNode.Options, diags = types.ListValue(types.StringType, options)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			clusterNode.VolumeSize = types.Int64Value(node.VolumeSize)
-			clusterNode.VolumeIOPS = types.Int64Value(node.VolumeIops)
-			clusterNode.VolumeType = types.StringValue(node.VolumeType)
-			clusterNode.InstanceType = types.StringValue(node.InstanceType)
-
-			nodeMap := map[string]attr.Value{
-				"region":            clusterNode.Region,
-				"name":              clusterNode.Name,
-				"availability_zone": clusterNode.AvailabilityZone,
-				"options":           clusterNode.Options,
-				"volume_size":       clusterNode.VolumeSize,
-				"volume_iops":       clusterNode.VolumeIOPS,
-				"volume_type":       clusterNode.VolumeType,
-				"instance_type":     clusterNode.InstanceType,
-			}
-
-			nodeValue, diags := types.ObjectValue(ClusterNodeTypes, nodeMap)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			clusterDetails.Nodes = append(clusterDetails.Nodes, nodeValue)
-		}
-
-		for _, network := range cluster.Networks {
-			var clusterNetwork ClusterNetworks
-			clusterNetwork.Cidr = types.StringValue(network.Cidr)
-
-			var publicSubnets []attr.Value
-			for _, subnet := range network.PublicSubnets {
-				publicSubnets = append(publicSubnets, types.StringValue(subnet))
-			}
-			clusterNetwork.PublicSubnets, diags = types.ListValue(types.StringType, publicSubnets)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			var privateSubnets []attr.Value
-			for _, subnet := range network.PrivateSubnets {
-				privateSubnets = append(privateSubnets, types.StringValue(subnet))
-			}
-			clusterNetwork.PrivateSubnets, diags = types.ListValue(types.StringType, privateSubnets)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			clusterNetwork.Region = types.StringValue(network.Region)
-			clusterNetwork.Name = types.StringValue(network.Name)
-			clusterNetwork.External = types.BoolValue(network.External)
-			clusterNetwork.ExternalId = types.StringValue(network.ExternalID)
-
-			networkMap := map[string]attr.Value{
-				"cidr":            clusterNetwork.Cidr,
-				"public_subnets":  clusterNetwork.PublicSubnets,
-				"private_subnets": clusterNetwork.PrivateSubnets,
-				"region":          clusterNetwork.Region,
-				"name":            clusterNetwork.Name,
-				"external":        clusterNetwork.External,
-				"external_id":     clusterNetwork.ExternalId,
-			}
-
-			networkValue, diags := types.ObjectValue(NetworksType, networkMap)
-			resp.Diagnostics.Append(diags...)
-			if resp.Diagnostics.HasError() {
-				return
-			}
-
-			clusterDetails.Networks = append(clusterDetails.Networks, networkValue)
-		}
-
+		clusterDetails.Name = types.StringValue(*cluster.Name)
+		clusterDetails.CloudAccountID = types.StringValue(*cluster.CloudAccount.ID)
+		clusterDetails.CreatedAt = types.StringValue(*cluster.CreatedAt)
+		clusterDetails.Status = types.StringValue(*cluster.Status)
 		clusterDetails.SSHKeyID = types.StringValue(cluster.SSHKeyID)
-		// var resourceTags []attr.Value
-		// for key, value := range cluster.ResourceTags {
-		// 	resourceTags = append(resourceTags, types.StringValue(key+":"+value))
-		// }
-		// clusterDetails.ResourceTags, diags = types.MapValue(types.StringType, resourceTags)
-		// resp.Diagnostics.Append(diags...)
-		// if resp.Diagnostics.HasError() {
-		// 	return
-		// }
+		clusterDetails.NodeLocation = types.StringValue(*cluster.NodeLocation)
+		clusterDetails.Capacity = types.Int64Value(cluster.Capacity)
 
-		var regions []attr.Value
-		for _, region := range cluster.Regions {
-			regions = append(regions, types.StringValue(region))
+	// Set Regions
+	clusterDetails.Regions = types.ListValueMust(types.StringType, func() []attr.Value {
+		regions := make([]attr.Value, len(cluster.Regions))
+		for i, region := range cluster.Regions {
+			regions[i] = types.StringValue(region)
 		}
-		clusterDetails.Regions, diags = types.ListValue(types.StringType, regions)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
+		return regions
+	}())
+		// Set FirewallRules
+		firewallRules := make([]types.Object, len(cluster.FirewallRules))
+		for i, rule := range cluster.FirewallRules {
+			firewallRule, diags := types.ObjectValue(
+				map[string]attr.Type{
+					"name":    types.StringType,
+					"port":    types.Int64Type,
+					"sources": types.ListType{ElemType: types.StringType},
+				},
+				map[string]attr.Value{
+					"name": types.StringValue(rule.Name),
+					"port": types.Int64Value(*rule.Port),
+					"sources": types.ListValueMust(
+						types.StringType,
+						func() []attr.Value {
+							sources := make([]attr.Value, len(rule.Sources))
+							for i, source := range rule.Sources {
+								sources[i] = types.StringValue(source)
+							}
+							return sources
+						}(),
+					),
+				},
+			)
+			resp.Diagnostics.Append(diags...)
+			firewallRules[i] = firewallRule
 		}
+		clusterDetails.FirewallRules = firewallRules
 
-		clusterDetails.NodeLocation = types.StringValue(cluster.NodeLocation)
+		// Set Nodes
+		nodes := make([]types.Object, len(cluster.Nodes))
+		for i, node := range cluster.Nodes {
+			nodeObj, diags := types.ObjectValue(
+				map[string]attr.Type{
+					"name":              types.StringType,
+					"region":            types.StringType,
+					"availability_zone": types.StringType,
+					"instance_type":     types.StringType,
+					"volume_size":       types.Int64Type,
+					"volume_type":       types.StringType,
+					"volume_iops":       types.Int64Type,
+					"options":           types.ListType{ElemType: types.StringType},
+				},
+				map[string]attr.Value{
+					"name":              types.StringValue(node.Name),
+					"region":            types.StringValue(*node.Region),
+					"availability_zone": types.StringValue(node.AvailabilityZone),
+					"instance_type":     types.StringValue(node.InstanceType),
+					"volume_size":       types.Int64Value(node.VolumeSize),
+					"volume_type":       types.StringValue(node.VolumeType),
+					"volume_iops":       types.Int64Value(node.VolumeIops),
+					"options": types.ListValueMust(
+						types.StringType,
+						func() []attr.Value {
+							options := make([]attr.Value, len(node.Options))
+							for i, option := range node.Options {
+								options[i] = types.StringValue(option)
+							}
+							return options
+						}(),
+					),
+				},
+			)
+			resp.Diagnostics.Append(diags...)
+			nodes[i] = nodeObj
+		}
+		clusterDetails.Nodes = nodes
+
+		// Set Networks
+		networks := make([]types.Object, len(cluster.Networks))
+		for i, network := range cluster.Networks {
+			networkObj, diags := types.ObjectValue(
+				map[string]attr.Type{
+					"name":            types.StringType,
+					"region":          types.StringType,
+					"external":        types.BoolType,
+					"external_id":     types.StringType,
+					"cidr":            types.StringType,
+					"public_subnets":  types.ListType{ElemType: types.StringType},
+					"private_subnets": types.ListType{ElemType: types.StringType},
+				},
+				map[string]attr.Value{
+					"name":        types.StringValue(network.Name),
+					"region":      types.StringValue(*network.Region),
+					"external":    types.BoolValue(network.External),
+					"external_id": types.StringValue(network.ExternalID),
+					"cidr":        types.StringValue(network.Cidr),
+					"public_subnets": types.ListValueMust(
+						types.StringType,
+						func() []attr.Value {
+							subnets := make([]attr.Value, len(network.PublicSubnets))
+							for i, subnet := range network.PublicSubnets {
+								subnets[i] = types.StringValue(subnet)
+							}
+							return subnets
+						}(),
+					),
+					"private_subnets": types.ListValueMust(
+						types.StringType,
+						func() []attr.Value {
+							subnets := make([]attr.Value, len(network.PrivateSubnets))
+							for i, subnet := range network.PrivateSubnets {
+								subnets[i] = types.StringValue(subnet)
+							}
+							return subnets
+						}(),
+					),
+				},
+			)
+			resp.Diagnostics.Append(diags...)
+			networks[i] = networkObj
+		}
+		clusterDetails.Networks = networks
+
+		// Set BackupStoreIDs
+		backupStoreIDs := make([]attr.Value, len(cluster.BackupStoreIds))
+		for i, id := range cluster.BackupStoreIds {
+			backupStoreIDs[i] = types.StringValue(id)
+		}
+		clusterDetails.BackupStoreIDs = types.ListValueMust(types.StringType, backupStoreIDs)
+
+		// Set ResourceTags
+		resourceTags := make(map[string]attr.Value)
+		for k, v := range cluster.ResourceTags {
+			resourceTags[k] = types.StringValue(v)
+		}
+		clusterDetails.ResourceTags = types.MapValueMust(types.StringType, resourceTags)
 
 		state.Clusters = append(state.Clusters, clusterDetails)
 	}
-	diags = resp.State.Set(ctx, &state)
+
+	diags := resp.State.Set(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return

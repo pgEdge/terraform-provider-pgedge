@@ -8,8 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/sanity-io/litter"
-
 	"github.com/go-openapi/strfmt"
 	"github.com/pgEdge/terraform-provider-pgedge/client/models"
 	"github.com/pgEdge/terraform-provider-pgedge/client/operations"
@@ -53,14 +51,6 @@ func NewClient(baseUrl, authHeader string) *Client {
 }
 
 func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
-	if c.PgEdgeAPIClient == nil {
-		return nil, fmt.Errorf("PgEdgeAPIClient is nil")
-	}
-
-	if c.PgEdgeAPIClient.Operations == nil {
-		return nil, fmt.Errorf("Operations is nil")
-	}
-
 	request := &operations.GetDatabasesParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
@@ -76,7 +66,44 @@ func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
 	return resp.Payload, nil
 }
 
-func (c *Client) GetDatabase(ctx context.Context, id strfmt.UUID) (*models.DatabaseDetails, error) {
+func (c *Client) CreateDatabase(ctx context.Context, database *models.CreateDatabaseInput) (*models.Database, error) {
+	request := &operations.PostDatabasesParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		Body:       database,
+	}
+	request.SetAuthorization(c.AuthHeader)
+
+	resp, err := c.PgEdgeAPIClient.Operations.PostDatabases(request)
+	if err != nil {
+		return nil, err
+	}
+
+	// Poll for database creation
+	for {
+		databaseDetails, err := c.GetDatabase(ctx, *resp.Payload.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		if databaseDetails.Status == nil {
+			return nil, errors.New("database status is nil")
+		}
+
+		switch *databaseDetails.Status {
+		case "available":
+			return databaseDetails, nil
+		case "failed":
+			return nil, errors.New("database creation failed")
+		case "creating":
+			time.Sleep(5 * time.Second)
+		default:
+			return nil, fmt.Errorf("unexpected database status: %s", *databaseDetails.Status)
+		}
+	}
+}
+
+func (c *Client) GetDatabase(ctx context.Context, id strfmt.UUID) (*models.Database, error) {
 	request := &operations.GetDatabasesIDParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
@@ -93,40 +120,7 @@ func (c *Client) GetDatabase(ctx context.Context, id strfmt.UUID) (*models.Datab
 	return resp.Payload, nil
 }
 
-func (c *Client) CreateDatabase(ctx context.Context, database *models.DatabaseCreationRequest) (*models.DatabaseCreationResponse, error) {
-	request := &operations.PostDatabasesParams{
-		HTTPClient: c.HTTPClient,
-		Context:    ctx,
-		Body:       database,
-	}
-	request.SetAuthorization(c.AuthHeader)
-
-	resp, err := c.PgEdgeAPIClient.Operations.PostDatabases(request)
-	if err != nil {
-		return nil, err
-	}
-
-	for {
-		databaseDetails, err := c.GetDatabase(ctx, resp.Payload.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		switch databaseDetails.Status {
-		case "available":
-			litter.Dump(databaseDetails)
-			return resp.Payload, nil
-		case "failed":
-			return nil, errors.New("database creation failed")
-		case "creating":
-			time.Sleep(5 * time.Second)
-		default:
-			return nil, errors.New("unexpected database status")
-		}
-	}
-}
-
-func (c *Client) UpdateDatabase(ctx context.Context, id strfmt.UUID, body *models.DatabaseUpdateRequest) (*models.DatabaseDetails, error) {
+func (c *Client) UpdateDatabase(ctx context.Context, id strfmt.UUID, body *models.UpdateDatabaseInput) (*models.Database, error) {
 	request := &operations.PatchDatabasesIDParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
@@ -141,25 +135,28 @@ func (c *Client) UpdateDatabase(ctx context.Context, id strfmt.UUID, body *model
 		return nil, err
 	}
 
-	// for {
-	databaseDetails, err := c.GetDatabase(ctx, resp.Payload.ID)
-	if err != nil {
-		return nil, err
+	// Poll for database update
+	for {
+		databaseDetails, err := c.GetDatabase(ctx, *resp.Payload.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		if databaseDetails.Status == nil {
+			return nil, errors.New("database status is nil")
+		}
+
+		switch *databaseDetails.Status {
+		case "available":
+			return databaseDetails, nil
+		case "degraded":
+			return nil, errors.New("database degraded")
+		case "modifying":
+			time.Sleep(5 * time.Second)
+		default:
+			return nil, fmt.Errorf("unexpected database status: %s", *databaseDetails.Status)
+		}
 	}
-
-	fmt.Println(databaseDetails, "databse details")
-
-	// switch databaseDetails.Status {
-	// case "available":
-	return resp.Payload, nil
-	// case "failed":
-	// return nil, errors.New("database creation failed")
-	// case "creating":
-	// time.Sleep(5 * time.Second)
-	// default:
-	// return nil, errors.New("unexpected database status")
-	// }
-	// }
 }
 
 func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) error {
@@ -172,7 +169,7 @@ func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) error {
 	request.SetAuthorization(c.AuthHeader)
 
 	_, err := c.PgEdgeAPIClient.Operations.DeleteDatabasesID(request)
-	if strings.Contains(err.Error(), "200") {
+	if err == nil {
 		for {
 			_, err := c.GetDatabase(ctx, id)
 			if err != nil {
@@ -183,27 +180,10 @@ func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) error {
 		}
 	}
 
-	return err
+	return nil
 }
 
-func (c *Client) ReplicateDatabase(ctx context.Context, id strfmt.UUID) (*models.ReplicationResponse, error) {
-	request := &operations.PostDatabasesIDReplicateParams{
-		HTTPClient: c.HTTPClient,
-		Context:    ctx,
-		ID:         id,
-	}
-
-	request.SetAuthorization(c.AuthHeader)
-
-	resp, err := c.PgEdgeAPIClient.Operations.PostDatabasesIDReplicate(request)
-	if err != nil {
-		return nil, err
-	}
-
-	return resp.Payload, nil
-}
-
-func (c *Client) GetAllClusters(ctx context.Context) ([]*models.ClusterDetails, error) {
+func (c *Client) GetAllClusters(ctx context.Context) ([]*models.Cluster, error) {
 	request := &operations.GetClustersParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
@@ -219,7 +199,7 @@ func (c *Client) GetAllClusters(ctx context.Context) ([]*models.ClusterDetails, 
 	return resp.Payload, nil
 }
 
-func (c *Client) GetCluster(ctx context.Context, id strfmt.UUID) (*models.ClusterDetails, error) {
+func (c *Client) GetCluster(ctx context.Context, id strfmt.UUID) (*models.Cluster, error) {
 	request := &operations.GetClustersIDParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
@@ -236,7 +216,7 @@ func (c *Client) GetCluster(ctx context.Context, id strfmt.UUID) (*models.Cluste
 	return resp.Payload, nil
 }
 
-func (c *Client) CreateCluster(ctx context.Context, cluster *models.ClusterCreationRequest) (*models.ClusterCreationResponse, error) {
+func (c *Client) CreateCluster(ctx context.Context, cluster *models.CreateClusterInput) (*models.Cluster, error) {
 	request := &operations.PostClustersParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
@@ -245,61 +225,31 @@ func (c *Client) CreateCluster(ctx context.Context, cluster *models.ClusterCreat
 
 	request.SetAuthorization(c.AuthHeader)
 
-	// 	fmt.Println(cluster.Nodes,&cluster.Nodes,cluster.Nodes[0].InstanceType, "cluster")
-	// 	res2B, _ := json.Marshal(cluster)
-	// fmt.Println(string(res2B))
-
 	resp, err := c.PgEdgeAPIClient.Operations.PostClusters(request)
 	if err != nil {
 		return nil, err
 	}
 
 	for {
-		clusterDetails, err := c.GetCluster(ctx, strfmt.UUID(resp.Payload.ID))
+		clusterDetails, err := c.GetCluster(ctx, strfmt.UUID(*resp.Payload.ID))
 		if err != nil {
 			return nil, err
 		}
 
-		switch clusterDetails.Status {
+		switch *clusterDetails.Status {
 		case "available":
-			return resp.Payload, nil
+			return clusterDetails, nil
 		case "failed":
 			return nil, errors.New("cluster creation failed")
 		case "creating":
 			time.Sleep(5 * time.Second)
 		default:
-			return nil, errors.New("unexpected cluster status")
+			return nil, fmt.Errorf("unexpected cluster status: %s", *clusterDetails.Status)
 		}
 	}
 }
 
-func (c *Client) DeleteCluster(ctx context.Context, id strfmt.UUID) error {
-	request := &operations.DeleteClustersIDParams{
-		HTTPClient: c.HTTPClient,
-		Context:    ctx,
-		ID:         id,
-	}
-
-	request.SetAuthorization(c.AuthHeader)
-
-	_, err := c.PgEdgeAPIClient.Operations.DeleteClustersID(request)
-	if strings.Contains(err.Error(), "200") {
-		for {
-			_, err := c.GetCluster(ctx, id)
-			if err != nil {
-				return nil
-			}
-			time.Sleep(5 * time.Second)
-
-		}
-	}
-
-	return err
-}
-
-func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models.ClusterUpdateRequest) (*models.ClusterDetails, error) {
-	fmt.Println(id, "cluster id")
-	fmt.Println(&body.Nodes, "cluster body")
+func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models.UpdateClusterInput) (*models.Cluster, error) {
 	request := &operations.PatchClustersIDParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
@@ -314,23 +264,94 @@ func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models
 		return nil, err
 	}
 
-	// for {
-	_, err = c.GetCluster(ctx, strfmt.UUID(resp.Payload.ID))
+	for {
+		clusterDetails, err := c.GetCluster(ctx, strfmt.UUID(*resp.Payload.ID))
+		if err != nil {
+			return nil, err
+		}
+
+		switch *clusterDetails.Status {
+		case "available":
+			return clusterDetails, nil
+		case "failed":
+			return nil, errors.New("cluster update failed")
+		case "modifying":
+			time.Sleep(5 * time.Second)
+		default:
+			return nil, fmt.Errorf("unexpected cluster status: %s", *clusterDetails.Status)
+		}
+	}
+}
+
+func (c *Client) DeleteCluster(ctx context.Context, id strfmt.UUID) error {
+	request := &operations.DeleteClustersIDParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		ID:         id,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	_, err := c.PgEdgeAPIClient.Operations.DeleteClustersID(request)
+	if err == nil {
+		for {
+			_, err := c.GetCluster(ctx, id)
+			if err != nil {
+				return nil
+			}
+			time.Sleep(5 * time.Second)
+		}
+	}
+
+	return nil
+}
+
+func (c *Client) GetClusterNodes(ctx context.Context, id strfmt.UUID, nearLat, nearLon, orderBy *string) ([]*models.ClusterNode, error) {
+	request := &operations.GetClustersIDNodesParams{
+		HTTPClient: c.HTTPClient,
+		Context:    ctx,
+		ID:         id,
+		NearLat:    nearLat,
+		NearLon:    nearLon,
+		OrderBy:    orderBy,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	resp, err := c.PgEdgeAPIClient.Operations.GetClustersIDNodes(request)
 	if err != nil {
 		return nil, err
 	}
 
-	// switch clusterDetails.Status {
-	// case "available":
 	return resp.Payload, nil
-	// case "failed":
-	// return nil, errors.New("cluster creation failed")
-	// case "creating":
-	// time.Sleep(5 * time.Second)
-	// default:
-	// return nil, errors.New("unexpected cluster status")
-	// }
-	// }
+}
+
+func (c *Client) GetClusterNodeLogs(ctx context.Context, clusterID, nodeID strfmt.UUID, logName string, params *operations.GetClustersIDNodesNodeIDLogsLogNameParams) ([]*models.ClusterNodeLogMessage, error) {
+	request := &operations.GetClustersIDNodesNodeIDLogsLogNameParams{
+		HTTPClient:    c.HTTPClient,
+		Context:       ctx,
+		ID:            clusterID.String(),
+		NodeID:        nodeID.String(),
+		LogName:       logName,
+		Lines:         params.Lines,
+		Since:         params.Since,
+		Until:         params.Until,
+		Priority:      params.Priority,
+		Grep:          params.Grep,
+		CaseSensitive: params.CaseSensitive,
+		Reverse:       params.Reverse,
+		Dmesg:         params.Dmesg,
+		Output:        params.Output,
+	}
+
+	request.SetAuthorization(c.AuthHeader)
+
+	resp, err := c.PgEdgeAPIClient.Operations.GetClustersIDNodesNodeIDLogsLogName(request)
+	if err != nil {
+		return nil, err
+	}
+
+	return resp.Payload, nil
 }
 
 func (c *Client) GetCloudAccounts(ctx context.Context) ([]*models.CloudAccount, error) {
@@ -397,15 +418,164 @@ func (c *Client) DeleteCloudAccount(ctx context.Context, id strfmt.UUID) error {
 
 	_, err := c.PgEdgeAPIClient.Operations.DeleteCloudAccountsID(request)
 	if err != nil {
-		// The API returns 200 OK for successful deletion
-		if strings.Contains(err.Error(), "200") {
-			return nil
-		}
 		return err
 	}
 
 	return nil
 }
+
+func (c *Client) GetSSHKeys(ctx context.Context) ([]*models.SSHKey, error) {
+    request := &operations.GetSSHKeysParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+    }
+
+    request.SetAuthorization(c.AuthHeader)
+
+    resp, err := c.PgEdgeAPIClient.Operations.GetSSHKeys(request)
+    if err != nil {
+        return nil, err
+    }
+
+    return resp.Payload, nil
+}
+
+func (c *Client) CreateSSHKey(ctx context.Context, sshKey *models.CreateSSHKeyInput) (*models.SSHKey, error) {
+    request := &operations.PostSSHKeysParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        Body:       sshKey,
+    }
+    request.SetAuthorization(c.AuthHeader)
+
+    resp, err := c.PgEdgeAPIClient.Operations.PostSSHKeys(request)
+    if err != nil {
+        return nil, err
+    }
+
+    return resp.Payload, nil
+}
+
+func (c *Client) GetSSHKey(ctx context.Context, id strfmt.UUID) (*models.SSHKey, error) {
+    request := &operations.GetSSHKeysIDParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        ID:         id,
+    }
+
+    request.SetAuthorization(c.AuthHeader)
+
+    resp, err := c.PgEdgeAPIClient.Operations.GetSSHKeysID(request)
+    if err != nil {
+        return nil, err
+    }
+
+    return resp.Payload, nil
+}
+
+func (c *Client) DeleteSSHKey(ctx context.Context, id strfmt.UUID) error {
+    request := &operations.DeleteSSHKeysIDParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        ID:         id,
+    }
+
+    request.SetAuthorization(c.AuthHeader)
+
+    _, err := c.PgEdgeAPIClient.Operations.DeleteSSHKeysID(request)
+    return err
+}
+
+func (c *Client) GetBackupStores(ctx context.Context, createdAfter, createdBefore *string, limit, offset *int64, descending *bool) ([]*models.BackupStore, error) {
+    request := &operations.GetBackupStoresParams{
+        HTTPClient:    c.HTTPClient,
+        Context:       ctx,
+        CreatedAfter:  createdAfter,
+        CreatedBefore: createdBefore,
+        Limit:         limit,
+        Offset:        offset,
+        Descending:    descending,
+    }
+
+    request.SetAuthorization(c.AuthHeader)
+
+    resp, err := c.PgEdgeAPIClient.Operations.GetBackupStores(request)
+    if err != nil {
+        return nil, err
+    }
+
+    return resp.Payload, nil
+}
+
+func (c *Client) CreateBackupStore(ctx context.Context, input *models.CreateBackupStoreInput) (*models.BackupStore, error) {
+    request := &operations.PostBackupStoresParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        Body:       input,
+    }
+
+    request.SetAuthorization(c.AuthHeader)
+
+    resp, err := c.PgEdgeAPIClient.Operations.PostBackupStores(request)
+    if err != nil {
+        return nil, err
+    }
+
+	if resp == nil || resp.Payload == nil {
+        return nil, fmt.Errorf("received nil response or payload")
+    }
+
+	backupStore := resp.Payload
+
+    for {
+        updatedStore, err := c.GetBackupStore(ctx, *backupStore.ID)
+        if err != nil {
+            return nil, fmt.Errorf("error checking backup store status: %w", err)
+        }
+
+        switch *updatedStore.Status {
+        case "available":
+            return updatedStore, nil
+        case "failed":
+            return nil, errors.New("backup store creation failed")
+        case "creating":
+            time.Sleep(5 * time.Second)
+        default:
+            return nil, fmt.Errorf("unexpected backup store status: %s", *updatedStore.Status)
+        }
+    }
+}
+
+func (c *Client) GetBackupStore(ctx context.Context, id strfmt.UUID) (*models.BackupStore, error) {
+    request := &operations.GetBackupStoresIDParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        ID:         id,
+    }
+
+    request.SetAuthorization(c.AuthHeader)
+
+    resp, err := c.PgEdgeAPIClient.Operations.GetBackupStoresID(request)
+    if err != nil {
+        return nil, err
+    }
+
+    return resp.Payload, nil
+}
+
+func (c *Client) DeleteBackupStore(ctx context.Context, id strfmt.UUID) error {
+    request := &operations.DeleteBackupStoresIDParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        ID:         id,
+    }
+
+    request.SetAuthorization(c.AuthHeader)
+
+    _, err := c.PgEdgeAPIClient.Operations.DeleteBackupStoresID(request)
+    return err
+}
+
 
 
 func (c *Client) OAuthToken(ctx context.Context, clientId, clientSecret, grantType string) (*operations.PostOauthTokenOKBody, error) {

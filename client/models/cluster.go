@@ -20,32 +20,44 @@ import (
 // swagger:model Cluster
 type Cluster struct {
 
+	// backup store ids
+	BackupStoreIds []string `json:"backup_store_ids"`
+
+	// capacity
+	Capacity int64 `json:"capacity,omitempty"`
+
 	// cloud account
-	CloudAccount *ClusterCloudAccount `json:"cloud_account,omitempty"`
+	// Required: true
+	CloudAccount *CloudAccountProperties `json:"cloud_account"`
 
 	// created at
-	// Format: date-time
-	CreatedAt strfmt.DateTime `json:"created_at,omitempty"`
+	// Required: true
+	CreatedAt *string `json:"created_at"`
 
 	// firewall rules
-	FirewallRules []*FirewallRule `json:"firewall_rules"`
+	FirewallRules []*ClusterFirewallRuleSettings `json:"firewall_rules"`
 
 	// id
-	ID string `json:"id,omitempty"`
+	// Required: true
+	// Format: uuid
+	ID *strfmt.UUID `json:"id"`
 
 	// name
-	Name string `json:"name,omitempty"`
+	// Required: true
+	Name *string `json:"name"`
 
 	// networks
-	Networks []*Network `json:"networks"`
+	Networks []*ClusterNetworkSettings `json:"networks"`
 
 	// node location
-	NodeLocation string `json:"node_location,omitempty"`
+	// Required: true
+	NodeLocation *string `json:"node_location"`
 
 	// nodes
-	Nodes []*ClusterNode `json:"nodes"`
+	Nodes []*ClusterNodeSettings `json:"nodes"`
 
 	// regions
+	// Required: true
 	Regions []string `json:"regions"`
 
 	// resource tags
@@ -55,7 +67,8 @@ type Cluster struct {
 	SSHKeyID string `json:"ssh_key_id,omitempty"`
 
 	// status
-	Status string `json:"status,omitempty"`
+	// Required: true
+	Status *string `json:"status"`
 }
 
 // Validate validates this cluster
@@ -74,11 +87,31 @@ func (m *Cluster) Validate(formats strfmt.Registry) error {
 		res = append(res, err)
 	}
 
+	if err := m.validateID(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateName(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateNetworks(formats); err != nil {
 		res = append(res, err)
 	}
 
+	if err := m.validateNodeLocation(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateNodes(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateRegions(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateStatus(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -89,8 +122,9 @@ func (m *Cluster) Validate(formats strfmt.Registry) error {
 }
 
 func (m *Cluster) validateCloudAccount(formats strfmt.Registry) error {
-	if swag.IsZero(m.CloudAccount) { // not required
-		return nil
+
+	if err := validate.Required("cloud_account", "body", m.CloudAccount); err != nil {
+		return err
 	}
 
 	if m.CloudAccount != nil {
@@ -108,11 +142,8 @@ func (m *Cluster) validateCloudAccount(formats strfmt.Registry) error {
 }
 
 func (m *Cluster) validateCreatedAt(formats strfmt.Registry) error {
-	if swag.IsZero(m.CreatedAt) { // not required
-		return nil
-	}
 
-	if err := validate.FormatOf("created_at", "body", "date-time", m.CreatedAt.String(), formats); err != nil {
+	if err := validate.Required("created_at", "body", m.CreatedAt); err != nil {
 		return err
 	}
 
@@ -145,6 +176,28 @@ func (m *Cluster) validateFirewallRules(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *Cluster) validateID(formats strfmt.Registry) error {
+
+	if err := validate.Required("id", "body", m.ID); err != nil {
+		return err
+	}
+
+	if err := validate.FormatOf("id", "body", "uuid", m.ID.String(), formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Cluster) validateName(formats strfmt.Registry) error {
+
+	if err := validate.Required("name", "body", m.Name); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *Cluster) validateNetworks(formats strfmt.Registry) error {
 	if swag.IsZero(m.Networks) { // not required
 		return nil
@@ -171,6 +224,15 @@ func (m *Cluster) validateNetworks(formats strfmt.Registry) error {
 	return nil
 }
 
+func (m *Cluster) validateNodeLocation(formats strfmt.Registry) error {
+
+	if err := validate.Required("node_location", "body", m.NodeLocation); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (m *Cluster) validateNodes(formats strfmt.Registry) error {
 	if swag.IsZero(m.Nodes) { // not required
 		return nil
@@ -192,6 +254,24 @@ func (m *Cluster) validateNodes(formats strfmt.Registry) error {
 			}
 		}
 
+	}
+
+	return nil
+}
+
+func (m *Cluster) validateRegions(formats strfmt.Registry) error {
+
+	if err := validate.Required("regions", "body", m.Regions); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Cluster) validateStatus(formats strfmt.Registry) error {
+
+	if err := validate.Required("status", "body", m.Status); err != nil {
+		return err
 	}
 
 	return nil
@@ -226,10 +306,6 @@ func (m *Cluster) ContextValidate(ctx context.Context, formats strfmt.Registry) 
 func (m *Cluster) contextValidateCloudAccount(ctx context.Context, formats strfmt.Registry) error {
 
 	if m.CloudAccount != nil {
-
-		if swag.IsZero(m.CloudAccount) { // not required
-			return nil
-		}
 
 		if err := m.CloudAccount.ContextValidate(ctx, formats); err != nil {
 			if ve, ok := err.(*errors.Validation); ok {
@@ -330,49 +406,6 @@ func (m *Cluster) MarshalBinary() ([]byte, error) {
 // UnmarshalBinary interface implementation
 func (m *Cluster) UnmarshalBinary(b []byte) error {
 	var res Cluster
-	if err := swag.ReadJSON(b, &res); err != nil {
-		return err
-	}
-	*m = res
-	return nil
-}
-
-// ClusterCloudAccount cluster cloud account
-//
-// swagger:model ClusterCloudAccount
-type ClusterCloudAccount struct {
-
-	// id
-	ID string `json:"id,omitempty"`
-
-	// name
-	Name string `json:"name,omitempty"`
-
-	// type
-	Type string `json:"type,omitempty"`
-}
-
-// Validate validates this cluster cloud account
-func (m *ClusterCloudAccount) Validate(formats strfmt.Registry) error {
-	return nil
-}
-
-// ContextValidate validates this cluster cloud account based on context it is used
-func (m *ClusterCloudAccount) ContextValidate(ctx context.Context, formats strfmt.Registry) error {
-	return nil
-}
-
-// MarshalBinary interface implementation
-func (m *ClusterCloudAccount) MarshalBinary() ([]byte, error) {
-	if m == nil {
-		return nil, nil
-	}
-	return swag.WriteJSON(m)
-}
-
-// UnmarshalBinary interface implementation
-func (m *ClusterCloudAccount) UnmarshalBinary(b []byte) error {
-	var res ClusterCloudAccount
 	if err := swag.ReadJSON(b, &res); err != nil {
 		return err
 	}

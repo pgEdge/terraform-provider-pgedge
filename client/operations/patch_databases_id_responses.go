@@ -42,12 +42,6 @@ func (o *PatchDatabasesIDReader) ReadResponse(response runtime.ClientResponse, c
 			return nil, err
 		}
 		return nil, result
-	case 500:
-		result := NewPatchDatabasesIDInternalServerError()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
 	default:
 		return nil, runtime.NewAPIError("[PATCH /databases/{id}] PatchDatabasesID", response, response.Code())
 	}
@@ -61,10 +55,10 @@ func NewPatchDatabasesIDOK() *PatchDatabasesIDOK {
 /*
 PatchDatabasesIDOK describes a response with status code 200, with default header values.
 
-Successful response
+Response containing the updated database definition.
 */
 type PatchDatabasesIDOK struct {
-	Payload *models.DatabaseDetails
+	Payload *models.Database
 }
 
 // IsSuccess returns true when this patch databases Id o k response has a 2xx status code
@@ -107,13 +101,13 @@ func (o *PatchDatabasesIDOK) String() string {
 	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdOK %s", 200, payload)
 }
 
-func (o *PatchDatabasesIDOK) GetPayload() *models.DatabaseDetails {
+func (o *PatchDatabasesIDOK) GetPayload() *models.Database {
 	return o.Payload
 }
 
 func (o *PatchDatabasesIDOK) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
-	o.Payload = new(models.DatabaseDetails)
+	o.Payload = new(models.Database)
 
 	// response payload
 	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
@@ -131,7 +125,7 @@ func NewPatchDatabasesIDBadRequest() *PatchDatabasesIDBadRequest {
 /*
 PatchDatabasesIDBadRequest describes a response with status code 400, with default header values.
 
-Bad Request
+Bad request.
 */
 type PatchDatabasesIDBadRequest struct {
 	Payload *models.Error
@@ -201,7 +195,7 @@ func NewPatchDatabasesIDUnauthorized() *PatchDatabasesIDUnauthorized {
 /*
 PatchDatabasesIDUnauthorized describes a response with status code 401, with default header values.
 
-Unauthorized
+Authorization information is missing or invalid.
 */
 type PatchDatabasesIDUnauthorized struct {
 	Payload *models.Error
@@ -252,76 +246,6 @@ func (o *PatchDatabasesIDUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *PatchDatabasesIDUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Error)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewPatchDatabasesIDInternalServerError creates a PatchDatabasesIDInternalServerError with default headers values
-func NewPatchDatabasesIDInternalServerError() *PatchDatabasesIDInternalServerError {
-	return &PatchDatabasesIDInternalServerError{}
-}
-
-/*
-PatchDatabasesIDInternalServerError describes a response with status code 500, with default header values.
-
-Internal Server Error
-*/
-type PatchDatabasesIDInternalServerError struct {
-	Payload *models.Error
-}
-
-// IsSuccess returns true when this patch databases Id internal server error response has a 2xx status code
-func (o *PatchDatabasesIDInternalServerError) IsSuccess() bool {
-	return false
-}
-
-// IsRedirect returns true when this patch databases Id internal server error response has a 3xx status code
-func (o *PatchDatabasesIDInternalServerError) IsRedirect() bool {
-	return false
-}
-
-// IsClientError returns true when this patch databases Id internal server error response has a 4xx status code
-func (o *PatchDatabasesIDInternalServerError) IsClientError() bool {
-	return false
-}
-
-// IsServerError returns true when this patch databases Id internal server error response has a 5xx status code
-func (o *PatchDatabasesIDInternalServerError) IsServerError() bool {
-	return true
-}
-
-// IsCode returns true when this patch databases Id internal server error response a status code equal to that given
-func (o *PatchDatabasesIDInternalServerError) IsCode(code int) bool {
-	return code == 500
-}
-
-// Code gets the status code for the patch databases Id internal server error response
-func (o *PatchDatabasesIDInternalServerError) Code() int {
-	return 500
-}
-
-func (o *PatchDatabasesIDInternalServerError) Error() string {
-	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdInternalServerError %s", 500, payload)
-}
-
-func (o *PatchDatabasesIDInternalServerError) String() string {
-	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[PATCH /databases/{id}][%d] patchDatabasesIdInternalServerError %s", 500, payload)
-}
-
-func (o *PatchDatabasesIDInternalServerError) GetPayload() *models.Error {
-	return o.Payload
-}
-
-func (o *PatchDatabasesIDInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

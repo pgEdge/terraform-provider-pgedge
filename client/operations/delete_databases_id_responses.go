@@ -42,12 +42,6 @@ func (o *DeleteDatabasesIDReader) ReadResponse(response runtime.ClientResponse, 
 			return nil, err
 		}
 		return nil, result
-	case 500:
-		result := NewDeleteDatabasesIDInternalServerError()
-		if err := result.readResponse(response, consumer, o.formats); err != nil {
-			return nil, err
-		}
-		return nil, result
 	default:
 		return nil, runtime.NewAPIError("[DELETE /databases/{id}] DeleteDatabasesID", response, response.Code())
 	}
@@ -61,7 +55,7 @@ func NewDeleteDatabasesIDNoContent() *DeleteDatabasesIDNoContent {
 /*
 DeleteDatabasesIDNoContent describes a response with status code 204, with default header values.
 
-No Content (successful deletion)
+Empty response indicating that the database was deleted.
 */
 type DeleteDatabasesIDNoContent struct {
 }
@@ -117,7 +111,7 @@ func NewDeleteDatabasesIDBadRequest() *DeleteDatabasesIDBadRequest {
 /*
 DeleteDatabasesIDBadRequest describes a response with status code 400, with default header values.
 
-Bad Request
+Bad request.
 */
 type DeleteDatabasesIDBadRequest struct {
 	Payload *models.Error
@@ -187,7 +181,7 @@ func NewDeleteDatabasesIDUnauthorized() *DeleteDatabasesIDUnauthorized {
 /*
 DeleteDatabasesIDUnauthorized describes a response with status code 401, with default header values.
 
-Unauthorized
+Authorization information is missing or invalid.
 */
 type DeleteDatabasesIDUnauthorized struct {
 	Payload *models.Error
@@ -238,76 +232,6 @@ func (o *DeleteDatabasesIDUnauthorized) GetPayload() *models.Error {
 }
 
 func (o *DeleteDatabasesIDUnauthorized) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
-
-	o.Payload = new(models.Error)
-
-	// response payload
-	if err := consumer.Consume(response.Body(), o.Payload); err != nil && err != io.EOF {
-		return err
-	}
-
-	return nil
-}
-
-// NewDeleteDatabasesIDInternalServerError creates a DeleteDatabasesIDInternalServerError with default headers values
-func NewDeleteDatabasesIDInternalServerError() *DeleteDatabasesIDInternalServerError {
-	return &DeleteDatabasesIDInternalServerError{}
-}
-
-/*
-DeleteDatabasesIDInternalServerError describes a response with status code 500, with default header values.
-
-Internal Server Error
-*/
-type DeleteDatabasesIDInternalServerError struct {
-	Payload *models.Error
-}
-
-// IsSuccess returns true when this delete databases Id internal server error response has a 2xx status code
-func (o *DeleteDatabasesIDInternalServerError) IsSuccess() bool {
-	return false
-}
-
-// IsRedirect returns true when this delete databases Id internal server error response has a 3xx status code
-func (o *DeleteDatabasesIDInternalServerError) IsRedirect() bool {
-	return false
-}
-
-// IsClientError returns true when this delete databases Id internal server error response has a 4xx status code
-func (o *DeleteDatabasesIDInternalServerError) IsClientError() bool {
-	return false
-}
-
-// IsServerError returns true when this delete databases Id internal server error response has a 5xx status code
-func (o *DeleteDatabasesIDInternalServerError) IsServerError() bool {
-	return true
-}
-
-// IsCode returns true when this delete databases Id internal server error response a status code equal to that given
-func (o *DeleteDatabasesIDInternalServerError) IsCode(code int) bool {
-	return code == 500
-}
-
-// Code gets the status code for the delete databases Id internal server error response
-func (o *DeleteDatabasesIDInternalServerError) Code() int {
-	return 500
-}
-
-func (o *DeleteDatabasesIDInternalServerError) Error() string {
-	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdInternalServerError %s", 500, payload)
-}
-
-func (o *DeleteDatabasesIDInternalServerError) String() string {
-	payload, _ := json.Marshal(o.Payload)
-	return fmt.Sprintf("[DELETE /databases/{id}][%d] deleteDatabasesIdInternalServerError %s", 500, payload)
-}
-
-func (o *DeleteDatabasesIDInternalServerError) GetPayload() *models.Error {
-	return o.Payload
-}
-
-func (o *DeleteDatabasesIDInternalServerError) readResponse(response runtime.ClientResponse, consumer runtime.Consumer, formats strfmt.Registry) error {
 
 	o.Payload = new(models.Error)
 

@@ -1,0 +1,194 @@
+paths:
+  /backup-stores:
+    get:
+      summary: List backup stores.
+      description: List backup stores.
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+        - name: created_after
+          in: query
+          type: string
+          description: Start time for backup stores retrieval as an RFC3339 timestamp.
+        - name: created_before
+          in: query
+          type: string
+          description: End time for backup stores retrieval as an RFC3339 timestamp.
+        - name: limit
+          in: query
+          type: integer
+          description: Maximum number of results to return.
+        - name: offset
+          in: query
+          type: integer
+          description: Offset into the results, for pagination.
+        - name: descending
+          in: query
+          type: boolean
+          description: Whether to sort in descending order.
+      responses:
+        "200":
+          description: List backup stores response
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/BackupStore"
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: "#/definitions/Error"
+    post:
+      summary: Create a backup store.
+      description: Create a backup store.
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+        - in: body
+          name: body
+          description: The backup store details.
+          required: true
+          schema:
+            $ref: "#/definitions/CreateBackupStoreInput"
+      responses:
+        "200":
+          description: Response containing the backup store details.
+          schema:
+            $ref: "#/definitions/BackupStore"
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: "#/definitions/Error"
+  /backup-stores/{id}:
+    get:
+      summary: Retrieve a backup store.
+      description: Retrieve a backup store.
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+        - name: id
+          in: path
+          description: The ID of the backup store to get.
+          required: true
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Response containing the backup store details.
+          schema:
+            $ref: "#/definitions/BackupStore"
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: "#/definitions/Error"
+    delete:
+      summary: Delete a backup store.
+      description: Delete a backup store.
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+        - name: id
+          in: path
+          description: The ID of the backup store to delete.
+          required: true
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: Backup store deleted.
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: "#/definitions/Error"
+
+definitions:
+  BackupStore:
+    type: object
+    required:
+      - id
+      - cloud_account_id
+      - cloud_account_type
+      - created_at
+      - updated_at
+      - status
+      - name
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: The ID of the backup store.
+      cloud_account_id:
+        type: string
+        description: The ID of the cloud account used for the backup store.
+      cloud_account_type:
+        type: string
+        description: The type of the cloud account used for the backup store.
+      created_at:
+        type: string
+        description: The time the backup store was created.
+      updated_at:
+        type: string
+        description: The time the backup store was last updated.
+      status:
+        type: string
+        description: The status of the backup store.
+      name:
+        type: string
+        description: The name of the backup store.
+      properties:
+        type: object
+        description: The computed properties of the backup store.
+      cluster_ids:
+        type: array
+        items:
+          type: string
+        description: The IDs of the clusters that use the backup store.
+  CreateBackupStoreInput:
+    type: object
+    required:
+      - name
+      - cloud_account_id
+    properties:
+      name:
+        type: string
+        description: The name of the backup store.
+      cloud_account_id:
+        type: string
+        description: The ID of the cloud account to use for the backup store.
+      region:
+        type: string
+        description: The region to use for the backup store.
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+      message:
+        type: string

@@ -1,0 +1,151 @@
+paths:
+  /ssh-keys:
+    get:
+      summary: List SSH keys.
+      description: List SSH keys.
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+      responses:
+        "200":
+          description: List SSH keys response
+          schema:
+            type: array
+            items:
+              $ref: "#/definitions/SshKey"
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: "#/definitions/Error"
+    post:
+      summary: Create an SSH key.
+      description: Create an SSH key.
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+        - in: body
+          name: body
+          description: The SSH key details.
+          required: true
+          schema:
+            $ref: "#/definitions/CreateSshKeyInput"
+      responses:
+        "200":
+          description: Response containing the SSH key details.
+          schema:
+            $ref: "#/definitions/SshKey"
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: "#/definitions/Error"
+  /ssh-keys/{id}:
+    get:
+      summary: Retrieve an SSH key.
+      description: Retrieve an SSH key.
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+        - name: id
+          in: path
+          description: ID of the SSH key to retrieve.
+          required: true
+          type: string
+          format: uuid
+      responses:
+        "200":
+          description: Response containing the SSH key details.
+          schema:
+            $ref: "#/definitions/SshKey"
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: "#/definitions/Error"
+    delete:
+      summary: Delete an SSH key.
+      description: Delete an SSH key.
+      parameters:
+        - name: Authorization
+          in: header
+          type: string
+          format: Bearer {access_token}
+          required: true
+        - name: id
+          in: path
+          description: ID of the SSH key to offboard.
+          required: true
+          type: string
+          format: uuid
+      responses:
+        "204":
+          description: Empty response indicating that the SSH key was offboarded.
+        "400":
+          description: Bad request.
+          schema:
+            $ref: "#/definitions/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          schema:
+            $ref: "#/definitions/Error"
+
+definitions:
+  SshKey:
+    type: object
+    required:
+      - id
+      - name
+      - public_key
+      - created_at
+    properties:
+      id:
+        type: string
+        format: uuid
+        description: The unique identifier of the SSH key.
+      name:
+        type: string
+        description: The name of the SSH key.
+      public_key:
+        type: string
+        description: The public key of the SSH key.
+      created_at:
+        type: string
+        description: The date and time when the SSH key was created.
+  CreateSshKeyInput:
+    type: object
+    required:
+      - name
+      - public_key
+    properties:
+      name:
+        type: string
+        description: The name of the SSH key.
+      public_key:
+        type: string
+        description: The public key of the SSH key.
+  Error:
+    type: object
+    properties:
+      code:
+        type: integer
+      message:
+        type: string

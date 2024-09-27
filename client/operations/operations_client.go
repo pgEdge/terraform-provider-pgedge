@@ -56,11 +56,19 @@ type ClientOption func(*runtime.ClientOperation)
 
 // ClientService is the interface for Client methods
 type ClientService interface {
+	DeleteBackupStoresID(params *DeleteBackupStoresIDParams, opts ...ClientOption) (*DeleteBackupStoresIDNoContent, error)
+
 	DeleteCloudAccountsID(params *DeleteCloudAccountsIDParams, opts ...ClientOption) (*DeleteCloudAccountsIDNoContent, error)
 
 	DeleteClustersID(params *DeleteClustersIDParams, opts ...ClientOption) (*DeleteClustersIDNoContent, error)
 
 	DeleteDatabasesID(params *DeleteDatabasesIDParams, opts ...ClientOption) (*DeleteDatabasesIDNoContent, error)
+
+	DeleteSSHKeysID(params *DeleteSSHKeysIDParams, opts ...ClientOption) (*DeleteSSHKeysIDNoContent, error)
+
+	GetBackupStores(params *GetBackupStoresParams, opts ...ClientOption) (*GetBackupStoresOK, error)
+
+	GetBackupStoresID(params *GetBackupStoresIDParams, opts ...ClientOption) (*GetBackupStoresIDOK, error)
 
 	GetCloudAccounts(params *GetCloudAccountsParams, opts ...ClientOption) (*GetCloudAccountsOK, error)
 
@@ -70,13 +78,23 @@ type ClientService interface {
 
 	GetClustersID(params *GetClustersIDParams, opts ...ClientOption) (*GetClustersIDOK, error)
 
+	GetClustersIDNodes(params *GetClustersIDNodesParams, opts ...ClientOption) (*GetClustersIDNodesOK, error)
+
+	GetClustersIDNodesNodeIDLogsLogName(params *GetClustersIDNodesNodeIDLogsLogNameParams, opts ...ClientOption) (*GetClustersIDNodesNodeIDLogsLogNameOK, error)
+
 	GetDatabases(params *GetDatabasesParams, opts ...ClientOption) (*GetDatabasesOK, error)
 
 	GetDatabasesID(params *GetDatabasesIDParams, opts ...ClientOption) (*GetDatabasesIDOK, error)
 
+	GetSSHKeys(params *GetSSHKeysParams, opts ...ClientOption) (*GetSSHKeysOK, error)
+
+	GetSSHKeysID(params *GetSSHKeysIDParams, opts ...ClientOption) (*GetSSHKeysIDOK, error)
+
 	PatchClustersID(params *PatchClustersIDParams, opts ...ClientOption) (*PatchClustersIDOK, error)
 
 	PatchDatabasesID(params *PatchDatabasesIDParams, opts ...ClientOption) (*PatchDatabasesIDOK, error)
+
+	PostBackupStores(params *PostBackupStoresParams, opts ...ClientOption) (*PostBackupStoresOK, error)
 
 	PostCloudAccounts(params *PostCloudAccountsParams, opts ...ClientOption) (*PostCloudAccountsOK, error)
 
@@ -84,11 +102,51 @@ type ClientService interface {
 
 	PostDatabases(params *PostDatabasesParams, opts ...ClientOption) (*PostDatabasesOK, error)
 
-	PostDatabasesIDReplicate(params *PostDatabasesIDReplicateParams, opts ...ClientOption) (*PostDatabasesIDReplicateOK, error)
-
 	PostOauthToken(params *PostOauthTokenParams, opts ...ClientOption) (*PostOauthTokenOK, error)
 
+	PostSSHKeys(params *PostSSHKeysParams, opts ...ClientOption) (*PostSSHKeysOK, error)
+
 	SetTransport(transport runtime.ClientTransport)
+}
+
+/*
+DeleteBackupStoresID deletes a backup store
+
+Delete a backup store.
+*/
+func (a *Client) DeleteBackupStoresID(params *DeleteBackupStoresIDParams, opts ...ClientOption) (*DeleteBackupStoresIDNoContent, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewDeleteBackupStoresIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "DeleteBackupStoresID",
+		Method:             "DELETE",
+		PathPattern:        "/backup-stores/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &DeleteBackupStoresIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*DeleteBackupStoresIDNoContent)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for DeleteBackupStoresID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
 }
 
 /*
@@ -132,9 +190,9 @@ func (a *Client) DeleteCloudAccountsID(params *DeleteCloudAccountsIDParams, opts
 }
 
 /*
-DeleteClustersID deletes cluster by ID
+DeleteClustersID deletes a pg edge database cluster
 
-Delete the cluster with the specified ID
+Deletes a pgEdge database cluster.
 */
 func (a *Client) DeleteClustersID(params *DeleteClustersIDParams, opts ...ClientOption) (*DeleteClustersIDNoContent, error) {
 	// TODO: Validate the params before sending
@@ -174,7 +232,7 @@ func (a *Client) DeleteClustersID(params *DeleteClustersIDParams, opts ...Client
 /*
 DeleteDatabasesID deletes a database
 
-Delete the database with the specified ID
+Deletes a database.
 */
 func (a *Client) DeleteDatabasesID(params *DeleteDatabasesIDParams, opts ...ClientOption) (*DeleteDatabasesIDNoContent, error) {
 	// TODO: Validate the params before sending
@@ -208,6 +266,126 @@ func (a *Client) DeleteDatabasesID(params *DeleteDatabasesIDParams, opts ...Clie
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for DeleteDatabasesID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+DeleteSSHKeysID deletes an SSH key
+
+Delete an SSH key.
+*/
+func (a *Client) DeleteSSHKeysID(params *DeleteSSHKeysIDParams, opts ...ClientOption) (*DeleteSSHKeysIDNoContent, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewDeleteSSHKeysIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "DeleteSSHKeysID",
+		Method:             "DELETE",
+		PathPattern:        "/ssh-keys/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &DeleteSSHKeysIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*DeleteSSHKeysIDNoContent)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for DeleteSSHKeysID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetBackupStores lists backup stores
+
+List backup stores.
+*/
+func (a *Client) GetBackupStores(params *GetBackupStoresParams, opts ...ClientOption) (*GetBackupStoresOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetBackupStoresParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "GetBackupStores",
+		Method:             "GET",
+		PathPattern:        "/backup-stores",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetBackupStoresReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetBackupStoresOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetBackupStores: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetBackupStoresID retrieves a backup store
+
+Retrieve a backup store.
+*/
+func (a *Client) GetBackupStoresID(params *GetBackupStoresIDParams, opts ...ClientOption) (*GetBackupStoresIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetBackupStoresIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "GetBackupStoresID",
+		Method:             "GET",
+		PathPattern:        "/backup-stores/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetBackupStoresIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetBackupStoresIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetBackupStoresID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
@@ -292,9 +470,9 @@ func (a *Client) GetCloudAccountsID(params *GetCloudAccountsIDParams, opts ...Cl
 }
 
 /*
-GetClusters gets all clusters
+GetClusters lists existing pg edge database clusters
 
-Retrieve a list of clusters with optional limit and offset
+Lists existing pgEdge database clusters.
 */
 func (a *Client) GetClusters(params *GetClustersParams, opts ...ClientOption) (*GetClustersOK, error) {
 	// TODO: Validate the params before sending
@@ -332,9 +510,9 @@ func (a *Client) GetClusters(params *GetClustersParams, opts ...ClientOption) (*
 }
 
 /*
-GetClustersID gets cluster by ID
+GetClustersID retrieves a pg edge database cluster given its ID
 
-Retrieve detailed information about a specific cluster
+Retrieve a pgEdge database cluster given its ID.
 */
 func (a *Client) GetClustersID(params *GetClustersIDParams, opts ...ClientOption) (*GetClustersIDOK, error) {
 	// TODO: Validate the params before sending
@@ -372,9 +550,89 @@ func (a *Client) GetClustersID(params *GetClustersIDParams, opts ...ClientOption
 }
 
 /*
-GetDatabases gets all databases
+GetClustersIDNodes lists nodes belonging to a specific cluster
 
-Retrieve a list of all databases
+Lists nodes belonging to a specific cluster.
+*/
+func (a *Client) GetClustersIDNodes(params *GetClustersIDNodesParams, opts ...ClientOption) (*GetClustersIDNodesOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetClustersIDNodesParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "GetClustersIDNodes",
+		Method:             "GET",
+		PathPattern:        "/clusters/{id}/nodes",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetClustersIDNodesReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetClustersIDNodesOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetClustersIDNodes: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetClustersIDNodesNodeIDLogsLogName retrieves messages from log file on a database node
+
+Retrieve messages from log file on a database node.
+*/
+func (a *Client) GetClustersIDNodesNodeIDLogsLogName(params *GetClustersIDNodesNodeIDLogsLogNameParams, opts ...ClientOption) (*GetClustersIDNodesNodeIDLogsLogNameOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetClustersIDNodesNodeIDLogsLogNameParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "GetClustersIDNodesNodeIDLogsLogName",
+		Method:             "GET",
+		PathPattern:        "/clusters/{id}/nodes/{node_id}/logs/{log_name}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetClustersIDNodesNodeIDLogsLogNameReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetClustersIDNodesNodeIDLogsLogNameOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetClustersIDNodesNodeIDLogsLogName: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetDatabases lists databases
+
+Lists databases.
 */
 func (a *Client) GetDatabases(params *GetDatabasesParams, opts ...ClientOption) (*GetDatabasesOK, error) {
 	// TODO: Validate the params before sending
@@ -412,9 +670,9 @@ func (a *Client) GetDatabases(params *GetDatabasesParams, opts ...ClientOption) 
 }
 
 /*
-GetDatabasesID gets database by ID
+GetDatabasesID retrieves a database given its ID
 
-Retrieve detailed information about a specific database
+Retrieve a database given its ID.
 */
 func (a *Client) GetDatabasesID(params *GetDatabasesIDParams, opts ...ClientOption) (*GetDatabasesIDOK, error) {
 	// TODO: Validate the params before sending
@@ -452,9 +710,89 @@ func (a *Client) GetDatabasesID(params *GetDatabasesIDParams, opts ...ClientOpti
 }
 
 /*
-PatchClustersID updates cluster by ID
+GetSSHKeys lists SSH keys
 
-Update the cluster with the specified ID
+List SSH keys.
+*/
+func (a *Client) GetSSHKeys(params *GetSSHKeysParams, opts ...ClientOption) (*GetSSHKeysOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetSSHKeysParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "GetSSHKeys",
+		Method:             "GET",
+		PathPattern:        "/ssh-keys",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetSSHKeysReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetSSHKeysOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetSSHKeys: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetSSHKeysID retrieves an SSH key
+
+Retrieve an SSH key.
+*/
+func (a *Client) GetSSHKeysID(params *GetSSHKeysIDParams, opts ...ClientOption) (*GetSSHKeysIDOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetSSHKeysIDParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "GetSSHKeysID",
+		Method:             "GET",
+		PathPattern:        "/ssh-keys/{id}",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetSSHKeysIDReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetSSHKeysIDOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetSSHKeysID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PatchClustersID updates a pg edge database cluster
+
+Update a pgEdge database cluster.
 */
 func (a *Client) PatchClustersID(params *PatchClustersIDParams, opts ...ClientOption) (*PatchClustersIDOK, error) {
 	// TODO: Validate the params before sending
@@ -494,7 +832,7 @@ func (a *Client) PatchClustersID(params *PatchClustersIDParams, opts ...ClientOp
 /*
 PatchDatabasesID updates a database
 
-Update the database with the specified ID
+Updates a database.
 */
 func (a *Client) PatchDatabasesID(params *PatchDatabasesIDParams, opts ...ClientOption) (*PatchDatabasesIDOK, error) {
 	// TODO: Validate the params before sending
@@ -528,6 +866,46 @@ func (a *Client) PatchDatabasesID(params *PatchDatabasesIDParams, opts ...Client
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for PatchDatabasesID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostBackupStores creates a backup store
+
+Create a backup store.
+*/
+func (a *Client) PostBackupStores(params *PostBackupStoresParams, opts ...ClientOption) (*PostBackupStoresOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostBackupStoresParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "PostBackupStores",
+		Method:             "POST",
+		PathPattern:        "/backup-stores",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PostBackupStoresReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostBackupStoresOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for PostBackupStores: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
@@ -572,9 +950,9 @@ func (a *Client) PostCloudAccounts(params *PostCloudAccountsParams, opts ...Clie
 }
 
 /*
-PostClusters creates a new cluster
+PostClusters creates a new pg edge database cluster
 
-Create a new cluster with the specified options
+Creates a new pgEdge database cluster.
 */
 func (a *Client) PostClusters(params *PostClustersParams, opts ...ClientOption) (*PostClustersOK, error) {
 	// TODO: Validate the params before sending
@@ -614,7 +992,7 @@ func (a *Client) PostClusters(params *PostClustersParams, opts ...ClientOption) 
 /*
 PostDatabases creates a new database
 
-Create a new database with the specified options
+Creates a new database.
 */
 func (a *Client) PostDatabases(params *PostDatabasesParams, opts ...ClientOption) (*PostDatabasesOK, error) {
 	// TODO: Validate the params before sending
@@ -648,46 +1026,6 @@ func (a *Client) PostDatabases(params *PostDatabasesParams, opts ...ClientOption
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for PostDatabases: API contract not enforced by server. Client expected to get an error, but got: %T", result)
-	panic(msg)
-}
-
-/*
-PostDatabasesIDReplicate replicates database
-
-Replicate the database with the specified ID
-*/
-func (a *Client) PostDatabasesIDReplicate(params *PostDatabasesIDReplicateParams, opts ...ClientOption) (*PostDatabasesIDReplicateOK, error) {
-	// TODO: Validate the params before sending
-	if params == nil {
-		params = NewPostDatabasesIDReplicateParams()
-	}
-	op := &runtime.ClientOperation{
-		ID:                 "PostDatabasesIDReplicate",
-		Method:             "POST",
-		PathPattern:        "/databases/{id}/replicate",
-		ProducesMediaTypes: []string{"application/json"},
-		ConsumesMediaTypes: []string{"application/json"},
-		Schemes:            []string{"http"},
-		Params:             params,
-		Reader:             &PostDatabasesIDReplicateReader{formats: a.formats},
-		Context:            params.Context,
-		Client:             params.HTTPClient,
-	}
-	for _, opt := range opts {
-		opt(op)
-	}
-
-	result, err := a.transport.Submit(op)
-	if err != nil {
-		return nil, err
-	}
-	success, ok := result.(*PostDatabasesIDReplicateOK)
-	if ok {
-		return success, nil
-	}
-	// unexpected success response
-	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
-	msg := fmt.Sprintf("unexpected success response for PostDatabasesIDReplicate: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
@@ -728,6 +1066,46 @@ func (a *Client) PostOauthToken(params *PostOauthTokenParams, opts ...ClientOpti
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for PostOauthToken: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+PostSSHKeys creates an SSH key
+
+Create an SSH key.
+*/
+func (a *Client) PostSSHKeys(params *PostSSHKeysParams, opts ...ClientOption) (*PostSSHKeysOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewPostSSHKeysParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "PostSSHKeys",
+		Method:             "POST",
+		PathPattern:        "/ssh-keys",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &PostSSHKeysReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*PostSSHKeysOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for PostSSHKeys: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 
