@@ -25,18 +25,23 @@ func NewClient(baseUrl, authHeader string) *Client {
 	var url string
 	var schemas []string
 	if baseUrl == "" {
-		url = "localhost"
+		url = "https://api.pgedge.com/v1"
 	} else {
 		url = baseUrl
 		schemas = strings.Split(url, "://")
+
+		// Ensure the /v1 prefix is present
+		if !strings.HasSuffix(url, "/v1") {
+			url = strings.TrimSuffix(url, "/") + "/v1"
+		}
 	}
 
 	if strings.HasPrefix(url, "https") {
 		url += ":443"
 	}
 
-	url = strings.ReplaceAll(url, "http://", "")
-	url = strings.ReplaceAll(url, "https://", "")
+	url = strings.TrimPrefix(url, "http://")
+	url = strings.TrimPrefix(url, "https://")
 
 	transport := httptransport.New(url, "", schemas)
 	client := New(transport, strfmt.Default)
