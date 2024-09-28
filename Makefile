@@ -18,6 +18,7 @@ PYTHON?=python3
 # Install dependencies
 .PHONY: install
 install:
+	go mod download
 	go install github.com/go-swagger/go-swagger/cmd/swagger@latest
 
 .PHONY: validate
