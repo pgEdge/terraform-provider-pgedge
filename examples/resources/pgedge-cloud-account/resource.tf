@@ -1,9 +1,9 @@
-resource "pgedge_cloud_account" "aws_account" {
-  name        = "my-aws-account"
+resource "pgedge_cloud_account" "example" {
+  name        = "example-aws-account"
   type        = "aws"
-  description = "My AWS Cloud Account"
+  description = "Example AWS Cloud Account"
 
   credentials = {
-    role_arn = "arn:aws:iam::212312312439:role/rolearn"
+    role_arn = "arn:aws:iam::123456789012:role/pgedge-example-role"
   }
 }

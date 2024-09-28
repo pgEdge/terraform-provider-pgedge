@@ -23,22 +23,38 @@ type Client struct {
 
 func NewClient(baseUrl, authHeader string) *Client {
 	var url string
-	var schemas []string
+	var schemes []string
+
 	if baseUrl == "" {
-		url = "localhost"
+		url = "https://api.pgedge.com/v1"
 	} else {
 		url = baseUrl
-		schemas = strings.Split(url, "://")
+		url = strings.TrimSuffix(url, "/")
+		
+		if !strings.HasSuffix(url, "/v1") {
+			url += "/v1"
+		}
 	}
 
-	if strings.HasPrefix(url, "https") {
-		url += ":443"
+	if strings.Contains(url, "://") {
+		parts := strings.SplitN(url, "://", 2)
+		schemes = []string{parts[0]}
+		url = parts[1]
+	} else {
+		schemes = []string{"https"}
 	}
 
-	url = strings.ReplaceAll(url, "http://", "")
-	url = strings.ReplaceAll(url, "https://", "")
+	url = strings.TrimPrefix(url, "http://")
+	url = strings.TrimPrefix(url, "https://")
 
-	transport := httptransport.New(url, "", schemas)
+	hostAndPath := strings.SplitN(url, "/", 2)
+	host := hostAndPath[0]
+	path := ""
+	if len(hostAndPath) > 1 {
+		path = "/" + hostAndPath[1]
+	}
+
+	transport := httptransport.New(host, path, schemes)
 	client := New(transport, strfmt.Default)
 
 	return &Client{
@@ -49,6 +65,7 @@ func NewClient(baseUrl, authHeader string) *Client {
 		PgEdgeAPIClient: client,
 	}
 }
+
 
 func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
 	request := &operations.GetDatabasesParams{
@@ -573,7 +590,18 @@ func (c *Client) DeleteBackupStore(ctx context.Context, id strfmt.UUID) error {
     request.SetAuthorization(c.AuthHeader)
 
     _, err := c.PgEdgeAPIClient.Operations.DeleteBackupStoresID(request)
-    return err
+    if err == nil {
+		for {
+			_, err := c.GetBackupStore(ctx, id)
+			if err != nil {
+				return nil
+			}
+
+			time.Sleep(5 * time.Second)
+		}
+	}
+
+	return err	
 }
 
 

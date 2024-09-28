@@ -83,7 +83,7 @@ func (r *backupStoreResource) Schema(_ context.Context, _ resource.SchemaRequest
                 ElementType: types.StringType,
             },
             "region": schema.StringAttribute{
-                Optional: true,
+                Required: true,
             },
         },
     }

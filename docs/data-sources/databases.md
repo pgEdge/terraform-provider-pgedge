@@ -3,12 +3,12 @@
 page_title: "pgedge_databases Data Source - terraform-provider-pgedge"
 subcategory: ""
 description: |-
-  Interface with the pgEdge service API.
+  Data source for pgEdge databases
 ---
 
 # pgedge_databases (Data Source)
 
-Interface with the pgEdge service API.
+Data source for pgEdge databases
 
 
 
@@ -22,38 +22,86 @@ Interface with the pgEdge service API.
 <a id="nestedatt--databases"></a>
 ### Nested Schema for `databases`
 
-Optional:
+Read-Only:
 
-- `components` (Attributes List) (see [below for nested schema](#nestedatt--databases--components))
-- `config_version` (String) Config version of the database
-- `extensions` (Attributes) (see [below for nested schema](#nestedatt--databases--extensions))
-- `nodes` (Attributes List) (see [below for nested schema](#nestedatt--databases--nodes))
-- `options` (List of String) Options for creating the database
-- `tables` (Attributes List) (see [below for nested schema](#nestedatt--databases--tables))
+- `backups` (Attributes) Backup configuration for the database (see [below for nested schema](#nestedatt--databases--backups))
+- `cluster_id` (String) ID of the cluster this database belongs to
+- `components` (Attributes List) Components of the database (see [below for nested schema](#nestedatt--databases--components))
+- `config_version` (String) Configuration version of the database
+- `created_at` (String) Creation timestamp of the database
+- `domain` (String) Domain of the database
+- `extensions` (Attributes) Extensions configuration for the database (see [below for nested schema](#nestedatt--databases--extensions))
+- `id` (String) ID of the database
+- `name` (String) Name of the database
+- `nodes` (Attributes List) Nodes of the database (see [below for nested schema](#nestedatt--databases--nodes))
+- `options` (List of String) Options for the database
+- `pg_version` (String) PostgreSQL version of the database
+- `roles` (Attributes List) Roles in the database (see [below for nested schema](#nestedatt--databases--roles))
+- `status` (String) Status of the database
+- `storage_used` (Number) Storage used by the database in bytes
+- `updated_at` (String) Last update timestamp of the database
+
+<a id="nestedatt--databases--backups"></a>
+### Nested Schema for `databases.backups`
 
 Read-Only:
 
-- `cluster_id` (String) Updated at of the database
-- `created_at` (String) Created at of the database
-- `domain` (String) Domain of the database
-- `id` (String) ID of the database
-- `name` (String) Name of the database
-- `pg_version` (String) Postgres version of the database
-- `roles` (Attributes List) (see [below for nested schema](#nestedatt--databases--roles))
-- `status` (String) Status of the database
-- `storage_used` (Number) Storage used of the database
-- `updated_at` (String) Updated at of the database
+- `config` (Attributes List) Backup configurations (see [below for nested schema](#nestedatt--databases--backups--config))
+- `provider` (String) Backup provider
+
+<a id="nestedatt--databases--backups--config"></a>
+### Nested Schema for `databases.backups.config`
+
+Read-Only:
+
+- `id` (String) Backup configuration ID
+- `node_name` (String) Node name
+- `repositories` (Attributes List) Backup repositories (see [below for nested schema](#nestedatt--databases--backups--config--repositories))
+- `schedules` (Attributes List) Backup schedules (see [below for nested schema](#nestedatt--databases--backups--config--schedules))
+
+<a id="nestedatt--databases--backups--config--repositories"></a>
+### Nested Schema for `databases.backups.config.repositories`
+
+Read-Only:
+
+- `azure_account` (String)
+- `azure_container` (String)
+- `azure_endpoint` (String)
+- `backup_store_id` (String)
+- `base_path` (String)
+- `gcs_bucket` (String)
+- `gcs_endpoint` (String)
+- `id` (String)
+- `retention_full` (Number)
+- `retention_full_type` (String)
+- `s3_bucket` (String)
+- `s3_endpoint` (String)
+- `s3_region` (String)
+- `type` (String)
+
+
+<a id="nestedatt--databases--backups--config--schedules"></a>
+### Nested Schema for `databases.backups.config.schedules`
+
+Read-Only:
+
+- `cron_expression` (String)
+- `id` (String)
+- `type` (String)
+
+
+
 
 <a id="nestedatt--databases--components"></a>
 ### Nested Schema for `databases.components`
 
-Optional:
+Read-Only:
 
-- `id` (String) Id of the component
-- `name` (String) Name of the component
-- `release_date` (String) Release date of the component
-- `status` (String) Status of the component
-- `version` (String) Version of the component
+- `id` (String) Component ID
+- `name` (String) Component name
+- `release_date` (String) Component release date
+- `status` (String) Component status
+- `version` (String) Component version
 
 
 <a id="nestedatt--databases--extensions"></a>
@@ -61,83 +109,44 @@ Optional:
 
 Read-Only:
 
-- `auto_manage` (Boolean) Auto manage of the extension
-- `available` (List of String) Available of the extension
-- `requested` (List of String) Requested of the extension
+- `auto_manage` (Boolean) Auto-manage extensions
+- `available` (List of String) Available extensions
+- `requested` (List of String) Requested extensions
 
 
 <a id="nestedatt--databases--nodes"></a>
 ### Nested Schema for `databases.nodes`
 
-Optional:
-
-- `distance_measurement` (Attributes) (see [below for nested schema](#nestedatt--databases--nodes--distance_measurement))
-- `extensions` (Attributes) (see [below for nested schema](#nestedatt--databases--nodes--extensions))
-- `region` (Attributes) (see [below for nested schema](#nestedatt--databases--nodes--region))
-
 Read-Only:
 
-- `connection` (Attributes) (see [below for nested schema](#nestedatt--databases--nodes--connection))
-- `location` (Attributes) (see [below for nested schema](#nestedatt--databases--nodes--location))
-- `name` (String) Name of the node
-
-<a id="nestedatt--databases--nodes--distance_measurement"></a>
-### Nested Schema for `databases.nodes.distance_measurement`
-
-Optional:
-
-- `distance` (Number) Distance from a reference point
-- `from_latitude` (Number) Latitude of the reference point
-- `from_longitude` (Number) Longitude of the reference point
-- `unit` (String) Unit of distance measurement
-
-
-<a id="nestedatt--databases--nodes--extensions"></a>
-### Nested Schema for `databases.nodes.extensions`
-
-Optional:
-
-- `errors` (Attributes) (see [below for nested schema](#nestedatt--databases--nodes--extensions--errors))
-- `installed` (List of String) List of installed extensions
-
-<a id="nestedatt--databases--nodes--extensions--errors"></a>
-### Nested Schema for `databases.nodes.extensions.errors`
-
-Optional:
-
-- `anim9ef` (String) Error code anim9ef
-- `enim3b` (String) Error code enim3b
-- `laborumd` (String) Error code laborumd
-- `mollit267` (String) Error code mollit267
-
-
-
-<a id="nestedatt--databases--nodes--region"></a>
-### Nested Schema for `databases.nodes.region`
-
-Optional:
-
-- `active` (Boolean) Active status of the region
-- `availability_zones` (List of String) Availability zones of the region
-- `cloud` (String) Cloud provider of the region
-- `code` (String) Code of the region
-- `name` (String) Name of the region
-- `parent` (String) Parent region
-
+- `connection` (Attributes) Node connection details (see [below for nested schema](#nestedatt--databases--nodes--connection))
+- `extensions` (Attributes) Node extensions (see [below for nested schema](#nestedatt--databases--nodes--extensions))
+- `location` (Attributes) Node location (see [below for nested schema](#nestedatt--databases--nodes--location))
+- `name` (String) Node name
+- `region` (Attributes) Node region (see [below for nested schema](#nestedatt--databases--nodes--region))
 
 <a id="nestedatt--databases--nodes--connection"></a>
 ### Nested Schema for `databases.nodes.connection`
 
 Read-Only:
 
-- `database` (String) Database of the node
-- `external_ip_address` (String) External IP of the node
-- `host` (String) Host of the node
-- `internal_host` (String) Internal Host of the node
-- `internal_ip_address` (String) Internal IP of the node
-- `password` (String, Sensitive) Password of the node
-- `port` (Number) Port of the node
-- `username` (String) Username of the node
+- `database` (String)
+- `external_ip_address` (String)
+- `host` (String)
+- `internal_host` (String)
+- `internal_ip_address` (String)
+- `password` (String)
+- `port` (Number)
+- `username` (String)
+
+
+<a id="nestedatt--databases--nodes--extensions"></a>
+### Nested Schema for `databases.nodes.extensions`
+
+Read-Only:
+
+- `errors` (Map of String)
+- `installed` (List of String)
 
 
 <a id="nestedatt--databases--nodes--location"></a>
@@ -145,54 +154,30 @@ Read-Only:
 
 Read-Only:
 
-- `city` (String) City of the location
-- `code` (String) Code of the location
-- `country` (String) Country of the location
-- `latitude` (Number) Latitude of the location
-- `longitude` (Number) Longitude of the location
-- `metro_code` (String) Metro code of the location
-- `name` (String) Name of the location
-- `postal_code` (String) Postal code of the location
-- `region` (String) Region of the location
-- `region_code` (String) Region code of the location
-- `timezone` (String) Timezone of the location
+- `city` (String)
+- `code` (String)
+- `country` (String)
+- `latitude` (Number)
+- `longitude` (Number)
+- `metro_code` (String)
+- `name` (String)
+- `postal_code` (String)
+- `region` (String)
+- `region_code` (String)
+- `timezone` (String)
 
 
+<a id="nestedatt--databases--nodes--region"></a>
+### Nested Schema for `databases.nodes.region`
 
-<a id="nestedatt--databases--tables"></a>
-### Nested Schema for `databases.tables`
+Read-Only:
 
-Optional:
-
-- `columns` (Attributes List) (see [below for nested schema](#nestedatt--databases--tables--columns))
-- `name` (String) Name of the table
-- `primary_key` (List of String) Primary key of the table
-- `replication_sets` (List of String) Replication sets of the table
-- `schema` (String) Schema of the table
-- `status` (Attributes List) (see [below for nested schema](#nestedatt--databases--tables--status))
-
-<a id="nestedatt--databases--tables--columns"></a>
-### Nested Schema for `databases.tables.columns`
-
-Optional:
-
-- `data_type` (String) Data type of the column
-- `default` (String) Default of the column
-- `is_nullable` (Boolean) Is nullable of the column
-- `is_primary_key` (Boolean) Is primary key of the column
-- `name` (String) Name of the column
-- `ordinal_position` (Number) Ordinal position of the column
-
-
-<a id="nestedatt--databases--tables--status"></a>
-### Nested Schema for `databases.tables.status`
-
-Optional:
-
-- `aligned` (Boolean) Aligned of the table
-- `node_name` (String) Node name of the table
-- `present` (Boolean) Present of the table
-- `replicating` (Boolean) Replicating of the table
+- `active` (Boolean)
+- `availability_zones` (List of String)
+- `cloud` (String)
+- `code` (String)
+- `name` (String)
+- `parent` (String)
 
 
 
@@ -201,12 +186,12 @@ Optional:
 
 Read-Only:
 
-- `bypass_rls` (Boolean) Bypass RLS
-- `connection_limit` (Number) Connection limit
-- `create_db` (Boolean) Create database
-- `create_role` (Boolean) Create role
-- `inherit` (Boolean) Inherit
-- `login` (Boolean) Login
-- `name` (String) Name of the role
-- `replication` (Boolean) Replication
-- `superuser` (Boolean) Superuser
+- `bypass_rls` (Boolean)
+- `connection_limit` (Number)
+- `create_db` (Boolean)
+- `create_role` (Boolean)
+- `inherit` (Boolean)
+- `login` (Boolean)
+- `name` (String)
+- `replication` (Boolean)
+- `superuser` (Boolean)

@@ -3,12 +3,12 @@
 page_title: "pgedge_database Resource - terraform-provider-pgedge"
 subcategory: ""
 description: |-
-  Interface with the pgEdge service API.
+  Manages a pgEdge database.
 ---
 
 # pgedge_database (Resource)
 
-Interface with the pgEdge service API.
+Manages a pgEdge database.
 
 
 
@@ -17,20 +17,192 @@ Interface with the pgEdge service API.
 
 ### Required
 
-- `cluster_id` (String) ID of the cluster to place the database on
-- `name` (String) Name of the database
+- `cluster_id` (String) The ID of the cluster this database belongs to.
+- `name` (String) The name of the database.
 
 ### Optional
 
-- `config_version` (String) Config version of the database
-- `options` (List of String) Options for creating the database
+- `backups` (Attributes) Backup configuration for the database. (see [below for nested schema](#nestedatt--backups))
+- `config_version` (String) The configuration version of the database.
+- `extensions` (Attributes) Extensions configuration for the database. (see [below for nested schema](#nestedatt--extensions))
+- `nodes` (Attributes List) List of nodes in the database. (see [below for nested schema](#nestedatt--nodes))
+- `options` (List of String) A list of options for the database.
+- `roles` (Attributes List) List of roles in the database. (see [below for nested schema](#nestedatt--roles))
 
 ### Read-Only
 
-- `created_at` (String) Created at of the database
-- `domain` (String) Domain of the database
-- `id` (String) ID of the database
-- `pg_version` (String) Postgres version of the database
-- `status` (String) Status of the database
-- `storage_used` (Number) Storage used of the database
-- `updated_at` (String) Updated at of the database
+- `components` (Attributes List) List of components in the database. (see [below for nested schema](#nestedatt--components))
+- `created_at` (String) The timestamp when the database was created.
+- `domain` (String) The domain associated with the database.
+- `id` (String) Unique identifier for the database.
+- `pg_version` (String) The PostgreSQL version of the database.
+- `status` (String) The current status of the database.
+- `storage_used` (Number) The amount of storage used by the database in bytes.
+- `updated_at` (String) The timestamp when the database was last updated.
+
+<a id="nestedatt--backups"></a>
+### Nested Schema for `backups`
+
+Optional:
+
+- `config` (Attributes List) List of backup configurations. (see [below for nested schema](#nestedatt--backups--config))
+- `provider` (String) The backup provider.
+
+<a id="nestedatt--backups--config"></a>
+### Nested Schema for `backups.config`
+
+Optional:
+
+- `id` (String) Unique identifier for the backup config.
+- `node_name` (String) Name of the node.
+- `schedules` (Attributes List) List of backup schedules. (see [below for nested schema](#nestedatt--backups--config--schedules))
+
+Read-Only:
+
+- `repositories` (Attributes List) List of backup repositories. (see [below for nested schema](#nestedatt--backups--config--repositories))
+
+<a id="nestedatt--backups--config--schedules"></a>
+### Nested Schema for `backups.config.schedules`
+
+Optional:
+
+- `cron_expression` (String) Cron expression for the schedule.
+- `id` (String) Unique identifier for the schedule.
+- `type` (String) Type of the schedule.
+
+
+<a id="nestedatt--backups--config--repositories"></a>
+### Nested Schema for `backups.config.repositories`
+
+Optional:
+
+- `id` (String) Unique identifier for the repository.
+
+Read-Only:
+
+- `azure_account` (String) Azure account.
+- `azure_container` (String) Azure container.
+- `azure_endpoint` (String) Azure endpoint.
+- `backup_store_id` (String) ID of the backup store.
+- `base_path` (String) Base path for the repository.
+- `gcs_bucket` (String) GCS bucket name.
+- `gcs_endpoint` (String) GCS endpoint.
+- `retention_full` (Number) Retention period for full backups.
+- `retention_full_type` (String) Type of retention for full backups.
+- `s3_bucket` (String) S3 bucket name.
+- `s3_endpoint` (String) S3 endpoint.
+- `s3_region` (String) S3 region.
+- `type` (String) Type of the repository.
+
+
+
+
+<a id="nestedatt--extensions"></a>
+### Nested Schema for `extensions`
+
+Optional:
+
+- `auto_manage` (Boolean)
+- `requested` (List of String)
+
+Read-Only:
+
+- `available` (List of String)
+
+
+<a id="nestedatt--nodes"></a>
+### Nested Schema for `nodes`
+
+Optional:
+
+- `name` (String)
+
+Read-Only:
+
+- `connection` (Attributes) (see [below for nested schema](#nestedatt--nodes--connection))
+- `extensions` (Attributes) (see [below for nested schema](#nestedatt--nodes--extensions))
+- `location` (Attributes) (see [below for nested schema](#nestedatt--nodes--location))
+- `region` (Attributes) (see [below for nested schema](#nestedatt--nodes--region))
+
+<a id="nestedatt--nodes--connection"></a>
+### Nested Schema for `nodes.connection`
+
+Read-Only:
+
+- `database` (String)
+- `external_ip_address` (String)
+- `host` (String)
+- `internal_host` (String)
+- `internal_ip_address` (String)
+- `password` (String)
+- `port` (Number)
+- `username` (String)
+
+
+<a id="nestedatt--nodes--extensions"></a>
+### Nested Schema for `nodes.extensions`
+
+Read-Only:
+
+- `errors` (Map of String)
+- `installed` (List of String)
+
+
+<a id="nestedatt--nodes--location"></a>
+### Nested Schema for `nodes.location`
+
+Read-Only:
+
+- `city` (String)
+- `code` (String)
+- `country` (String)
+- `latitude` (Number)
+- `longitude` (Number)
+- `metro_code` (String)
+- `name` (String)
+- `postal_code` (String)
+- `region` (String)
+- `region_code` (String)
+- `timezone` (String)
+
+
+<a id="nestedatt--nodes--region"></a>
+### Nested Schema for `nodes.region`
+
+Read-Only:
+
+- `active` (Boolean)
+- `availability_zones` (List of String)
+- `cloud` (String)
+- `code` (String)
+- `name` (String)
+- `parent` (String)
+
+
+
+<a id="nestedatt--roles"></a>
+### Nested Schema for `roles`
+
+Read-Only:
+
+- `bypass_rls` (Boolean)
+- `connection_limit` (Number)
+- `create_db` (Boolean)
+- `create_role` (Boolean)
+- `inherit` (Boolean)
+- `login` (Boolean)
+- `name` (String)
+- `replication` (Boolean)
+- `superuser` (Boolean)
+
+
+<a id="nestedatt--components"></a>
+### Nested Schema for `components`
+
+Read-Only:
+
+- `id` (String)
+- `name` (String)
+- `release_date` (String)
+- `status` (String)
+- `version` (String)

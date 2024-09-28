@@ -3,12 +3,12 @@
 page_title: "pgedge_clusters Data Source - terraform-provider-pgedge"
 subcategory: ""
 description: |-
-  Interface with the pgEdge service API for clusters.
+  Data source for pgEdge clusters.
 ---
 
 # pgedge_clusters (Data Source)
 
-Interface with the pgEdge service API for clusters.
+Data source for pgEdge clusters.
 
 
 
@@ -22,36 +22,25 @@ Interface with the pgEdge service API for clusters.
 <a id="nestedatt--clusters"></a>
 ### Nested Schema for `clusters`
 
-Required:
-
-- `name` (String) Name of the cluster
-
 Optional:
 
-- `cloud_account` (Attributes) (see [below for nested schema](#nestedatt--clusters--cloud_account))
 - `nodes` (Attributes List) (see [below for nested schema](#nestedatt--clusters--nodes))
 
 Read-Only:
 
+- `backup_store_ids` (List of String) Backup store IDs of the cluster
+- `capacity` (Number) Capacity of the cluster
 - `cloud_account_id` (String) Cloud account ID of the cluster
 - `created_at` (String) Created at of the cluster
 - `firewall_rules` (Attributes List) (see [below for nested schema](#nestedatt--clusters--firewall_rules))
 - `id` (String) ID of the cluster
+- `name` (String) Name of the cluster
 - `networks` (Attributes List) (see [below for nested schema](#nestedatt--clusters--networks))
 - `node_location` (String) Node location of the cluster
 - `regions` (List of String)
+- `resource_tags` (Map of String) Resource tags of the cluster
 - `ssh_key_id` (String) SSH key ID of the cluster
 - `status` (String) Status of the cluster
-
-<a id="nestedatt--clusters--cloud_account"></a>
-### Nested Schema for `clusters.cloud_account`
-
-Read-Only:
-
-- `id` (String) Display name of the node
-- `name` (String) IP address of the node
-- `type` (String) Type of the node
-
 
 <a id="nestedatt--clusters--nodes"></a>
 ### Nested Schema for `clusters.nodes`
@@ -86,7 +75,7 @@ Read-Only:
 
 Read-Only:
 
-- `cidr` (String) CIDR of the AWS node group
+- `cidr` (String) CIDR of the network
 - `external` (Boolean) Is the network external
 - `external_id` (String) External ID of the network
 - `name` (String) Name of the network

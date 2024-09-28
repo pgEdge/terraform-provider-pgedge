@@ -2,15 +2,15 @@
 
 # pgEdge Terraform Provider
 
-The official Terraform provider for [pgEdge](https://www.pgedge.com/).
+The official Terraform provider for [pgEdge](https://www.pgedge.com/), designed to simplify the management of pgEdge resources for both **Developers** and **Enterprise** edition.
 
-- **Documentation:** https://registry.terraform.io/providers/pgEdge/pgedge/latest/docs
-- **Website**: https://www.pgedge.com/
-- **Discuss**: https://github.com/pgEdge/terraform-provider-pgedge/issues
+- **Documentation:** [pgEdge Terraform Docs](https://registry.terraform.io/providers/pgEdge/pgedge/latest/docs)
+- **Website:** [pgEdge](https://www.pgedge.com/)
+- **Discuss:** [GitHub Issues](https://github.com/pgEdge/terraform-provider-pgedge/issues)
 
 ## Installation
 
-Declare the provider in your configuration and `terraform init` will automatically fetch and install the provider for you from the [Terraform Registry](https://registry.terraform.io/providers/pgEdge/pgedge/latest):
+To get started, declare the pgEdge provider in your Terraform configuration. Running `terraform init` will automatically download and install the provider from the [Terraform Registry](https://registry.terraform.io/providers/pgEdge/pgedge/latest):
 
 ```hcl
 terraform {
@@ -22,72 +22,304 @@ terraform {
 }
 ```
 
-## Usage
+## Environment Setup
 
-[Create an API Client in pgEdge Cloud](https://dev.pgedge.com), and set the Client ID and Client Secret as environment variables:
+Before using the provider, you must create an API Client in [pgEdge Cloud](https://app.pgedge.com) and configure the following environment variables:
 
 ```sh
 export PGEDGE_CLIENT_ID="your-client-id"
 export PGEDGE_CLIENT_SECRET="your-client-secret"
 ```
 
-Then, you can use the provider in your configuration:
+These credentials authenticate the Terraform provider with your pgEdge Cloud account.
+
+## Usage
+
+### Developer User Configuration
+
+For Developer Edition, pgEdge offers access to manage databases. Here’s an example setup for Developer Edition::
 
 ```hcl
-provider "pgedge" {}
-
-resource "pgedge_cluster" "main" {
-  name             = "example"
-  cloud_account_id = "b8959307-be7e-4f6c-b29e-f753dbc39e4e"
-  ssh_key_id       = "b2ffbbd5-91b2-43f8-ae7f-6e47fcc71044"
-  regions          = ["us-west-1", "us-west-2"]
-  networks = [
-    {
-      region         = "us-west-1"
-      cidr           = "10.1.0.0/16"
-      public_subnets = ["10.1.1.0/24"]
-    },
-    {
-      region         = "us-west-2"
-      cidr           = "10.2.0.0/16"
-      public_subnets = ["10.2.1.0/24"]
+terraform {
+  required_providers {
+    pgedge = {
+      source = "pgEdge/pgedge"
     }
-  ]
-  firewall_rules = [
-    {
-      port    = 5432
-      sources = ["0.0.0.0/0"]
-    },
-    {
-      port    = 22
-      sources = ["0.0.0.0/0"]
-    }
-  ]
-  nodes = [
-    {
-      name              = "n1"
-      region            = "us-west-1"
-      availability_zone = "us-west-1a"
-      instance_type     = "t4g.medium"
-      volume_size       = 20
-      volume_type       = "gp2"
-    },
-    {
-      name              = "n2"
-      region            = "us-west-2"
-      availability_zone = "us-west-2a"
-      instance_type     = "t4g.medium"
-      volume_size       = 20
-      volume_type       = "gp2"
-    }
-  ]
+  }
 }
 
-# Create a database
-resource "pgedge_database" "example" {
-  name       = "exampledb"
-  cluster_id = pgedge_cluster.main.id
+provider "pgedge" {}
+
+# Define a database
+resource "pgedge_database" "defaultdb" {
+  name       = "defaultdb"
+  cluster_id = "f12239ddq-df9d-4ded-adqwead9-3e2bvhe6d6ee"
+
+  options = [
+    "rest:enabled",
+    "install:northwind"
+  ]
 }
 ```
 
-For more information on configuring providers in general, see the [Provider Configuration documentation](https://developer.hashicorp.com/terraform/language/providers/configuration).
+### Enterprise User Configuration
+
+Enterprise Edition users can manage Cloud Accounts, SSH keys, Backup Stores, and Clusters. Here's an Enterprise Edition example that includes mechanisms to manage various aspects of these resources:
+
+```hcl
+terraform {
+  required_providers {
+    pgedge = {
+      source = "pgEdge/pgedge"
+    }
+  }
+}
+
+provider "pgedge" {
+  base_url = "https://api.pgedge.com"
+}
+
+# SSH Key resource
+resource "pgedge_ssh_key" "example" {
+  name       = "example-key"
+  public_key = "ssh-ed25519 AAAAC3NzaC1wes241mmT63i04t5fvvsdwqVG7DkyxvyXbYQNhKP/rSeLY user@example.com"
+}
+
+# Cloud Account resource
+resource "pgedge_cloud_account" "example" {
+  name        = "my-aws-account"
+  type        = "aws"
+  description = "My AWS Cloud Account"
+
+  credentials = {
+    role_arn = "arn:aws:iam::0123456789:role/pgedge-13fe3332c"
+  }
+
+  depends_on = [pgedge_ssh_key.example]
+}
+
+# Backup Store resource
+resource "pgedge_backup_store" "test_store" {
+  name             = "test-store"
+  cloud_account_id = pgedge_cloud_account.example.id
+  region           = "us-east-1"
+
+  depends_on = [pgedge_cloud_account.example]
+}
+
+# Cluster resource with update support
+resource "pgedge_cluster" "example" {
+  name             = "example"
+  cloud_account_id = pgedge_cloud_account.example.id
+  regions          = ["us-west-2", "us-east-1", "eu-central-1"]
+  ssh_key_id       = pgedge_ssh_key.example.id
+  backup_store_ids = [pgedge_backup_store.test_store.id]
+
+  nodes = [
+    {
+      name          = "n1"
+      region        = "us-west-2"
+      instance_type = "r6g.medium"
+      volume_size   = 100
+      volume_type   = "gp2"
+    },
+    {
+      name          = "n2"
+      region        = "us-east-1"
+      instance_type = "r6g.medium"
+      volume_size   = 100
+      volume_type   = "gp2"
+    },
+    {
+      name          = "n3"
+      region        = "eu-central-1"
+      instance_type = "r6g.medium"
+      volume_size   = 100
+      volume_type   = "gp2"
+    }
+  ]
+
+  networks = [
+    {
+      region         = "us-west-2"
+      cidr           = "10.1.0.0/16"
+      public_subnets = ["10.1.0.0/24"]
+    # private_subnets = ["10.1.1.0/24"]
+    },
+    {
+      region         = "us-east-1"
+      cidr           = "10.2.0.0/16"
+      public_subnets = ["10.2.0.0/24"]
+    # private_subnets = ["10.2.1.0/24"]
+    },
+    {
+      region         = "eu-central-1"
+      cidr           = "10.3.0.0/16"
+      public_subnets = ["10.3.0.0/24"]
+    # private_subnets = ["10.3.1.0/24"]
+    }
+  ]
+
+  firewall_rules = [
+    {
+      name    = "postgres"
+      port    = 5432
+      sources = ["131.107.106.231/16"]
+    },
+  ]
+
+  depends_on = [pgedge_cloud_account.example]
+}
+
+### Updating a Cluster
+
+To update an existing cluster, such as adding or removing nodes, follow these steps:
+
+- **Add or remove nodes**: Modify the `nodes` block.
+- **Update regions and networks**: If you're adding or removing nodes, you must also update the corresponding `regions` and `networks` blocks for those nodes.
+- **Manage backup stores**: Adjust the `backup_store_ids` array if necessary.
+
+For example, when removing a node, ensure the corresponding region and network are also removed.
+
+---
+
+**Example: Removing a Node from the Cluster**
+
+To remove a node, you must also update the corresponding `regions` and `networks`:
+
+```hcl
+nodes = [
+  {
+    name          = "n1"
+    region        = "us-west-2"
+    instance_type = "r6g.medium"
+    volume_size   = 100
+    volume_type   = "gp2"
+  },
+  {
+    name          = "n3"
+    region        = "eu-central-1"
+    instance_type = "r6g.medium"
+    volume_size   = 100
+    volume_type   = "gp2"
+  }
+]
+
+regions = ["us-west-2", "eu-central-1"]
+
+networks = [
+  {
+    region         = "us-west-2"
+    cidr           = "10.1.0.0/16"
+    public_subnets = ["10.1.0.0/24"]
+  },
+  {
+    region         = "eu-central-1"
+    cidr           = "10.3.0.0/16"
+    public_subnets = ["10.3.0.0/24"]
+  }
+]
+```
+
+This ensures that all associated regions, nodes, and networks are synchronized when making changes.
+
+---
+
+### Database Resource with Update Support
+
+```hcl
+resource "pgedge_database" "example_db" {
+  name       = "exampledb"
+  cluster_id = pgedge_cluster.example.id
+
+  options = [
+    "install:northwind",
+    "rest:enabled",
+    "autoddl:enabled",
+    "cloudwatch_metrics:enabled"
+  ]
+
+  extensions = {
+    auto_manage = true
+    requested = [
+      "postgis",
+      "vector"
+    ]
+  }
+
+  nodes = [
+    {
+      name = "n1"
+    },
+    {
+      name = "n2"
+    },
+    {
+      name = "n3"
+    }
+  ]
+
+  backups = {
+    provider = "pgbackrest"
+    config = [
+      {
+        id        = "default"
+        node_name = "n1"
+        schedules = [
+          {
+            type            = "full"
+            cron_expression = "15 * * * *"
+            id              = "daily-full-backup"
+          }
+        ]
+      }
+    ]
+  }
+
+  depends_on = [pgedge_cluster.example]
+}
+```
+
+### Updating a Database
+
+- **Nodes**: Modify the `nodes` block to add or remove database nodes.
+- **Options**: Update the `options` array to configure additional settings.
+- **Extensions**: Modify the `extensions.requested` array to manage database extensions.
+
+---
+
+**Example Updates**
+
+**Removing a node from the database:**
+
+```hcl
+nodes = [
+  {
+    name = "n1"
+  },
+  {
+    name = "n3"
+  }
+]
+```
+
+**Adding a new backup store to a cluster:**
+
+```hcl
+backup_store_ids = [
+  pgedge_backup_store.test_store.id,
+  "new-backup-store-id"
+]
+```
+
+For further details on provider configuration, refer to the [Terraform Provider Configuration guide](https://developer.hashicorp.com/terraform/language/providers/configuration).
+
+---
+
+## Contributing
+
+We welcome and appreciate contributions from the community. Please review the [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on how to get involved.
+
+## License
+
+This project is licensed under the Apache License. See the [LICENSE](LICENSE) file for details.

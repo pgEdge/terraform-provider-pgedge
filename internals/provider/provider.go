@@ -78,7 +78,7 @@ func (p *PgEdgeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 	}
 
 	if baseUrl == "" {
-		baseUrl = "https://api.pgedge.com"
+		baseUrl = "https://api.pgedge.com/v1"
 	}
 
 	if ClientId == "" {

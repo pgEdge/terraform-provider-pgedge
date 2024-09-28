@@ -3,12 +3,12 @@
 page_title: "pgedge_cluster Resource - terraform-provider-pgedge"
 subcategory: ""
 description: |-
-  Interface with the pgEdge service API for clusters.
+  
 ---
 
 # pgedge_cluster (Resource)
 
-Interface with the pgEdge service API for clusters.
+
 
 
 
@@ -17,48 +17,42 @@ Interface with the pgEdge service API for clusters.
 
 ### Required
 
-- `cloud_account_id` (String) ID of the target cloud account
-- `name` (String) Name of the cluster
+- `cloud_account_id` (String)
+- `name` (String)
+- `networks` (Attributes List) (see [below for nested schema](#nestedatt--networks))
+- `node_location` (String)
+- `nodes` (Attributes List) (see [below for nested schema](#nestedatt--nodes))
 - `regions` (List of String)
 
 ### Optional
 
+- `backup_store_ids` (List of String) List of backup store IDs to associate with the cluster
+- `capacity` (Number)
 - `firewall_rules` (Attributes List) (see [below for nested schema](#nestedatt--firewall_rules))
-- `networks` (Attributes List) (see [below for nested schema](#nestedatt--networks))
-- `node_location` (String) Network location for nodes (public or private)
-- `nodes` (Attributes List) (see [below for nested schema](#nestedatt--nodes))
-- `ssh_key_id` (String) ID of the SSH key to add to the cluster nodes
+- `resource_tags` (Map of String) A map of tags to assign to the cluster
+- `ssh_key_id` (String)
 
 ### Read-Only
 
-- `created_at` (String) Creation time of the cluster
-- `id` (String) ID of the cluster
-- `status` (String) Status of the cluster
-
-<a id="nestedatt--firewall_rules"></a>
-### Nested Schema for `firewall_rules`
-
-Required:
-
-- `port` (Number) Port whose traffic is allowed
-- `sources` (List of String) CIDRs and/or IP addresses allowed
-
+- `created_at` (String)
+- `id` (String) The ID of this resource.
+- `status` (String)
 
 <a id="nestedatt--networks"></a>
 ### Nested Schema for `networks`
 
 Required:
 
+- `cidr` (String) CIDR of the network
+- `public_subnets` (List of String) List of public subnets
 - `region` (String) Region of the network
 
 Optional:
 
-- `cidr` (String) CIDR range for the network
-- `external` (Boolean) Is the network externally defined
-- `external_id` (String) ID of the network, if externally defined
+- `external` (Boolean) Whether the network is external
+- `external_id` (String) External ID of the network
 - `name` (String) Name of the network
-- `private_subnets` (List of String)
-- `public_subnets` (List of String)
+- `private_subnets` (List of String) List of private subnets
 
 
 <a id="nestedatt--nodes"></a>
@@ -66,14 +60,23 @@ Optional:
 
 Required:
 
-- `region` (String) Cloud provider region
+- `instance_type` (String)
+- `name` (String)
+- `region` (String)
 
 Optional:
 
-- `availability_zone` (String) Cloud provider availability zone name
-- `instance_type` (String) Instance type used for the node
-- `name` (String) Node name
-- `options` (List of String)
-- `volume_iops` (Number) Volume IOPS of the node data volume
-- `volume_size` (Number) Volume size of the node data volume
-- `volume_type` (String) Volume type of the node data volume
+- `availability_zone` (String)
+- `volume_iops` (Number)
+- `volume_size` (Number)
+- `volume_type` (String)
+
+
+<a id="nestedatt--firewall_rules"></a>
+### Nested Schema for `firewall_rules`
+
+Required:
+
+- `name` (String)
+- `port` (Number)
+- `sources` (List of String)
