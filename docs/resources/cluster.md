@@ -43,9 +43,16 @@ description: |-
 
 Required:
 
-- `cidr` (String)
-- `public_subnets` (List of String)
-- `region` (String)
+- `cidr` (String) CIDR of the network
+- `public_subnets` (List of String) List of public subnets
+- `region` (String) Region of the network
+
+Optional:
+
+- `external` (Boolean) Whether the network is external
+- `external_id` (String) External ID of the network
+- `name` (String) Name of the network
+- `private_subnets` (List of String) List of private subnets
 
 
 <a id="nestedatt--nodes"></a>
