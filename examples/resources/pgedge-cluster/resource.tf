@@ -8,17 +8,17 @@ resource "pgedge_cluster" "example" {
 
   nodes = [
     {
-      name          = "node1"
+      name          = "n1"
       region        = "us-west-2"
-      instance_type = "t4g.medium"
-      volume_size   = 20
+      instance_type = "r6g.medium"
+      volume_size   = 100
       volume_type   = "gp2"
     },
     {
-      name          = "node2"
+      name          = "n2"
       region        = "us-east-1"
-      instance_type = "t4g.medium"
-      volume_size   = 20
+      instance_type = "r6g.medium"
+      volume_size   = 100
       volume_type   = "gp2"
     }
   ]
@@ -28,24 +28,26 @@ resource "pgedge_cluster" "example" {
       region         = "us-west-2"
       cidr           = "10.1.0.0/16"
       public_subnets = ["10.1.1.0/24"]
+      # private_subnets = ["10.1.2.0/24"]
     },
     {
       region         = "us-east-1"
       cidr           = "10.2.0.0/16"
       public_subnets = ["10.2.1.0/24"]
+      # private_subnets = ["10.2.2.0/24"]
     }
   ]
 
   backup_store_ids = [
     "b8959307-dtqwd1-4f6c-b29e-f753dbc39e4e",
     "b8959307-dfgw2-4f6c-b29e-f753dbc39e4e"
-    ]
+  ]
 
   firewall_rules = [
     {
       name    = "postgres"
       port    = 5432
-      sources = ["0.0.0.0/0"]
+      sources = ["103.213.321.452/32"]
     }
   ]
 }

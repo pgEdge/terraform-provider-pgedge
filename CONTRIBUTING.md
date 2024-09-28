@@ -49,8 +49,6 @@ Before you begin, ensure you have the following tools installed:
    export PGEDGE_ROLE_ARN="your-role-arn" # optional. For running Tests only.
    ```
 
-Certainly! I'll update the "Making Changes" section as you've suggested, focusing on the importance of running `go install .` after every change. Here's the revised section:
-
 ## Making Changes
 
 1. Create a new branch for your changes:

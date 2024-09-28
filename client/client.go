@@ -29,16 +29,13 @@ func NewClient(baseUrl, authHeader string) *Client {
 		url = "https://api.pgedge.com/v1"
 	} else {
 		url = baseUrl
-		// Remove trailing slash if present
 		url = strings.TrimSuffix(url, "/")
 		
-		// Ensure the /v1 prefix is present
 		if !strings.HasSuffix(url, "/v1") {
 			url += "/v1"
 		}
 	}
 
-	// Split the URL into scheme and host+path
 	if strings.Contains(url, "://") {
 		parts := strings.SplitN(url, "://", 2)
 		schemes = []string{parts[0]}
@@ -47,11 +44,9 @@ func NewClient(baseUrl, authHeader string) *Client {
 		schemes = []string{"https"}
 	}
 
-	// Remove the scheme from the URL if it's still there
 	url = strings.TrimPrefix(url, "http://")
 	url = strings.TrimPrefix(url, "https://")
 
-	// Split host and path
 	hostAndPath := strings.SplitN(url, "/", 2)
 	host := hostAndPath[0]
 	path := ""
@@ -59,7 +54,6 @@ func NewClient(baseUrl, authHeader string) *Client {
 		path = "/" + hostAndPath[1]
 	}
 
-	// Create the transport with the correct host and basePath
 	transport := httptransport.New(host, path, schemes)
 	client := New(transport, strfmt.Default)
 

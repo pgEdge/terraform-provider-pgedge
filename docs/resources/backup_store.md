@@ -19,9 +19,6 @@ description: |-
 
 - `cloud_account_id` (String)
 - `name` (String)
-
-### Optional
-
 - `region` (String)
 
 ### Read-Only

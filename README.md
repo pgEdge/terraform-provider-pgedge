@@ -2,7 +2,7 @@
 
 # pgEdge Terraform Provider
 
-The official Terraform provider for [pgEdge](https://www.pgedge.com/), designed to simplify the management of pgEdge resources for both **developers** and **enterprise** users.
+The official Terraform provider for [pgEdge](https://www.pgedge.com/), designed to simplify the management of pgEdge resources for both **Developers** and **Enterprise** edition.
 
 - **Documentation:** [pgEdge Terraform Docs](https://registry.terraform.io/providers/pgEdge/pgedge/latest/docs)
 - **Website:** [pgEdge](https://www.pgedge.com/)
@@ -24,7 +24,7 @@ terraform {
 
 ## Environment Setup
 
-Before using the provider, you must create an API Client in [pgEdge Cloud](https://dev.pgedge.com) and configure the following environment variables:
+Before using the provider, you must create an API Client in [pgEdge Cloud](https://app.pgedge.com) and configure the following environment variables:
 
 ```sh
 export PGEDGE_CLIENT_ID="your-client-id"
@@ -37,7 +37,7 @@ These credentials authenticate the Terraform provider with your pgEdge Cloud acc
 
 ### Developer User Configuration
 
-For developers, pgEdge offers access to manage databases and a limited number of cluster nodes. Here’s an example setup for developers:
+For Developer Edition, pgEdge offers access to manage databases. Here’s an example setup for Developer Edition::
 
 ```hcl
 terraform {
@@ -53,7 +53,7 @@ provider "pgedge" {}
 # Define a database
 resource "pgedge_database" "defaultdb" {
   name       = "defaultdb"
-  cluster_id = "e67574b7-df9d-4ded-88f8-3e2173e6d6ee"
+  cluster_id = "f12239ddq-df9d-4ded-adqwead9-3e2bvhe6d6ee"
 
   options = [
     "rest:enabled",
@@ -64,7 +64,7 @@ resource "pgedge_database" "defaultdb" {
 
 ### Enterprise User Configuration
 
-Enterprise users can manage cloud accounts, SSH keys, backup stores, and advanced clusters with greater flexibility. Here's an enterprise setup that includes mechanisms to modify nodes, regions, networks, backup stores, and more:
+Enterprise Edition users can manage Cloud Accounts, SSH keys, Backup Stores, and Clusters. Here's an Enterprise Edition example that includes mechanisms to manage various aspects of these resources:
 
 ```hcl
 terraform {
@@ -92,7 +92,7 @@ resource "pgedge_cloud_account" "example" {
   description = "My AWS Cloud Account"
 
   credentials = {
-    role_arn = "arn:aws:iam::2551251142433:role/pgedge-13ffc32c"
+    role_arn = "arn:aws:iam::0123456789:role/pgedge-13fe3332c"
   }
 
   depends_on = [pgedge_ssh_key.example]
@@ -102,58 +102,61 @@ resource "pgedge_cloud_account" "example" {
 resource "pgedge_backup_store" "test_store" {
   name             = "test-store"
   cloud_account_id = pgedge_cloud_account.example.id
-  region           = "ap-northeast-1"
+  region           = "us-east-1"
 
   depends_on = [pgedge_cloud_account.example]
 }
 
 # Cluster resource with update support
 resource "pgedge_cluster" "example" {
-  name             = "examplecluster"
+  name             = "example"
   cloud_account_id = pgedge_cloud_account.example.id
-  regions          = ["ap-northeast-1", "ap-northeast-3", "ap-northeast-2"]
+  regions          = ["us-west-2", "us-east-1", "eu-central-1"]
   ssh_key_id       = pgedge_ssh_key.example.id
   backup_store_ids = [pgedge_backup_store.test_store.id]
 
   nodes = [
     {
       name          = "n1"
-      region        = "ap-northeast-1"
-      instance_type = "t4g.medium"
-      volume_size   = 20
+      region        = "us-west-2"
+      instance_type = "r6g.medium"
+      volume_size   = 100
       volume_type   = "gp2"
     },
     {
       name          = "n2"
-      region        = "ap-northeast-3"
-      instance_type = "t4g.medium"
-      volume_size   = 20
+      region        = "us-east-1"
+      instance_type = "r6g.medium"
+      volume_size   = 100
       volume_type   = "gp2"
     },
     {
       name          = "n3"
-      region        = "ap-northeast-2"
-      instance_type = "t4g.medium"
-      volume_size   = 20
+      region        = "eu-central-1"
+      instance_type = "r6g.medium"
+      volume_size   = 100
       volume_type   = "gp2"
     }
   ]
 
   networks = [
     {
-      region         = "ap-northeast-1"
+      region         = "us-west-2"
       cidr           = "10.1.0.0/16"
       public_subnets = ["10.1.0.0/24"]
+    # private_subnets = ["10.1.1.0/24"]
     },
     {
-      region         = "ap-northeast-3"
+      region         = "us-east-1"
       cidr           = "10.2.0.0/16"
       public_subnets = ["10.2.0.0/24"]
+    # private_subnets = ["10.2.1.0/24"]
     },
     {
-      region         = "ap-northeast-2"
+      region         = "eu-central-1"
       cidr           = "10.3.0.0/16"
       public_subnets = ["10.3.0.0/24"]
+    # private_subnets = ["10.3.1.0/24"]
     }
   ]
 
@@ -161,7 +164,7 @@ resource "pgedge_cluster" "example" {
     {
       name    = "postgres"
       port    = 5432
-      sources = ["0.0.0.0/0"]
+      sources = ["131.107.106.231/16"]
     },
   ]
 
@@ -188,30 +191,30 @@ To remove a node, you must also update the corresponding `regions` and `networks
 nodes = [
   {
     name          = "n1"
-    region        = "ap-northeast-1"
-    instance_type = "t4g.medium"
-    volume_size   = 20
+    region        = "us-west-2"
+    instance_type = "r6g.medium"
+    volume_size   = 100
     volume_type   = "gp2"
   },
   {
     name          = "n3"
-    region        = "ap-northeast-2"
-    instance_type = "t4g.medium"
-    volume_size   = 20
+    region        = "eu-central-1"
+    instance_type = "r6g.medium"
+    volume_size   = 100
     volume_type   = "gp2"
   }
 ]
 
-regions = ["ap-northeast-1", "ap-northeast-2"]
+regions = ["us-west-2", "eu-central-1"]
 
 networks = [
   {
-    region         = "ap-northeast-1"
+    region         = "us-west-2"
     cidr           = "10.1.0.0/16"
     public_subnets = ["10.1.0.0/24"]
   },
   {
-    region         = "ap-northeast-2"
+    region         = "eu-central-1"
     cidr           = "10.3.0.0/16"
     public_subnets = ["10.3.0.0/24"]
   }
@@ -257,7 +260,7 @@ resource "pgedge_database" "example_db" {
   ]
 
   backups = {
-    provider = "pgdump"
+    provider = "pgbackrest"
     config = [
       {
         id        = "default"
@@ -265,7 +268,7 @@ resource "pgedge_database" "example_db" {
         schedules = [
           {
             type            = "full"
-            cron_expression = "0 6 * * ?"
+            cron_expression = "15 * * * *"
             id              = "daily-full-backup"
           }
         ]
