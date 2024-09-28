@@ -573,7 +573,18 @@ func (c *Client) DeleteBackupStore(ctx context.Context, id strfmt.UUID) error {
     request.SetAuthorization(c.AuthHeader)
 
     _, err := c.PgEdgeAPIClient.Operations.DeleteBackupStoresID(request)
-    return err
+    if err == nil {
+		for {
+			_, err := c.GetBackupStore(ctx, id)
+			if err != nil {
+				return nil
+			}
+
+			time.Sleep(5 * time.Second)
+		}
+	}
+
+	return err	
 }
 
 
