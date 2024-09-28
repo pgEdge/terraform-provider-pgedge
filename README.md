@@ -64,7 +64,7 @@ resource "pgedge_database" "defaultdb" {
 
 ### Enterprise Setup
 
-Enterprise users can manage cloud accounts, SSH keys, backup stores, and advanced clusters with greater flexibility:
+Enterprise users can manage cloud accounts, SSH keys, backup stores, and advanced clusters with greater flexibility. Here’s an example configuration for enterprise users, including mechanisms to update nodes, regions, backup stores, options, and extensions.
 
 ```hcl
 terraform {
@@ -107,7 +107,7 @@ resource "pgedge_backup_store" "test_store" {
   depends_on = [pgedge_cloud_account.example]
 }
 
-# Define a Cluster
+# Define a Cluster with Update Capabilities
 resource "pgedge_cluster" "example" {
   name             = "examplecluster"
   cloud_account_id = pgedge_cloud_account.example.id
@@ -168,7 +168,14 @@ resource "pgedge_cluster" "example" {
   depends_on = [pgedge_cloud_account.example]
 }
 
-# Create a database
+# Updating a Cluster
+# To update the cluster by adding/removing nodes, regions, networks, or backup stores, simply modify the corresponding arrays:
+#
+# - Add/remove nodes by updating the `nodes` block.
+# - Add/remove regions and networks by updating the `regions` and `networks` blocks.
+# - Add/remove backup stores by modifying the `backup_store_ids` array.
+
+# Define a Database with Update Capabilities
 resource "pgedge_database" "example_db" {
   name       = "exampledb"
   cluster_id = pgedge_cluster.example.id
@@ -219,6 +226,37 @@ resource "pgedge_database" "example_db" {
 
   depends_on = [pgedge_cluster.example]
 }
+
+# Updating a Database
+# To update the database:
+#
+# - Add/remove nodes by modifying the `nodes` block.
+# - Add/remove options by updating the `options` array.
+# - Add/remove extensions by modifying the `extensions.requested` array.
+```
+
+### Example Updates
+
+**To remove a node from the database:**
+
+```hcl
+nodes = [
+  {
+    name = "n1"
+  },
+  {
+    name = "n3"
+  }
+]
+```
+
+**To add a new backup store to the cluster:**
+
+```hcl
+backup_store_ids = [
+  pgedge_backup_store.test_store.id,
+  "new-backup-store-id"
+]
 ```
 
 For more information on configuring providers in general, refer to the [Provider Configuration documentation](https://developer.hashicorp.com/terraform/language/providers/configuration).
