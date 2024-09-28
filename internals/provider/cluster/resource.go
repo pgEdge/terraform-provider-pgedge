@@ -10,7 +10,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/listplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -106,9 +108,52 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Required: true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
-						"region":         schema.StringAttribute{Required: true},
-						"cidr":           schema.StringAttribute{Required: true},
-						"public_subnets": schema.ListAttribute{Required: true, ElementType: types.StringType},
+						"cidr": schema.StringAttribute{
+							Required:    true,
+							Description: "CIDR of the network",
+						},
+						"external": schema.BoolAttribute{
+							Optional:    true,
+							Computed:    true,
+							PlanModifiers: []planmodifier.Bool{
+								boolplanmodifier.UseStateForUnknown(),
+							},
+							Description: "Whether the network is external",
+						},
+						"external_id": schema.StringAttribute{
+							Optional:    true,
+							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+							Description: "External ID of the network",
+						},
+						"name": schema.StringAttribute{
+							Optional:    true,
+							Computed:    true,
+							PlanModifiers: []planmodifier.String{
+								stringplanmodifier.UseStateForUnknown(),
+							},
+							Description: "Name of the network",
+						},
+						"private_subnets": schema.ListAttribute{
+							Optional:    true,
+							Computed:    true,
+							PlanModifiers: []planmodifier.List{
+								listplanmodifier.UseStateForUnknown(),
+							},
+							ElementType: types.StringType,
+							Description: "List of private subnets",
+						},
+						"public_subnets": schema.ListAttribute{
+							Required:    true,
+							ElementType: types.StringType,
+							Description: "List of public subnets",
+						},
+						"region": schema.StringAttribute{
+							Required:    true,
+							Description: "Region of the network",
+						},
 					},
 				},
 			},
@@ -207,10 +252,20 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			return
 		}
 
+		privateSubnets, diags := convertToStringSlice(ctx, network.PrivateSubnets)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
 		createInput.Networks = append(createInput.Networks, &models.ClusterNetworkSettings{
-			Region:        network.Region.ValueStringPointer(),
-			Cidr:          network.Cidr.ValueString(),
-			PublicSubnets: publicSubnets,
+			Region:         network.Region.ValueStringPointer(),
+			Cidr:           network.Cidr.ValueString(),
+			PublicSubnets:  publicSubnets,
+			PrivateSubnets: privateSubnets,
+			Name:           network.Name.ValueString(),
+			External:       network.External.ValueBool(),
+			ExternalID:     network.ExternalID.ValueString(),
 		})
 	}
 
@@ -268,11 +323,10 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 	plan.Nodes = nodes
 
-	// Update Networks
 	networks := make([]networkModel, 0)
 	for _, network := range cluster.Networks {
 		networks = append(networks, networkModel{
-			Region: types.StringValue(*network.Region),
+			Region: types.StringPointerValue(network.Region),
 			Cidr:   types.StringValue(network.Cidr),
 			PublicSubnets: types.ListValueMust(types.StringType, func() []attr.Value {
 				subnets := make([]attr.Value, len(network.PublicSubnets))
@@ -281,6 +335,16 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 				}
 				return subnets
 			}()),
+			PrivateSubnets: types.ListValueMust(types.StringType, func() []attr.Value {
+				subnets := make([]attr.Value, len(network.PrivateSubnets))
+				for i, subnet := range network.PrivateSubnets {
+					subnets[i] = types.StringValue(subnet)
+				}
+				return subnets
+			}()),
+			Name:       types.StringValue(network.Name),
+			External:   types.BoolValue(network.External),
+			ExternalID: types.StringValue(network.ExternalID),
 		})
 	}
 	plan.Networks = networks
@@ -412,11 +476,10 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 	}
 	state.Nodes = nodes
 
-	// Handle Networks
 	networks := make([]networkModel, 0)
 	for _, network := range cluster.Networks {
 		networks = append(networks, networkModel{
-			Region: types.StringValue(*network.Region),
+			Region: types.StringPointerValue(network.Region),
 			Cidr:   types.StringValue(network.Cidr),
 			PublicSubnets: types.ListValueMust(types.StringType, func() []attr.Value {
 				subnets := make([]attr.Value, len(network.PublicSubnets))
@@ -425,6 +488,16 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 				}
 				return subnets
 			}()),
+			PrivateSubnets: types.ListValueMust(types.StringType, func() []attr.Value {
+				subnets := make([]attr.Value, len(network.PrivateSubnets))
+				for i, subnet := range network.PrivateSubnets {
+					subnets[i] = types.StringValue(subnet)
+				}
+				return subnets
+			}()),
+			Name:       types.StringValue(network.Name),
+			External:   types.BoolValue(network.External),
+			ExternalID: types.StringValue(network.ExternalID),
 		})
 	}
 	state.Networks = networks
@@ -456,13 +529,13 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state clusterResourceModel
-    diags := req.Plan.Get(ctx, &plan)
-    resp.Diagnostics.Append(diags...)
-    diags = req.State.Get(ctx, &state)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	diags = req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
 	regions, diags := convertToStringSlice(ctx, plan.Regions)
 	resp.Diagnostics.Append(diags...)
@@ -491,11 +564,12 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	updateInput := &models.UpdateClusterInput{
 		SSHKeyID: plan.SSHKeyID.ValueString(),
 		Nodes:    make([]*models.ClusterNodeSettings, 0),
+		Networks: make([]*models.ClusterNetworkSettings, 0),
 	}
 	updateInput.Regions = regions
 	if !compareStringSlices(planBackupStoreIds, stateBackupStoreIds) {
-        updateInput.BackupStoreIds = planBackupStoreIds
-    }
+		updateInput.BackupStoreIds = planBackupStoreIds
+	}
 	updateInput.ResourceTags = resourceTags
 
 	// Add nodes
@@ -521,10 +595,20 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 			return
 		}
 
+		privateSubnets, diags := convertToStringSlice(ctx, network.PrivateSubnets)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+
 		networkSettings := &models.ClusterNetworkSettings{
-			Region:        network.Region.ValueStringPointer(),
-			Cidr:          network.Cidr.ValueString(),
-			PublicSubnets: publicSubnets,
+			Region:         network.Region.ValueStringPointer(),
+			Cidr:           network.Cidr.ValueString(),
+			PublicSubnets:  publicSubnets,
+			PrivateSubnets: privateSubnets,
+			Name:           network.Name.ValueString(),
+			External:       network.External.ValueBool(),
+			ExternalID:     network.ExternalID.ValueString(),
 		}
 
 		updateInput.Networks = append(updateInput.Networks, networkSettings)
@@ -561,6 +645,31 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	updatedPlan.BackupStoreIDs = plan.BackupStoreIDs
 	updatedPlan.ResourceTags = plan.ResourceTags
 
+	updatedPlan.Networks = make([]networkModel, 0)
+	for _, network := range cluster.Networks {
+		updatedPlan.Networks = append(updatedPlan.Networks, networkModel{
+			Region: types.StringPointerValue(network.Region),
+			Cidr:   types.StringValue(network.Cidr),
+			PublicSubnets: types.ListValueMust(types.StringType, func() []attr.Value {
+				subnets := make([]attr.Value, len(network.PublicSubnets))
+				for i, subnet := range network.PublicSubnets {
+					subnets[i] = types.StringValue(subnet)
+				}
+				return subnets
+			}()),
+			PrivateSubnets: types.ListValueMust(types.StringType, func() []attr.Value {
+				subnets := make([]attr.Value, len(network.PrivateSubnets))
+				for i, subnet := range network.PrivateSubnets {
+					subnets[i] = types.StringValue(subnet)
+				}
+				return subnets
+			}()),
+			Name:       types.StringValue(network.Name),
+			External:   types.BoolValue(network.External),
+			ExternalID: types.StringValue(network.ExternalID),
+		})
+	}
+
 	if !plan.SSHKeyID.IsNull() || !plan.SSHKeyID.IsUnknown() {
 		updatedPlan.SSHKeyID = plan.SSHKeyID
 	}
@@ -581,7 +690,6 @@ func (r *clusterResource) mapClusterToResourceModel(cluster *models.Cluster) clu
 		CreatedAt:      types.StringPointerValue(cluster.CreatedAt),
 		// Regions:        r.mapRegionsToResourceModel(cluster.Regions),
 		Nodes:         r.mapNodesToResourceModel(cluster.Nodes),
-		Networks:      r.mapNetworksToResourceModel(cluster.Networks),
 		FirewallRules: r.mapFirewallRulesToResourceModel(cluster.FirewallRules),
 		Capacity:      types.Int64Value(cluster.Capacity),
 	}
@@ -608,18 +716,6 @@ func (r *clusterResource) mapNodesToResourceModel(nodes []*models.ClusterNodeSet
 			VolumeSize:       types.Int64Value(node.VolumeSize),
 			VolumeType:       types.StringValue(node.VolumeType),
 			VolumeIops:       types.Int64Value(node.VolumeIops),
-		})
-	}
-	return result
-}
-
-func (r *clusterResource) mapNetworksToResourceModel(networks []*models.ClusterNetworkSettings) []networkModel {
-	var result []networkModel
-	for _, network := range networks {
-		result = append(result, networkModel{
-			Region:        types.StringPointerValue(network.Region),
-			Cidr:          types.StringValue(network.Cidr),
-			PublicSubnets: types.ListValueMust(types.StringType, r.stringSliceToValueSlice(network.PublicSubnets)),
 		})
 	}
 	return result
@@ -691,9 +787,13 @@ type nodeModel struct {
 }
 
 type networkModel struct {
-	Region        types.String `tfsdk:"region"`
-	Cidr          types.String `tfsdk:"cidr"`
-	PublicSubnets types.List   `tfsdk:"public_subnets"`
+	Cidr           types.String `tfsdk:"cidr"`
+	External       types.Bool   `tfsdk:"external"`
+	ExternalID     types.String `tfsdk:"external_id"`
+	Name           types.String `tfsdk:"name"`
+	PrivateSubnets types.List   `tfsdk:"private_subnets"`
+	PublicSubnets  types.List   `tfsdk:"public_subnets"`
+	Region         types.String `tfsdk:"region"`
 }
 
 type firewallRuleModel struct {
@@ -759,19 +859,19 @@ func compareRegions(a, b []string) bool {
 }
 
 func compareStringSlices(a, b []string) bool {
-    if len(a) != len(b) {
-        return false
-    }
-    aCopy := make([]string, len(a))
-    bCopy := make([]string, len(b))
-    copy(aCopy, a)
-    copy(bCopy, b)
-    sort.Strings(aCopy)
-    sort.Strings(bCopy)
-    for i := range aCopy {
-        if aCopy[i] != bCopy[i] {
-            return false
-        }
-    }
-    return true
+	if len(a) != len(b) {
+		return false
+	}
+	aCopy := make([]string, len(a))
+	bCopy := make([]string, len(b))
+	copy(aCopy, a)
+	copy(bCopy, b)
+	sort.Strings(aCopy)
+	sort.Strings(bCopy)
+	for i := range aCopy {
+		if aCopy[i] != bCopy[i] {
+			return false
+		}
+	}
+	return true
 }

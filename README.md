@@ -82,7 +82,7 @@ provider "pgedge" {
 # SSH Key resource
 resource "pgedge_ssh_key" "example" {
   name       = "example-key"
-  public_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAICXfT63i04t5fvvlGeoUoVG7DkyxvyXbYQNhKP/rSeLY user@example.com"
+  public_key = "ssh-ed25519 AAAAC3NzaC1wes241mmT63i04t5fvvsdwqVG7DkyxvyXbYQNhKP/rSeLY user@example.com"
 }
 
 # Cloud Account resource
