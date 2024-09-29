@@ -273,8 +273,8 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					"requested": schema.ListAttribute{Computed: true, Optional: true, ElementType: types.StringType},
 				},
 			},
-			"nodes": schema.ListNestedAttribute{
-				Description: "List of nodes in the database.",
+			"nodes": schema.MapNestedAttribute{
+				Description: "Map of nodes in the database.",
 				Required:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
@@ -582,7 +582,6 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 					if resp.Diagnostics.HasError() {
 						return
 					}
-					
 					for _, repo := range repositories {
 						backupConfig.Repositories = append(backupConfig.Repositories, &models.BackupRepository{
 							ID:                *repo.ID.ValueStringPointer(),
@@ -687,7 +686,7 @@ func (r *databaseResource) Read(ctx context.Context, req resource.ReadRequest, r
 	}
 }
 
-func (r *databaseResource) nodesEqual(planNodes, stateNodes types.List) bool {
+func (r *databaseResource) nodesEqual(planNodes, stateNodes types.Map) bool {
 	if planNodes.IsNull() || stateNodes.IsNull() {
 		return planNodes.IsNull() == stateNodes.IsNull()
 	}
@@ -702,7 +701,7 @@ func (r *databaseResource) nodesEqual(planNodes, stateNodes types.List) bool {
 	planNodeNames := make(map[string]bool)
 	stateNodeNames := make(map[string]bool)
 
-	for _, nodeElem := range planElements {
+	for key, nodeElem := range planElements {
 		if nodeObj, ok := nodeElem.(types.Object); ok {
 			var node struct {
 				Name types.String `tfsdk:"name"`
@@ -711,11 +710,15 @@ func (r *databaseResource) nodesEqual(planNodes, stateNodes types.List) bool {
 			if diags.HasError() {
 				continue
 			}
-			planNodeNames[node.Name.ValueString()] = true
+			planNodeNames[key] = true
+			// Ensure the key matches the node name
+			if key != node.Name.ValueString() {
+				return false
+			}
 		}
 	}
 
-	for _, nodeElem := range stateElements {
+	for key, nodeElem := range stateElements {
 		if nodeObj, ok := nodeElem.(types.Object); ok {
 			var node struct {
 				Name types.String `tfsdk:"name"`
@@ -724,7 +727,11 @@ func (r *databaseResource) nodesEqual(planNodes, stateNodes types.List) bool {
 			if diags.HasError() {
 				continue
 			}
-			stateNodeNames[node.Name.ValueString()] = true
+			stateNodeNames[key] = true
+			// Ensure the key matches the node name
+			if key != node.Name.ValueString() {
+				return false
+			}
 		}
 	}
 
@@ -845,7 +852,7 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 	case "nodes":
 		nodesUpdateInput := &models.UpdateDatabaseInput{}
 
-		nodes, diags := r.nodesToUpdateInput(ctx, diags, plan.Nodes)
+		nodes, diags := r.nodesToUpdateInput(ctx, plan.Nodes)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -905,10 +912,11 @@ func (r *databaseResource) Delete(ctx context.Context, req resource.DeleteReques
 	})
 }
 
-func (r *databaseResource) nodesToUpdateInput(ctx context.Context, diags diag.Diagnostics, nodesList types.List) ([]*models.DatabaseNode, diag.Diagnostics) {
+func (r *databaseResource) nodesToUpdateInput(ctx context.Context, nodesMap types.Map) ([]*models.DatabaseNode, diag.Diagnostics) {
 	var nodes []*models.DatabaseNode
+	var diags diag.Diagnostics
 
-	for _, nodeElem := range nodesList.Elements() {
+	for key, nodeElem := range nodesMap.Elements() {
 		nodeObj, ok := nodeElem.(types.Object)
 		if !ok {
 			diags.AddError("Invalid node type", fmt.Sprintf("Expected types.Object, got %T", nodeElem))
@@ -926,6 +934,12 @@ func (r *databaseResource) nodesToUpdateInput(ctx context.Context, diags diag.Di
 		diags.Append(nodeObj.As(ctx, &node, basetypes.ObjectAsOptions{})...)
 		if diags.HasError() {
 			return nil, diags
+		}
+
+		// Ensure the key matches the node name
+		if key != node.Name.ValueString() {
+			diags.AddError("Node name mismatch", fmt.Sprintf("Node key '%s' does not match node name '%s'", key, node.Name.ValueString()))
+			continue
 		}
 
 		dbNode := &models.DatabaseNode{
@@ -1198,8 +1212,18 @@ func (r *databaseResource) mapExtensionsToResourceModel(extensions *models.Exten
 	return extensionsObj
 }
 
-func (r *databaseResource) mapNodesToResourceModel(nodes []*models.DatabaseNode) types.List {
-    nodesList := []attr.Value{}
+func (r *databaseResource) nodeAttrTypes() map[string]attr.Type {
+    return map[string]attr.Type{
+        "name":       types.StringType,
+        "connection": types.ObjectType{AttrTypes: r.connectionAttrTypes()},
+        "location":   types.ObjectType{AttrTypes: r.locationAttrTypes()},
+        "region":     types.ObjectType{AttrTypes: r.regionAttrTypes()},
+        "extensions": types.ObjectType{AttrTypes: r.nodeExtensionsAttrTypes()},
+    }
+}
+
+func (r *databaseResource) mapNodesToResourceModel(nodes []*models.DatabaseNode) types.Map {
+    nodeMap := make(map[string]attr.Value)
     nodeAttrTypes := map[string]attr.Type{
         "name":       types.StringType,
         "connection": types.ObjectType{AttrTypes: r.connectionAttrTypes()},
@@ -1209,6 +1233,10 @@ func (r *databaseResource) mapNodesToResourceModel(nodes []*models.DatabaseNode)
     }
 
     for _, node := range nodes {
+        if node.Name == nil {
+            continue
+        }
+
         regionObj := r.mapRegionToResourceModel(node.Region)
         if regionObj.IsNull() {
             regionObj, _ = types.ObjectValue(r.regionAttrTypes(), map[string]attr.Value{
@@ -1224,17 +1252,17 @@ func (r *databaseResource) mapNodesToResourceModel(nodes []*models.DatabaseNode)
         nodeObj, _ := types.ObjectValue(
             nodeAttrTypes,
             map[string]attr.Value{
-                "name":       types.StringPointerValue(node.Name),
+                "name":       types.StringValue(*node.Name),
                 "connection": r.mapConnectionToResourceModel(node.Connection),
                 "location":   r.mapLocationToResourceModel(node.Location),
                 "region":     regionObj,
                 "extensions": r.mapNodeExtensionsToResourceModel(node.Extensions),
             },
         )
-        nodesList = append(nodesList, nodeObj)
+        nodeMap[*node.Name] = nodeObj
     }
 
-    return types.ListValueMust(types.ObjectType{AttrTypes: nodeAttrTypes}, nodesList)
+    return types.MapValueMust(types.ObjectType{AttrTypes: nodeAttrTypes}, nodeMap)
 }
 
 func sortNodes(nodes []*models.DatabaseNode) []*models.DatabaseNode {
@@ -1479,7 +1507,7 @@ type databaseResourceModel struct {
 	Backups       types.Object `tfsdk:"backups"`
 	Components    types.List   `tfsdk:"components"`
 	Extensions    types.Object `tfsdk:"extensions"`
-	Nodes         types.List   `tfsdk:"nodes"`
+	Nodes         types.Map    `tfsdk:"nodes"`
 	Roles         types.List   `tfsdk:"roles"`
 }
 
