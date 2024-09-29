@@ -65,7 +65,7 @@ type DatabaseModel struct {
 	Backups        types.Object `tfsdk:"backups"`
 	Components     types.List   `tfsdk:"components"`
 	Extensions     types.Object `tfsdk:"extensions"`
-	Nodes          types.List   `tfsdk:"nodes"`
+	Nodes          types.Map    `tfsdk:"nodes"`
 	Roles          types.List   `tfsdk:"roles"`
 }
 
@@ -138,13 +138,13 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Description: "Extensions configuration for the database",
 							Attributes:  d.extensionsSchema(),
 						},
-						"nodes": schema.ListNestedAttribute{
-							Computed:    true,
-							Description: "Nodes of the database",
-							NestedObject: schema.NestedAttributeObject{
-								Attributes: d.nodeSchema(),
-							},
-						},
+						"nodes": schema.MapNestedAttribute{
+    				Computed:    true,
+    Description: "Map of nodes in the database",
+    NestedObject: schema.NestedAttributeObject{
+        Attributes: d.nodeSchema(),
+    },
+},
 						"roles": schema.ListNestedAttribute{
 							Computed:    true,
 							Description: "Roles in the database",
@@ -316,33 +316,35 @@ func (d *databasesDataSource) extensionsSchema() map[string]schema.Attribute {
 }
 
 func (d *databasesDataSource) nodeSchema() map[string]schema.Attribute {
-	return map[string]schema.Attribute{
-		"name": schema.StringAttribute{
-			Computed:    true,
-			Description: "Node name",
-		},
-		"connection": schema.SingleNestedAttribute{
-			Computed:    true,
-			Description: "Node connection details",
-			Attributes:  d.connectionSchema(),
-		},
-		"location": schema.SingleNestedAttribute{
-			Computed:    true,
-			Description: "Node location",
-			Attributes:  d.locationSchema(),
-		},
-		"region": schema.SingleNestedAttribute{
-			Computed:    true,
-			Description: "Node region",
-			Attributes:  d.regionSchema(),
-		},
-		"extensions": schema.SingleNestedAttribute{
-			Computed:    true,
-			Description: "Node extensions",
-			Attributes:  d.nodeExtensionsSchema(),
-		},
-	}
+    return map[string]schema.Attribute{
+        "name": schema.StringAttribute{
+            Computed:    true,
+            Description: "Name of the node",
+        },
+        "connection": schema.SingleNestedAttribute{
+            Computed:    true,
+            Description: "Node connection details",
+            Attributes:  d.connectionSchema(),
+        },
+        "location": schema.SingleNestedAttribute{
+            Computed:    true,
+            Description: "Node location",
+            Attributes:  d.locationSchema(),
+        },
+        "region": schema.SingleNestedAttribute{
+            Computed:    true,
+            Description: "Node region",
+            Attributes:  d.regionSchema(),
+        },
+        "extensions": schema.SingleNestedAttribute{
+            Computed:    true,
+            Description: "Node extensions",
+            Attributes:  d.nodeExtensionsSchema(),
+        },
+    }
 }
+
+
 
 func (d *databasesDataSource) connectionSchema() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
@@ -630,34 +632,34 @@ func (d *databasesDataSource) nodeExtensionsAttrTypes() map[string]attr.Type {
     }
 }
 
-func (d *databasesDataSource) mapNodesToModel(nodes []*models.DatabaseNode) types.List {
-	nodesList := []attr.Value{}
-	nodeAttrTypes := map[string]attr.Type{
-		"name":       types.StringType,
-		"connection": types.ObjectType{AttrTypes: d.connectionAttrTypes()},
-		"location":   types.ObjectType{AttrTypes: d.locationAttrTypes()},
-		"region":     types.ObjectType{AttrTypes: d.regionAttrTypes()},
-		"extensions": types.ObjectType{AttrTypes: d.nodeExtensionsAttrTypes()},
-	}
+func (d *databasesDataSource) mapNodesToModel(nodes []*models.DatabaseNode) types.Map {
+    nodeMap := make(map[string]attr.Value)
+    nodeAttrTypes := map[string]attr.Type{
+        "name":       types.StringType,
+        "connection": types.ObjectType{AttrTypes: d.connectionAttrTypes()},
+        "location":   types.ObjectType{AttrTypes: d.locationAttrTypes()},
+        "region":     types.ObjectType{AttrTypes: d.regionAttrTypes()},
+        "extensions": types.ObjectType{AttrTypes: d.nodeExtensionsAttrTypes()},
+    }
 
-	// Sort nodes by name
-	sortedNodes := sortNodes(nodes)
+    for _, node := range nodes {
+        if node.Name == nil {
+            continue
+        }
+        nodeObj, _ := types.ObjectValue(
+            nodeAttrTypes,
+            map[string]attr.Value{
+                "name":       types.StringPointerValue(node.Name),
+                "connection": d.mapConnectionToModel(node.Connection),
+                "location":   d.mapLocationToModel(node.Location),
+                "region":     d.mapRegionToModel(node.Region),
+                "extensions": d.mapNodeExtensionsToModel(node.Extensions),
+            },
+        )
+        nodeMap[*node.Name] = nodeObj
+    }
 
-	for _, node := range sortedNodes {
-		nodeObj, _ := types.ObjectValue(
-			nodeAttrTypes,
-			map[string]attr.Value{
-				"name":       types.StringPointerValue(node.Name),
-				"connection": d.mapConnectionToModel(node.Connection),
-				"location":   d.mapLocationToModel(node.Location),
-				"region":     d.mapRegionToModel(node.Region),
-				"extensions": d.mapNodeExtensionsToModel(node.Extensions),
-			},
-		)
-		nodesList = append(nodesList, nodeObj)
-	}
-
-	return types.ListValueMust(types.ObjectType{AttrTypes: nodeAttrTypes}, nodesList)
+    return types.MapValueMust(types.ObjectType{AttrTypes: nodeAttrTypes}, nodeMap)
 }
 
 func (d *databasesDataSource) mapConnectionToModel(connection *models.Connection) types.Object {
