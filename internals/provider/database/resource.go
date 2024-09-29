@@ -21,6 +21,9 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
+
+	// "github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
 	"github.com/pgEdge/terraform-provider-pgedge/client/models"
@@ -331,9 +334,9 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						},
 						"extensions": schema.SingleNestedAttribute{
 							Computed: true,
-							// PlanModifiers: []planmodifier.Object{
-							// 	conditionalUseStateForUnknownModifier{},
-							// },
+							PlanModifiers: []planmodifier.Object{
+								conditionalUseStateForUnknownModifier{},
+							},
 							Attributes: map[string]schema.Attribute{
 								"errors":    schema.MapAttribute{Computed: true, ElementType: types.StringType, PlanModifiers: []planmodifier.Map{mapplanmodifier.UseStateForUnknown()}},
 								"installed": schema.ListAttribute{Computed: true, ElementType: types.StringType, PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()}},
@@ -367,103 +370,102 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 		},
 	}
 }
-
 // Plan modifier for node extensions
-// type conditionalUseStateForUnknownModifier struct{}
+type conditionalUseStateForUnknownModifier struct{}
 
-// func (m conditionalUseStateForUnknownModifier) Description(_ context.Context) string {
-// 	return "Uses the prior state for nodeextensions if extensions hasn't been modified."
-// }
+func (m conditionalUseStateForUnknownModifier) Description(_ context.Context) string {
+	return "Uses the prior state for nodeextensions if extensions hasn't been modified."
+}
 
-// func (m conditionalUseStateForUnknownModifier) MarkdownDescription(_ context.Context) string {
-// 	return "Uses the prior state for nodeextensions if extensions hasn't been modified."
-// }
+func (m conditionalUseStateForUnknownModifier) MarkdownDescription(_ context.Context) string {
+	return "Uses the prior state for nodeextensions if extensions hasn't been modified."
+}
 
-// func (m conditionalUseStateForUnknownModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
-// 	if req.StateValue.IsNull() {
-// 		return
-// 	}
+func (m conditionalUseStateForUnknownModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+	if req.StateValue.IsNull() {
+		return
+	}
 
-// 	if !req.PlanValue.IsUnknown() {
-// 		return
-// 	}
+	if !req.PlanValue.IsUnknown() {
+		return
+	}
 
-// 	var configRequested, stateInstalled []string
+	var configRequested, stateInstalled []string
 
-// 	if !req.Config.Raw.IsNull() {
-// 		var configData map[string]tftypes.Value
-// 		err := req.Config.Raw.As(&configData)
-// 		if err == nil {
-// 			if extVal, ok := configData["extensions"]; ok {
-// 				var extMap map[string]tftypes.Value
-// 				err = extVal.As(&extMap)
-// 				if err == nil {
-// 					if reqVal, ok := extMap["requested"]; ok {
-// 						var requestedList []tftypes.Value
-// 						err = reqVal.As(&requestedList)
-// 						if err == nil {
-// 							for _, v := range requestedList {
-// 								var s string
-// 								if err := v.As(&s); err == nil {
-// 									configRequested = append(configRequested, s)
-// 								}
-// 							}
-// 						} else {
-// 							// TODO: log error
-// 						}
-// 					}
-// 				}
-// 			}
-// 		}
-// 	}
+	if !req.Config.Raw.IsNull() {
+		var configData map[string]tftypes.Value
+		err := req.Config.Raw.As(&configData)
+		if err == nil {
+			if extVal, ok := configData["extensions"]; ok {
+				var extMap map[string]tftypes.Value
+				err = extVal.As(&extMap)
+				if err == nil {
+					if reqVal, ok := extMap["requested"]; ok {
+						var requestedList []tftypes.Value
+						err = reqVal.As(&requestedList)
+						if err == nil {
+							for _, v := range requestedList {
+								var s string
+								if err := v.As(&s); err == nil {
+									configRequested = append(configRequested, s)
+								}
+							}
+						} else {
+							// TODO: log error
+						}
+					}
+				}
+			}
+		}
+	}
 
-// 	if !req.StateValue.IsNull() {
-// 		stateData := req.StateValue.Attributes()
-// 		if installedVal, ok := stateData["installed"].(types.List); ok {
-// 			stateInstalled = make([]string, 0, len(installedVal.Elements()))
-// 			for _, elem := range installedVal.Elements() {
-// 				if strVal, ok := elem.(types.String); ok {
-// 					stateInstalled = append(stateInstalled, strVal.ValueString())
-// 				}
-// 			}
-// 		}
-// 	}
+	if !req.StateValue.IsNull() {
+		stateData := req.StateValue.Attributes()
+		if installedVal, ok := stateData["installed"].(types.List); ok {
+			stateInstalled = make([]string, 0, len(installedVal.Elements()))
+			for _, elem := range installedVal.Elements() {
+				if strVal, ok := elem.(types.String); ok {
+					stateInstalled = append(stateInstalled, strVal.ValueString())
+				}
+			}
+		}
+	}
 
-// 	if len(stateInstalled) == 0 {
-// 		return
-// 	}
+	if len(stateInstalled) == 0 {
+		return
+	}
 
-// 	if compareStringSlices(configRequested, stateInstalled) {
-// 		resp.PlanValue = req.StateValue
-// 		return
-// 	}
+	if compareStringSlices(configRequested, stateInstalled) {
+		resp.PlanValue = req.StateValue
+		return
+	}
 
-// }
+}
 
-// func compareStringSlices(a, b []string) bool {
-// 	if len(a) != len(b) {
-// 		return false
-// 	}
+func compareStringSlices(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
 
-// 	countMap := make(map[string]int)
+	countMap := make(map[string]int)
 
-// 	for _, v := range a {
-// 		countMap[v]++
-// 	}
+	for _, v := range a {
+		countMap[v]++
+	}
 
-// 	for _, v := range b {
-// 		countMap[v]--
-// 		if countMap[v] == 0 {
-// 			delete(countMap, v)
-// 		}
-// 	}
+	for _, v := range b {
+		countMap[v]--
+		if countMap[v] == 0 {
+			delete(countMap, v)
+		}
+	}
 
-// 	return len(countMap) == 0
-// }
+	return len(countMap) == 0
+}
 
-// func New() planmodifier.Object {
-// 	return &conditionalUseStateForUnknownModifier{}
-// }
+func New() planmodifier.Object {
+	return &conditionalUseStateForUnknownModifier{}
+}
 
 func (r *databaseResource) Configure(_ context.Context, req resource.ConfigureRequest, resp *resource.ConfigureResponse) {
 	if req.ProviderData == nil {
@@ -582,7 +584,7 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 					if resp.Diagnostics.HasError() {
 						return
 					}
-
+					
 					for _, repo := range repositories {
 						backupConfig.Repositories = append(backupConfig.Repositories, &models.BackupRepository{
 							ID:                *repo.ID.ValueStringPointer(),
@@ -1199,42 +1201,42 @@ func (r *databaseResource) mapExtensionsToResourceModel(extensions *models.Exten
 }
 
 func (r *databaseResource) mapNodesToResourceModel(nodes []*models.DatabaseNode) types.List {
-	nodesList := []attr.Value{}
-	nodeAttrTypes := map[string]attr.Type{
-		"name":       types.StringType,
-		"connection": types.ObjectType{AttrTypes: r.connectionAttrTypes()},
-		"location":   types.ObjectType{AttrTypes: r.locationAttrTypes()},
-		"region":     types.ObjectType{AttrTypes: r.regionAttrTypes()},
-		"extensions": types.ObjectType{AttrTypes: r.nodeExtensionsAttrTypes()},
-	}
+    nodesList := []attr.Value{}
+    nodeAttrTypes := map[string]attr.Type{
+        "name":       types.StringType,
+        "connection": types.ObjectType{AttrTypes: r.connectionAttrTypes()},
+        "location":   types.ObjectType{AttrTypes: r.locationAttrTypes()},
+        "region":     types.ObjectType{AttrTypes: r.regionAttrTypes()},
+        "extensions": types.ObjectType{AttrTypes: r.nodeExtensionsAttrTypes()},
+    }
 
-	for _, node := range nodes {
-		regionObj := r.mapRegionToResourceModel(node.Region)
-		if regionObj.IsNull() {
-			regionObj, _ = types.ObjectValue(r.regionAttrTypes(), map[string]attr.Value{
-				"active":             types.BoolNull(),
-				"availability_zones": types.ListNull(types.StringType),
-				"cloud":              types.StringNull(),
-				"code":               types.StringNull(),
-				"name":               types.StringNull(),
-				"parent":             types.StringNull(),
-			})
-		}
+    for _, node := range nodes {
+        regionObj := r.mapRegionToResourceModel(node.Region)
+        if regionObj.IsNull() {
+            regionObj, _ = types.ObjectValue(r.regionAttrTypes(), map[string]attr.Value{
+                "active":             types.BoolNull(),
+                "availability_zones": types.ListNull(types.StringType),
+                "cloud":              types.StringNull(),
+                "code":               types.StringNull(),
+                "name":               types.StringNull(),
+                "parent":             types.StringNull(),
+            })
+        }
 
-		nodeObj, _ := types.ObjectValue(
-			nodeAttrTypes,
-			map[string]attr.Value{
-				"name":       types.StringPointerValue(node.Name),
-				"connection": r.mapConnectionToResourceModel(node.Connection),
-				"location":   r.mapLocationToResourceModel(node.Location),
-				"region":     regionObj,
-				"extensions": r.mapNodeExtensionsToResourceModel(node.Extensions),
-			},
-		)
-		nodesList = append(nodesList, nodeObj)
-	}
+        nodeObj, _ := types.ObjectValue(
+            nodeAttrTypes,
+            map[string]attr.Value{
+                "name":       types.StringPointerValue(node.Name),
+                "connection": r.mapConnectionToResourceModel(node.Connection),
+                "location":   r.mapLocationToResourceModel(node.Location),
+                "region":     regionObj,
+                "extensions": r.mapNodeExtensionsToResourceModel(node.Extensions),
+            },
+        )
+        nodesList = append(nodesList, nodeObj)
+    }
 
-	return types.ListValueMust(types.ObjectType{AttrTypes: nodeAttrTypes}, nodesList)
+    return types.ListValueMust(types.ObjectType{AttrTypes: nodeAttrTypes}, nodesList)
 }
 
 func sortNodes(nodes []*models.DatabaseNode) []*models.DatabaseNode {
