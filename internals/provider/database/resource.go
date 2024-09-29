@@ -275,15 +275,11 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 			"nodes": schema.ListNestedAttribute{
 				Description: "List of nodes in the database.",
-				Computed:    true,
-				Optional:    true,
+				Required:    true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: map[string]schema.Attribute{
 						"name": schema.StringAttribute{
 							Required: true,
-							PlanModifiers: []planmodifier.String{
-								stringplanmodifier.RequiresReplace(),
-							},
 						},
 						"connection": schema.SingleNestedAttribute{
 							Computed: true,
