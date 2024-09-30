@@ -50,10 +50,102 @@ func (p *PgEdgeProvider) Schema(ctx context.Context, req provider.SchemaRequest,
 				Description: "Base Url to use when connecting to the PgEdge service.",
 			},
 		},
-		Blocks:      map[string]schema.Block{},
-		Description: "Interface with the pgEdge service API.",
-	}
+		Blocks: map[string]schema.Block{},
+        Description: `
+The pgEdge provider is used to interact with the resources supported by pgEdge. 
+It allows you to manage various aspects of your pgEdge infrastructure, including databases, clusters, cloud accounts, SSH keys, and backup stores.
+
+## Authentication
+
+The provider needs to be configured with the proper credentials before it can be used. 
+You can provide your credentials via environment variables:
+
+- Set the PGEDGE_CLIENT_ID environment variable for your pgEdge Client ID.
+- Set the PGEDGE_CLIENT_SECRET environment variable for your pgEdge Client Secret.
+
+Example provider configuration:
+
+` + "```hcl" + `
+# Configure the pgEdge Provider
+provider "pgedge" {}
+
+# Set environment variables
+# export PGEDGE_CLIENT_ID="your-client-id"
+# export PGEDGE_CLIENT_SECRET="your-client-secret"
+` + "```" + `
+
+## Example Usage
+
+### Managing a Cluster
+
+` + "```hcl" + `
+resource "pgedge_cluster" "example" {
+  name             = "example-cluster"
+  cloud_account_id = "your-cloud-account-id"
+  regions          = ["us-west-2", "us-east-1"]
+  node_location    = "public"
+
+  nodes = [
+    {
+      name          = "node1"
+      region        = "us-west-2"
+      instance_type = "r6g.medium"
+    },
+    {
+      name          = "node2"
+      region        = "us-east-1"
+      instance_type = "r6g.medium"
+    }
+  ]
+
+  networks = [
+    {
+      region         = "us-west-2"
+      cidr           = "10.1.0.0/16"
+      public_subnets = ["10.1.1.0/24"]
+    },
+    {
+      region         = "us-east-1"
+      cidr           = "10.2.0.0/16"
+      public_subnets = ["10.2.1.0/24"]
+    }
+  ]
 }
+` + "```" + `
+
+### Managing a Database
+
+` + "```hcl" + `
+resource "pgedge_database" "example" {
+  name       = "example-db"
+  cluster_id = "your-cluster-id"
+
+  options = [
+    "install:northwind",
+    "rest:enabled"
+  ]
+
+  extensions = {
+    auto_manage = true
+    requested   = ["postgis"]
+  }
+
+  nodes = {
+	n1 = {
+	  name = "n1"
+	},
+	n2 = {
+	  name = "n2"
+	}
+  }
+}
+` + "```" + `
+
+For more information on the available resources and their configurations, please refer to the documentation for each resource and data source.
+`,
+    }
+}
+
 func (p *PgEdgeProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
 	tflog.Info(ctx, "Configuring pgEdge client")
 

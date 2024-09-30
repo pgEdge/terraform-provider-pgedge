@@ -19,13 +19,13 @@ Manages a pgEdge database.
 
 - `cluster_id` (String) The ID of the cluster this database belongs to.
 - `name` (String) The name of the database.
+- `nodes` (Attributes Map) Map of nodes in the database. (see [below for nested schema](#nestedatt--nodes))
 
 ### Optional
 
 - `backups` (Attributes) Backup configuration for the database. (see [below for nested schema](#nestedatt--backups))
 - `config_version` (String) The configuration version of the database.
 - `extensions` (Attributes) Extensions configuration for the database. (see [below for nested schema](#nestedatt--extensions))
-- `nodes` (Attributes List) List of nodes in the database. (see [below for nested schema](#nestedatt--nodes))
 - `options` (List of String) A list of options for the database.
 - `roles` (Attributes List) List of roles in the database. (see [below for nested schema](#nestedatt--roles))
 
@@ -39,6 +39,76 @@ Manages a pgEdge database.
 - `status` (String) The current status of the database.
 - `storage_used` (Number) The amount of storage used by the database in bytes.
 - `updated_at` (String) The timestamp when the database was last updated.
+
+<a id="nestedatt--nodes"></a>
+### Nested Schema for `nodes`
+
+Required:
+
+- `name` (String)
+
+Read-Only:
+
+- `connection` (Attributes) (see [below for nested schema](#nestedatt--nodes--connection))
+- `extensions` (Attributes) (see [below for nested schema](#nestedatt--nodes--extensions))
+- `location` (Attributes) (see [below for nested schema](#nestedatt--nodes--location))
+- `region` (Attributes) (see [below for nested schema](#nestedatt--nodes--region))
+
+<a id="nestedatt--nodes--connection"></a>
+### Nested Schema for `nodes.connection`
+
+Read-Only:
+
+- `database` (String)
+- `external_ip_address` (String)
+- `host` (String)
+- `internal_host` (String)
+- `internal_ip_address` (String)
+- `password` (String)
+- `port` (Number)
+- `username` (String)
+
+
+<a id="nestedatt--nodes--extensions"></a>
+### Nested Schema for `nodes.extensions`
+
+Read-Only:
+
+- `errors` (Map of String)
+- `installed` (List of String)
+
+
+<a id="nestedatt--nodes--location"></a>
+### Nested Schema for `nodes.location`
+
+Read-Only:
+
+- `city` (String)
+- `code` (String)
+- `country` (String)
+- `latitude` (Number)
+- `longitude` (Number)
+- `metro_code` (String)
+- `name` (String)
+- `postal_code` (String)
+- `region` (String)
+- `region_code` (String)
+- `timezone` (String)
+
+
+<a id="nestedatt--nodes--region"></a>
+### Nested Schema for `nodes.region`
+
+Read-Only:
+
+- `active` (Boolean)
+- `availability_zones` (List of String)
+- `cloud` (String)
+- `code` (String)
+- `name` (String)
+- `parent` (String)
+
+
 
 <a id="nestedatt--backups"></a>
 ### Nested Schema for `backups`
@@ -108,76 +178,6 @@ Optional:
 Read-Only:
 
 - `available` (List of String)
-
-
-<a id="nestedatt--nodes"></a>
-### Nested Schema for `nodes`
-
-Optional:
-
-- `name` (String)
-
-Read-Only:
-
-- `connection` (Attributes) (see [below for nested schema](#nestedatt--nodes--connection))
-- `extensions` (Attributes) (see [below for nested schema](#nestedatt--nodes--extensions))
-- `location` (Attributes) (see [below for nested schema](#nestedatt--nodes--location))
-- `region` (Attributes) (see [below for nested schema](#nestedatt--nodes--region))
-
-<a id="nestedatt--nodes--connection"></a>
-### Nested Schema for `nodes.connection`
-
-Read-Only:
-
-- `database` (String)
-- `external_ip_address` (String)
-- `host` (String)
-- `internal_host` (String)
-- `internal_ip_address` (String)
-- `password` (String)
-- `port` (Number)
-- `username` (String)
-
-
-<a id="nestedatt--nodes--extensions"></a>
-### Nested Schema for `nodes.extensions`
-
-Read-Only:
-
-- `errors` (Map of String)
-- `installed` (List of String)
-
-
-<a id="nestedatt--nodes--location"></a>
-### Nested Schema for `nodes.location`
-
-Read-Only:
-
-- `city` (String)
-- `code` (String)
-- `country` (String)
-- `latitude` (Number)
-- `longitude` (Number)
-- `metro_code` (String)
-- `name` (String)
-- `postal_code` (String)
-- `region` (String)
-- `region_code` (String)
-- `timezone` (String)
-
-
-<a id="nestedatt--nodes--region"></a>
-### Nested Schema for `nodes.region`
-
-Read-Only:
-
-- `active` (Boolean)
-- `availability_zones` (List of String)
-- `cloud` (String)
-- `code` (String)
-- `name` (String)
-- `parent` (String)
-
 
 
 <a id="nestedatt--roles"></a>

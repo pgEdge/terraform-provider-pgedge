@@ -33,7 +33,7 @@ Read-Only:
 - `extensions` (Attributes) Extensions configuration for the database (see [below for nested schema](#nestedatt--databases--extensions))
 - `id` (String) ID of the database
 - `name` (String) Name of the database
-- `nodes` (Attributes List) Nodes of the database (see [below for nested schema](#nestedatt--databases--nodes))
+- `nodes` (Attributes Map) Map of nodes in the database (see [below for nested schema](#nestedatt--databases--nodes))
 - `options` (List of String) Options for the database
 - `pg_version` (String) PostgreSQL version of the database
 - `roles` (Attributes List) Roles in the database (see [below for nested schema](#nestedatt--databases--roles))
@@ -122,7 +122,7 @@ Read-Only:
 - `connection` (Attributes) Node connection details (see [below for nested schema](#nestedatt--databases--nodes--connection))
 - `extensions` (Attributes) Node extensions (see [below for nested schema](#nestedatt--databases--nodes--extensions))
 - `location` (Attributes) Node location (see [below for nested schema](#nestedatt--databases--nodes--location))
-- `name` (String) Node name
+- `name` (String) Name of the node
 - `region` (Attributes) Node region (see [below for nested schema](#nestedatt--databases--nodes--region))
 
 <a id="nestedatt--databases--nodes--connection"></a>

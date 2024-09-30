@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
@@ -16,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/mapplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
@@ -80,6 +82,10 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 			"node_location": schema.StringAttribute{
 				Required: true,
+				Description: "Node location of the cluster. Must be either 'public' or 'private'.",
+				Validators: []validator.String{
+                    stringvalidator.OneOf("public", "private"),
+                },
 			},
 			"status": schema.StringAttribute{
 				Computed: true,

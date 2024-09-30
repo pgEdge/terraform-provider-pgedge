@@ -36,7 +36,7 @@ Read-Only:
 - `id` (String) ID of the cluster
 - `name` (String) Name of the cluster
 - `networks` (Attributes List) (see [below for nested schema](#nestedatt--clusters--networks))
-- `node_location` (String) Node location of the cluster
+- `node_location` (String) Node location of the cluster. Must be either 'public' or 'private'.
 - `regions` (List of String)
 - `resource_tags` (Map of String) Resource tags of the cluster
 - `ssh_key_id` (String) SSH key ID of the cluster
