@@ -69,6 +69,9 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"status": schema.StringAttribute{
 				Description: "The current status of the database.",
 				Computed:    true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"created_at": schema.StringAttribute{
 				Description: "The timestamp when the database was created.",

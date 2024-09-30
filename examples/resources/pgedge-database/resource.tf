@@ -13,14 +13,14 @@ resource "pgedge_database" "example" {
     requested   = ["postgis"]
   }
 
-  nodes = [
-    {
-      name = "node1"
+  nodes = {
+    n1 = {
+      name = "n1"
     },
-    {
-      name = "node2"
+    n2 = {
+      name = "n2"
     }
-  ]
+  }
 
   backups = {
     provider = "pgbackrest"

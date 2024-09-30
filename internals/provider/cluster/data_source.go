@@ -207,7 +207,7 @@ func (c *clustersDataSource) Schema(_ context.Context, _ datasource.SchemaReques
 						},
 						"node_location": schema.StringAttribute{
 							Computed:    true,
-							Description: "Node location of the cluster",
+							Description: "Node location of the cluster. Must be either 'public' or 'private'.",
 						},
 						"capacity": schema.Int64Attribute{
 							Computed:    true,

@@ -42,6 +42,7 @@ require (
 	github.com/hashicorp/terraform-exec v0.21.0 // indirect
 	github.com/hashicorp/terraform-json v0.22.1 // indirect
 	github.com/hashicorp/terraform-plugin-docs v0.19.4 // indirect
+	github.com/hashicorp/terraform-plugin-framework-validators v0.13.0 // indirect
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.30.0 // indirect
 	github.com/huandu/xstrings v1.3.3 // indirect
 	github.com/imdario/mergo v0.3.15 // indirect

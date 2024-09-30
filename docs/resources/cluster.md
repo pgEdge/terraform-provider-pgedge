@@ -20,7 +20,7 @@ description: |-
 - `cloud_account_id` (String)
 - `name` (String)
 - `networks` (Attributes List) (see [below for nested schema](#nestedatt--networks))
-- `node_location` (String)
+- `node_location` (String) Node location of the cluster. Must be either 'public' or 'private'.
 - `nodes` (Attributes List) (see [below for nested schema](#nestedatt--nodes))
 - `regions` (List of String)
 

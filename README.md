@@ -247,17 +247,17 @@ resource "pgedge_database" "example_db" {
     ]
   }
 
-  nodes = [
-    {
+  nodes = {
+    n1 = {
       name = "n1"
     },
-    {
+    n2 = {
       name = "n2"
     },
-    {
+    n3 = {
       name = "n3"
     }
-  ]
+  }
 
   backups = {
     provider = "pgbackrest"
@@ -293,14 +293,14 @@ resource "pgedge_database" "example_db" {
 **Removing a node from the database:**
 
 ```hcl
-nodes = [
-  {
+nodes = {
+  n1 = {
     name = "n1"
   },
-  {
+  n3 = {
     name = "n3"
   }
-]
+}
 ```
 
 **Adding a new backup store to a cluster:**
