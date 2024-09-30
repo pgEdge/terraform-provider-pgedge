@@ -82,9 +82,6 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 			"updated_at": schema.StringAttribute{
 				Description: "The timestamp when the database was last updated.",
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplaceIfConfigured(),
-				},
 				Computed:    true,
 			},
 			"pg_version": schema.StringAttribute{
