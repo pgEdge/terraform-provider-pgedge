@@ -58,7 +58,7 @@ type DatabaseModel struct {
 	CreatedAt      types.String `tfsdk:"created_at"`
 	UpdatedAt      types.String `tfsdk:"updated_at"`
 	PgVersion      types.String `tfsdk:"pg_version"`
-	StorageUsed    types.Int64  `tfsdk:"storage_used"`
+	// StorageUsed    types.Int64  `tfsdk:"storage_used"`
 	Domain         types.String `tfsdk:"domain"`
 	ConfigVersion  types.String `tfsdk:"config_version"`
 	Options        types.List   `tfsdk:"options"`
@@ -104,10 +104,10 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Computed:    true,
 							Description: "PostgreSQL version of the database",
 						},
-						"storage_used": schema.Int64Attribute{
-							Computed:    true,
-							Description: "Storage used by the database in bytes",
-						},
+						// "storage_used": schema.Int64Attribute{
+						// 	Computed:    true,
+						// 	Description: "Storage used by the database in bytes",
+						// },
 						"domain": schema.StringAttribute{
 							Computed:    true,
 							Description: "Domain of the database",
@@ -181,7 +181,7 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			CreatedAt:      types.StringPointerValue(db.CreatedAt),
 			UpdatedAt:      types.StringPointerValue(db.UpdatedAt),
 			PgVersion:      types.StringValue(db.PgVersion),
-			StorageUsed:    types.Int64Value(db.StorageUsed),
+			// StorageUsed:    types.Int64Value(db.StorageUsed),
 			Domain:         types.StringValue(db.Domain),
 			ConfigVersion:  types.StringValue(db.ConfigVersion),
 			Options:        d.convertToListValue(db.Options),
