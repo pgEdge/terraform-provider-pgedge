@@ -82,6 +82,9 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 			"updated_at": schema.StringAttribute{
 				Description: "The timestamp when the database was last updated.",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 				Computed:    true,
 			},
 			"pg_version": schema.StringAttribute{
@@ -93,6 +96,9 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 			"storage_used": schema.Int64Attribute{
 				Description: "The amount of storage used by the database in bytes.",
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.UseStateForUnknown(),
+				},
 				Computed:    true,
 			},
 			"domain": schema.StringAttribute{
