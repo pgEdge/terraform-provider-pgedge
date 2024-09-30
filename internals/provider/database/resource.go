@@ -276,6 +276,9 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Description: "Extensions configuration for the database.",
 				Computed:    true,
 				Optional:    true,
+				PlanModifiers: []planmodifier.Object{
+					objectplanmodifier.UseStateForUnknown(),
+				},
 				Attributes: map[string]schema.Attribute{
 					"auto_manage": schema.BoolAttribute{Computed: true, Optional: true},
 					"available": schema.ListAttribute{
@@ -285,7 +288,7 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 							listplanmodifier.UseStateForUnknown(),
 						},
 					},
-					"requested": schema.ListAttribute{Computed: true, Optional: true, ElementType: types.StringType},
+					"requested": schema.ListAttribute{Computed: true, Optional: true, ElementType: types.StringType, PlanModifiers: []planmodifier.List{listplanmodifier.UseStateForUnknown()}},
 				},
 			},
 			"nodes": schema.MapNestedAttribute{
