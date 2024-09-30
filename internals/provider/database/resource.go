@@ -94,13 +94,13 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				},
 				Computed: true,
 			},
-			"storage_used": schema.Int64Attribute{
-				Description: "The amount of storage used by the database in bytes.",
-				PlanModifiers: []planmodifier.Int64{
-					int64planmodifier.RequiresReplaceIfConfigured(),
-				},
-				Computed:    true,
-			},
+			// "storage_used": schema.Int64Attribute{
+			// 	Description: "The amount of storage used by the database in bytes.",
+			// 	PlanModifiers: []planmodifier.Int64{
+			// 		int64planmodifier.RequiresReplaceIfConfigured(),
+			// 	},
+			// 	Computed:    true,
+			// },
 			"domain": schema.StringAttribute{
 				Description: "The domain associated with the database.",
 				Computed:    true,
@@ -1100,7 +1100,7 @@ func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database)
 		CreatedAt:     types.StringPointerValue(database.CreatedAt),
 		UpdatedAt:     types.StringPointerValue(database.UpdatedAt),
 		PgVersion:     types.StringValue(database.PgVersion),
-		StorageUsed:   types.Int64Value(database.StorageUsed),
+		// StorageUsed:   types.Int64Value(database.StorageUsed),
 		Domain:        types.StringValue(database.Domain),
 		ConfigVersion: types.StringValue(database.ConfigVersion),
 		Options:       convertToListValue(database.Options),
@@ -1518,7 +1518,7 @@ type databaseResourceModel struct {
 	CreatedAt     types.String `tfsdk:"created_at"`
 	UpdatedAt     types.String `tfsdk:"updated_at"`
 	PgVersion     types.String `tfsdk:"pg_version"`
-	StorageUsed   types.Int64  `tfsdk:"storage_used"`
+	// StorageUsed   types.Int64  `tfsdk:"storage_used"`
 	Domain        types.String `tfsdk:"domain"`
 	ConfigVersion types.String `tfsdk:"config_version"`
 	Options       types.List   `tfsdk:"options"`
