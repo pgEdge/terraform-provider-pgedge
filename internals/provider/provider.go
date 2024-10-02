@@ -43,58 +43,132 @@ func (p *PgEdgeProvider) Metadata(ctx context.Context, req provider.MetadataRequ
 }
 
 func (p *PgEdgeProvider) Schema(ctx context.Context, req provider.SchemaRequest, resp *provider.SchemaResponse) {
-	resp.Schema = schema.Schema{
-		Attributes: map[string]schema.Attribute{
-			"base_url": schema.StringAttribute{
-				Optional:    true,
-				Description: "Base Url to use when connecting to the PgEdge service.",
-			},
-		},
-		Blocks: map[string]schema.Block{},
+    resp.Schema = schema.Schema{
+        Attributes: map[string]schema.Attribute{
+            "base_url": schema.StringAttribute{
+                Optional:    true,
+                Description: "Base Url to use when connecting to the PgEdge service.",
+            },
+        },
+        Blocks: map[string]schema.Block{},
         Description: `
-The pgEdge provider is used to interact with the resources supported by pgEdge. 
-It allows you to manage various aspects of your pgEdge infrastructure, including databases, clusters, cloud accounts, SSH keys, and backup stores.
+The official Terraform provider for [pgEdge Cloud](https://www.pgedge.com/cloud), designed to simplify the management of pgEdge Cloud resources for both **Developer** and **Enterprise** edition.
 
 ## Authentication
 
-The provider needs to be configured with the proper credentials before it can be used. 
-You can provide your credentials via environment variables:
+Before using the provider, you must create an API Client in [pgEdge Cloud](https://app.pgedge.com) and configure the following environment variables:
 
-- Set the PGEDGE_CLIENT_ID environment variable for your pgEdge Client ID.
-- Set the PGEDGE_CLIENT_SECRET environment variable for your pgEdge Client Secret.
-
-Example provider configuration:
-
-` + "```hcl" + `
-# Configure the pgEdge Provider
-provider "pgedge" {}
-
-# Set environment variables
-# export PGEDGE_CLIENT_ID="your-client-id"
-# export PGEDGE_CLIENT_SECRET="your-client-secret"
+` + "```sh" + `
+export PGEDGE_CLIENT_ID="your-client-id"
+export PGEDGE_CLIENT_SECRET="your-client-secret"
 ` + "```" + `
+
+These credentials authenticate the Terraform provider with your pgEdge Cloud account.
 
 ## Example Usage
 
-### Managing a Cluster
+### Developer Edition Configuration
+
+For Developer Edition, pgEdge offers access to manage databases. Here's an example setup for Developer Edition:
 
 ` + "```hcl" + `
+terraform {
+  required_providers {
+    pgedge = {
+      source = "pgEdge/pgedge"
+    }
+  }
+}
+
+provider "pgedge" {}
+
+# Define a database
+resource "pgedge_database" "defaultdb" {
+  name       = "defaultdb"
+  cluster_id = "f12239ddq-df9d-4ded-adqwead9-3e2bvhe6d6ee"
+
+  options = [
+    "rest:enabled",
+    "install:northwind"
+  ]
+}
+` + "```" + `
+
+### Enterprise Edition Configuration
+
+Enterprise Edition users can manage Cloud Accounts, SSH keys, Backup Stores, and Clusters. Here's an Enterprise Edition example:
+
+` + "```hcl" + `
+terraform {
+  required_providers {
+    pgedge = {
+      source = "pgEdge/pgedge"
+    }
+  }
+}
+
+provider "pgedge" {
+  base_url = "https://api.pgedge.com"
+}
+
+# SSH Key resource
+resource "pgedge_ssh_key" "example" {
+  name       = "example-key"
+  public_key = "ssh-ed25519 AAAAC3NzaC1wes241mmT63i04t5fvvsdwqVG7DkyxvyXbYQNhKP/rSeLY user@example.com"
+}
+
+# Cloud Account resource
+resource "pgedge_cloud_account" "example" {
+  name        = "my-aws-account"
+  type        = "aws"
+  description = "My AWS Cloud Account"
+
+  credentials = {
+    role_arn = "arn:aws:iam::0123456789:role/pgedge-13fe3332c"
+  }
+
+  depends_on = [pgedge_ssh_key.example]
+}
+
+# Backup Store resource
+resource "pgedge_backup_store" "test_store" {
+  name             = "test-store"
+  cloud_account_id = pgedge_cloud_account.example.id
+  region           = "us-east-1"
+
+  depends_on = [pgedge_cloud_account.example]
+}
+
+# Cluster resource
 resource "pgedge_cluster" "example" {
-  name             = "example-cluster"
-  cloud_account_id = "your-cloud-account-id"
-  regions          = ["us-west-2", "us-east-1"]
+  name             = "example"
+  cloud_account_id = pgedge_cloud_account.example.id
+  regions          = ["us-west-2", "us-east-1", "eu-central-1"]
+  ssh_key_id       = pgedge_ssh_key.example.id
+  backup_store_ids = [pgedge_backup_store.test_store.id]
   node_location    = "public"
 
   nodes = [
     {
-      name          = "node1"
+      name          = "n1"
       region        = "us-west-2"
       instance_type = "r6g.medium"
+      volume_size   = 100
+      volume_type   = "gp2"
     },
     {
-      name          = "node2"
+      name          = "n2"
       region        = "us-east-1"
       instance_type = "r6g.medium"
+      volume_size   = 100
+      volume_type   = "gp2"
+    },
+    {
+      name          = "n3"
+      region        = "eu-central-1"
+      instance_type = "r6g.medium"
+      volume_size   = 100
+      volume_type   = "gp2"
     }
   ]
 
@@ -102,42 +176,82 @@ resource "pgedge_cluster" "example" {
     {
       region         = "us-west-2"
       cidr           = "10.1.0.0/16"
-      public_subnets = ["10.1.1.0/24"]
+      public_subnets = ["10.1.0.0/24"]
     },
     {
       region         = "us-east-1"
       cidr           = "10.2.0.0/16"
-      public_subnets = ["10.2.1.0/24"]
+      public_subnets = ["10.2.0.0/24"]
+    },
+    {
+      region         = "eu-central-1"
+      cidr           = "10.3.0.0/16"
+      public_subnets = ["10.3.0.0/24"]
     }
   ]
+
+  firewall_rules = [
+    {
+      name    = "postgres"
+      port    = 5432
+      sources = ["192.0.2.44/32"]
+    },
+  ]
+
+  depends_on = [pgedge_cloud_account.example]
 }
-` + "```" + `
 
-### Managing a Database
-
-` + "```hcl" + `
-resource "pgedge_database" "example" {
-  name       = "example-db"
-  cluster_id = "your-cluster-id"
+# Database Resource
+resource "pgedge_database" "example_db" {
+  name       = "exampledb"
+  cluster_id = pgedge_cluster.example.id
 
   options = [
-    "install:northwind",
-    "rest:enabled"
+    "autoddl:enabled",
   ]
 
   extensions = {
     auto_manage = true
-    requested   = ["postgis"]
+    requested = [
+      "postgis",
+      "vector"
+    ]
   }
 
   nodes = {
-	n1 = {
-	  name = "n1"
-	},
-	n2 = {
-	  name = "n2"
-	}
+    n1 = {
+      name = "n1"
+    },
+    n2 = {
+      name = "n2"
+    },
+    n3 = {
+      name = "n3"
+    }
   }
+
+  backups = {
+    provider = "pgbackrest"
+    config = [
+      {
+        id        = "default"
+        schedules = [
+          {
+            type            = "full"
+            cron_expression = "0 6 * * ?"
+            id              = "daily-full-backup"
+          },
+          {
+            type            = "incr"
+            cron_expression = "0 * * * ?"
+            id              = "hourly-incr-backup"
+          }
+        ]
+      }
+    ]
+  }
+
+  depends_on = [pgedge_cluster.example]
 }
 ` + "```" + `
 

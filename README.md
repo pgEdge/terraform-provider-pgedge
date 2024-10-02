@@ -2,7 +2,7 @@
 
 # pgEdge Terraform Provider
 
-The official Terraform provider for [pgEdge](https://www.pgedge.com/), designed to simplify the management of pgEdge resources for both **Developers** and **Enterprise** edition.
+The official Terraform provider for [pgEdge Cloud](https://www.pgedge.com/cloud), designed to simplify the management of pgEdge Cloud resources for both **Developer** and **Enterprise** edition.
 
 - **Documentation:** [pgEdge Terraform Docs](https://registry.terraform.io/providers/pgEdge/pgedge/latest/docs)
 - **Website:** [pgEdge](https://www.pgedge.com/)
@@ -35,7 +35,7 @@ These credentials authenticate the Terraform provider with your pgEdge Cloud acc
 
 ## Usage
 
-### Developer User Configuration
+### Developer Edition Configuration
 
 For Developer Edition, pgEdge offers access to manage databases. Here’s an example setup for Developer Edition::
 
@@ -62,7 +62,7 @@ resource "pgedge_database" "defaultdb" {
 }
 ```
 
-### Enterprise User Configuration
+### Enterprise Edition Configuration
 
 Enterprise Edition users can manage Cloud Accounts, SSH keys, Backup Stores, and Clusters. Here's an Enterprise Edition example that includes mechanisms to manage various aspects of these resources:
 
@@ -114,6 +114,7 @@ resource "pgedge_cluster" "example" {
   regions          = ["us-west-2", "us-east-1", "eu-central-1"]
   ssh_key_id       = pgedge_ssh_key.example.id
   backup_store_ids = [pgedge_backup_store.test_store.id]
+  node_location    = "public"
 
   nodes = [
     {
@@ -164,12 +165,13 @@ resource "pgedge_cluster" "example" {
     {
       name    = "postgres"
       port    = 5432
-      sources = ["131.107.106.231/16"]
+      sources = ["192.0.2.44/32"]
     },
   ]
 
   depends_on = [pgedge_cloud_account.example]
 }
+```
 
 ### Updating a Cluster
 
@@ -233,10 +235,10 @@ resource "pgedge_database" "example_db" {
   cluster_id = pgedge_cluster.example.id
 
   options = [
-    "install:northwind",
-    "rest:enabled",
     "autoddl:enabled",
-    "cloudwatch_metrics:enabled"
+#   "install:northwind",
+#   "rest:enabled",
+#   "cloudwatch_metrics:enabled"
   ]
 
   extensions = {
@@ -264,12 +266,16 @@ resource "pgedge_database" "example_db" {
     config = [
       {
         id        = "default"
-        node_name = "n1"
         schedules = [
           {
             type            = "full"
-            cron_expression = "15 * * * *"
+            cron_expression = "0 6 * * ?"
             id              = "daily-full-backup"
+          },
+          {
+            type            = "incr"
+            cron_expression = "0 * * * ?"
+            id              = "hourly-incr-backup"
           }
         ]
       }

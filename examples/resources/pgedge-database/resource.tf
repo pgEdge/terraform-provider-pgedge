@@ -3,9 +3,10 @@ resource "pgedge_database" "example" {
   cluster_id = "asdqw-fdrt334-w123-1gsde"
 
   options = [
-    "install:northwind",
-    "rest:enabled",
-    "autoddl:enabled"
+    "autoddl:enabled",
+    #   "install:northwind",
+    #   "rest:enabled",
+    #   "cloudwatch_metrics:enabled"
   ]
 
   extensions = {
@@ -26,13 +27,17 @@ resource "pgedge_database" "example" {
     provider = "pgbackrest"
     config = [
       {
-        id        = "default"
-        node_name = "n1"
+        id = "default"
         schedules = [
           {
             type            = "full"
-            cron_expression = "0 1 * * *"
+            cron_expression = "0 6 * * ?"
             id              = "daily-full-backup"
+          },
+          {
+            type            = "incr"
+            cron_expression = "0 * * * ?"
+            id              = "hourly-incr-backup"
           }
         ]
       }
