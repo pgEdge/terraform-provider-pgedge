@@ -324,7 +324,7 @@ func (p *PgEdgeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		resp.Diagnostics.AddError(
 			"Unable to Create pgEdge API Client",
 			"An unexpected error occurred when creating the pgEdge API client. "+
-				"If the error is not clear, please contact the provider developer.\n\n"+
+				"If the error is not clear, please contact the provider developers.\n\n"+
 				"pgEdge Client Error: "+err.Error(),
 		)
 		return
