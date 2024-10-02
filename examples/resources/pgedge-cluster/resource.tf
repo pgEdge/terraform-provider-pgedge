@@ -47,7 +47,7 @@ resource "pgedge_cluster" "example" {
     {
       name    = "postgres"
       port    = 5432
-      sources = ["103.213.321.452/32"]
+      sources = ["192.0.2.44/32"]
     }
   ]
 }
