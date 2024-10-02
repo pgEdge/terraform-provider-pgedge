@@ -2,7 +2,7 @@
 
 # pgEdge Terraform Provider
 
-The official Terraform provider for [pgEdge Cloud](https://www.pgedge.com/cloud), designed to simplify the management of pgEdge Cloud resources for both **Developers** and **Enterprise** edition.
+The official Terraform provider for [pgEdge Cloud](https://www.pgedge.com/cloud), designed to simplify the management of pgEdge Cloud resources for both **Developer** and **Enterprise** edition.
 
 - **Documentation:** [pgEdge Terraform Docs](https://registry.terraform.io/providers/pgEdge/pgedge/latest/docs)
 - **Website:** [pgEdge](https://www.pgedge.com/)

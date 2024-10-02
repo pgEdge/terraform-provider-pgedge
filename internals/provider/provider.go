@@ -52,7 +52,7 @@ func (p *PgEdgeProvider) Schema(ctx context.Context, req provider.SchemaRequest,
         },
         Blocks: map[string]schema.Block{},
         Description: `
-The official Terraform provider for [pgEdge Cloud](https://www.pgedge.com/cloud), designed to simplify the management of pgEdge Cloud resources for both **Developers** and **Enterprise** edition.
+The official Terraform provider for [pgEdge Cloud](https://www.pgedge.com/cloud), designed to simplify the management of pgEdge Cloud resources for both **Developer** and **Enterprise** edition.
 
 ## Authentication
 
@@ -324,7 +324,7 @@ func (p *PgEdgeProvider) Configure(ctx context.Context, req provider.ConfigureRe
 		resp.Diagnostics.AddError(
 			"Unable to Create pgEdge API Client",
 			"An unexpected error occurred when creating the pgEdge API client. "+
-				"If the error is not clear, please contact the provider developers.\n\n"+
+				"If the error is not clear, please contact the provider developer.\n\n"+
 				"pgEdge Client Error: "+err.Error(),
 		)
 		return

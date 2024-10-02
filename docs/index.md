@@ -3,7 +3,7 @@
 page_title: "pgedge Provider"
 subcategory: ""
 description: |-
-  The official Terraform provider for pgEdge Cloud https://www.pgedge.com/cloud, designed to simplify the management of pgEdge Cloud resources for both Developers and Enterprise edition.
+  The official Terraform provider for pgEdge Cloud https://www.pgedge.com/cloud, designed to simplify the management of pgEdge Cloud resources for both Developer and Enterprise edition.
   Authentication
   Before using the provider, you must create an API Client in pgEdge Cloud https://app.pgedge.com and configure the following environment variables:
   
@@ -199,7 +199,7 @@ description: |-
 
 # pgedge Provider
 
-The official Terraform provider for [pgEdge Cloud](https://www.pgedge.com/cloud), designed to simplify the management of pgEdge Cloud resources for both **Developers** and **Enterprise** edition.
+The official Terraform provider for [pgEdge Cloud](https://www.pgedge.com/cloud), designed to simplify the management of pgEdge Cloud resources for both **Developer** and **Enterprise** edition.
 
 ## Authentication
 
