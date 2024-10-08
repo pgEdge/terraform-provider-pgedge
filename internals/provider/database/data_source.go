@@ -96,10 +96,10 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Computed:    true,
 							Description: "Creation timestamp of the database",
 						},
-						"updated_at": schema.StringAttribute{
-							Computed:    true,
-							Description: "Last update timestamp of the database",
-						},
+						// "updated_at": schema.StringAttribute{
+						// 	Computed:    true,
+						// 	Description: "Last update timestamp of the database",
+						// },
 						"pg_version": schema.StringAttribute{
 							Computed:    true,
 							Description: "PostgreSQL version of the database",
