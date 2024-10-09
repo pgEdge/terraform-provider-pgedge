@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
 	"github.com/pgEdge/terraform-provider-pgedge/client/models"
+	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/common"
 )
 
 var (
@@ -107,12 +108,9 @@ func (r *cloudAccountResource) Create(ctx context.Context, req resource.CreateRe
 
 	account, err := r.client.CreateCloudAccount(ctx, createInput)
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error creating Cloud Account",
-			"Could not create cloud account, unexpected error: "+err.Error(),
-		)
-		return
-	}
+        resp.Diagnostics.Append(common.HandleProviderError(err, "cloud account creation"))
+        return
+    }
 
 	plan.ID = types.StringValue(account.ID.String())
 	plan.CreatedAt = types.StringValue(*account.CreatedAt)
@@ -135,12 +133,9 @@ func (r *cloudAccountResource) Read(ctx context.Context, req resource.ReadReques
 
 	account, err := r.client.GetCloudAccount(ctx, strfmt.UUID(state.ID.ValueString()))
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading Cloud Account",
-			"Could not read cloud account ID "+state.ID.ValueString()+": "+err.Error(),
-		)
-		return
-	}
+        resp.Diagnostics.Append(common.HandleProviderError(err, "reading cloud account"))
+        return
+    }
 
 	state.Name = types.StringValue(*account.Name)
 	state.Type = types.StringValue(*account.Type)
@@ -176,10 +171,7 @@ func (r *cloudAccountResource) Delete(ctx context.Context, req resource.DeleteRe
 
 	err := r.client.DeleteCloudAccount(ctx, strfmt.UUID(state.ID.ValueString()))
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Deleting Cloud Account",
-			"Could not delete cloud account, unexpected error: "+err.Error(),
-		)
-		return
-	}
+        resp.Diagnostics.Append(common.HandleProviderError(err, "cloud account deletion"))
+        return
+    }
 }

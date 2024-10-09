@@ -22,6 +22,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
 	"github.com/pgEdge/terraform-provider-pgedge/client/models"
+	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/common"
 )
 
 var (
@@ -293,12 +294,9 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 
 	cluster, err := r.client.CreateCluster(ctx, createInput)
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error creating cluster",
-			"Could not create cluster, unexpected error: "+err.Error(),
-		)
-		return
-	}
+        resp.Diagnostics.Append(common.HandleProviderError(err, "cluster creation"))
+        return
+    }
 
 	tflog.Debug(ctx, "Created cluster", map[string]interface{}{"cluster": cluster})
 
@@ -413,12 +411,9 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	cluster, err := r.client.GetCluster(ctx, strfmt.UUID(state.ID.ValueString()))
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error reading cluster",
-			"Could not read cluster ID "+state.ID.ValueString()+": "+err.Error(),
-		)
-		return
-	}
+        resp.Diagnostics.Append(common.HandleProviderError(err, "reading cluster"))
+        return
+    }
 
 	state.Name = types.StringPointerValue(cluster.Name)
 	state.CloudAccountID = types.StringPointerValue(cluster.CloudAccount.ID)
@@ -637,12 +632,9 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	cluster, err := r.client.UpdateCluster(ctx, strfmt.UUID(*plan.ID.ValueStringPointer()), updateInput)
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error updating cluster",
-			"Could not update cluster, unexpected error: "+err.Error(),
-		)
-		return
-	}
+        resp.Diagnostics.Append(common.HandleProviderError(err, "updating cluster"))
+        return
+    }
 
 	updatedPlan := r.mapClusterToResourceModel(cluster)
 
@@ -757,12 +749,9 @@ func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 	err := r.client.DeleteCluster(ctx, strfmt.UUID(state.ID.ValueString()))
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error deleting cluster",
-			"Could not delete cluster, unexpected error: "+err.Error(),
-		)
-		return
-	}
+        resp.Diagnostics.Append(common.HandleProviderError(err, "cluster deletion"))
+        return
+    }
 }
 
 type clusterResourceModel struct {
