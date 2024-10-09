@@ -10,6 +10,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
+	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/common"
 )
 
 var (
@@ -293,12 +294,9 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 
 	clusters, err := c.client.GetAllClusters(ctx)
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to Read pgEdge Clusters",
-			err.Error(),
-		)
-		return
-	}
+        resp.Diagnostics.Append(common.HandleProviderError(err, "reading clusters"))
+        return
+    }
 
 	for _, cluster := range clusters {
 		var clusterDetails ClusterDetails

@@ -1,4 +1,4 @@
-package common
+package test_helper
 
 import (
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"

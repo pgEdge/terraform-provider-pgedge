@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
 	"github.com/pgEdge/terraform-provider-pgedge/client/models"
+	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/common"
 )
 
 var (
@@ -165,12 +166,9 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 
 	databases, err := d.client.GetDatabases(ctx)
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to Read pgEdge Databases",
-			err.Error(),
-		)
-		return
-	}
+        resp.Diagnostics.Append(common.HandleProviderError(err, "reading databases"))
+        return
+    }
 
 	for _, db := range databases {
 		databaseModel := DatabaseModel{

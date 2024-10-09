@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
+	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/common"
 )
 
 var (
@@ -108,12 +109,9 @@ func (d *cloudAccountsDataSource) Read(ctx context.Context, req datasource.ReadR
 
 	cloudAccounts, err := d.client.GetCloudAccounts(ctx)
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Unable to Read pgEdge Cloud Accounts",
-			err.Error(),
-		)
-		return
-	}
+        resp.Diagnostics.Append(common.HandleProviderError(err, "reading cloud accounts"))
+        return
+    }
 
 	for _, account := range cloudAccounts {
 		properties := make(map[string]attr.Value)

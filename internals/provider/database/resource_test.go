@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
-	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/common"
+	common "github.com/pgEdge/terraform-provider-pgedge/internals/provider/common/test-helper"
 )
 
 func TestAccDatabaseResource(t *testing.T) {

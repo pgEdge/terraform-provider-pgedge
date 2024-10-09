@@ -14,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
 	"github.com/pgEdge/terraform-provider-pgedge/client/models"
+	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/common"
 )
 
 var (
@@ -125,10 +126,7 @@ func (r *backupStoreResource) Create(ctx context.Context, req resource.CreateReq
 
     backupStore, err := r.client.CreateBackupStore(ctx, input)
     if err != nil {
-        resp.Diagnostics.AddError(
-            "Error creating backup store",
-            "Could not create backup store, unexpected error: "+err.Error(),
-        )
+        resp.Diagnostics.Append(common.HandleProviderError(err, "backup store creation"))
         return
     }
 
@@ -165,10 +163,7 @@ func (r *backupStoreResource) Read(ctx context.Context, req resource.ReadRequest
 
     backupStore, err := r.client.GetBackupStore(ctx, strfmt.UUID(state.ID.ValueString()))
     if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Reading pgEdge Backup Store",
-            "Could not read pgEdge backup store ID "+state.ID.ValueString()+": "+err.Error(),
-        )
+        resp.Diagnostics.Append(common.HandleProviderError(err, "reading backup store"))
         return
     }
 
@@ -213,10 +208,7 @@ func (r *backupStoreResource) Delete(ctx context.Context, req resource.DeleteReq
 
     err := r.client.DeleteBackupStore(ctx, strfmt.UUID(state.ID.ValueString()))
     if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Deleting Backup Store",
-            "Could not delete backup store, unexpected error: "+err.Error(),
-        )
+        resp.Diagnostics.Append(common.HandleProviderError(err, "backup store deletion"))
         return
     }
 }
