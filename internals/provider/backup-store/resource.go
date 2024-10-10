@@ -163,7 +163,12 @@ func (r *backupStoreResource) Read(ctx context.Context, req resource.ReadRequest
 
     backupStore, err := r.client.GetBackupStore(ctx, strfmt.UUID(state.ID.ValueString()))
     if err != nil {
-        resp.Diagnostics.Append(common.HandleProviderError(err, "reading backup store"))
+        diag := common.HandleProviderError(err, "reading backup store")
+        if diag == nil {
+            resp.State.RemoveResource(ctx)
+            return
+        }
+        resp.Diagnostics.Append(diag)
         return
     }
 

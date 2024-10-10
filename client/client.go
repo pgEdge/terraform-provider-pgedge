@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 	"github.com/pgEdge/terraform-provider-pgedge/client/models"
 	"github.com/pgEdge/terraform-provider-pgedge/client/operations"
@@ -82,6 +83,13 @@ func handleAPIError(err error) error {
 	if err == nil {
 		return nil
 	}
+
+	if apiErr, ok := err.(*runtime.APIError); ok {
+        return &APIError{
+            StatusCode: apiErr.Code,
+            Message:    apiErr.Error(),
+        }
+    }
 
 	errStr := err.Error()
 

@@ -133,7 +133,12 @@ func (r *cloudAccountResource) Read(ctx context.Context, req resource.ReadReques
 
 	account, err := r.client.GetCloudAccount(ctx, strfmt.UUID(state.ID.ValueString()))
 	if err != nil {
-        resp.Diagnostics.Append(common.HandleProviderError(err, "reading cloud account"))
+		diag := common.HandleProviderError(err, "reading cloud account")
+        if diag == nil {
+            resp.State.RemoveResource(ctx)
+            return
+        }
+        resp.Diagnostics.Append(diag)
         return
     }
 
