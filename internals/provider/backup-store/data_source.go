@@ -1,14 +1,15 @@
 package backupstore
 
 import (
-    "context"
-    "fmt"
+	"context"
+	"fmt"
 
-    "github.com/hashicorp/terraform-plugin-framework/attr"
-    "github.com/hashicorp/terraform-plugin-framework/datasource"
-    "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-    "github.com/hashicorp/terraform-plugin-framework/types"
-    pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
+	"github.com/hashicorp/terraform-plugin-framework/attr"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
+	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/common"
 )
 
 var (
@@ -109,10 +110,7 @@ func (d *backupStoresDataSource) Read(ctx context.Context, req datasource.ReadRe
 
     backupStores, err := d.client.GetBackupStores(ctx, nil, nil, nil, nil, nil)
     if err != nil {
-        resp.Diagnostics.AddError(
-            "Unable to Read pgEdge Backup Stores",
-            err.Error(),
-        )
+        resp.Diagnostics.Append(common.HandleProviderError(err, "reading backup stores"))
         return
     }
 
