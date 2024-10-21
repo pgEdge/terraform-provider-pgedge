@@ -80,13 +80,6 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			// "updated_at": schema.StringAttribute{
-			// 	Description: "The timestamp when the database was last updated.",
-			// 	Computed:    true,
-			// 	PlanModifiers: []planmodifier.String{
-			// 		stringplanmodifier.UseStateForUnknown(),
-			// 	},			
-			// },
 			"pg_version": schema.StringAttribute{
 				Description: "The PostgreSQL version of the database.",
 				PlanModifiers: []planmodifier.String{
@@ -1098,7 +1091,6 @@ func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database)
 		ClusterID:     types.StringValue(database.ClusterID.String()),
 		Status:        types.StringPointerValue(database.Status),
 		CreatedAt:     types.StringPointerValue(database.CreatedAt),
-		// UpdatedAt:     types.StringPointerValue(database.UpdatedAt),
 		PgVersion:     types.StringValue(database.PgVersion),
 		// StorageUsed:   types.Int64Value(database.StorageUsed),
 		Domain:        types.StringValue(database.Domain),
@@ -1516,7 +1508,6 @@ type databaseResourceModel struct {
 	ClusterID     types.String `tfsdk:"cluster_id"`
 	Status        types.String `tfsdk:"status"`
 	CreatedAt     types.String `tfsdk:"created_at"`
-	// UpdatedAt     types.String `tfsdk:"updated_at"`
 	PgVersion     types.String `tfsdk:"pg_version"`
 	// StorageUsed   types.Int64  `tfsdk:"storage_used"`
 	Domain        types.String `tfsdk:"domain"`

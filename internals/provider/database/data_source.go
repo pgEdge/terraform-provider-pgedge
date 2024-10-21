@@ -56,7 +56,6 @@ type DatabaseModel struct {
 	ClusterID      types.String `tfsdk:"cluster_id"`
 	Status         types.String `tfsdk:"status"`
 	CreatedAt      types.String `tfsdk:"created_at"`
-	// UpdatedAt      types.String `tfsdk:"updated_at"`
 	PgVersion      types.String `tfsdk:"pg_version"`
 	// StorageUsed    types.Int64  `tfsdk:"storage_used"`
 	Domain         types.String `tfsdk:"domain"`
@@ -96,10 +95,6 @@ func (d *databasesDataSource) Schema(_ context.Context, _ datasource.SchemaReque
 							Computed:    true,
 							Description: "Creation timestamp of the database",
 						},
-						// "updated_at": schema.StringAttribute{
-						// 	Computed:    true,
-						// 	Description: "Last update timestamp of the database",
-						// },
 						"pg_version": schema.StringAttribute{
 							Computed:    true,
 							Description: "PostgreSQL version of the database",
@@ -179,7 +174,6 @@ func (d *databasesDataSource) Read(ctx context.Context, req datasource.ReadReque
 			ClusterID:      types.StringValue(db.ClusterID.String()),
 			Status:         types.StringPointerValue(db.Status),
 			CreatedAt:      types.StringPointerValue(db.CreatedAt),
-			// UpdatedAt:      types.StringPointerValue(db.UpdatedAt),
 			PgVersion:      types.StringValue(db.PgVersion),
 			// StorageUsed:    types.Int64Value(db.StorageUsed),
 			Domain:         types.StringValue(db.Domain),
