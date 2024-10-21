@@ -2,12 +2,9 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
-	"regexp"
 	"strings"
 	"time"
 
@@ -79,68 +76,39 @@ func (e *APIError) Error() string {
 	return fmt.Sprintf("API error (status %d): %s", e.StatusCode, e.Message)
 }
 
-func handleAPIError(err error) error {
-	if err == nil {
-		return nil
-	}
+type GeneratedAPIError interface {
+    Code() int
+    Message() string
+}
 
-	if apiErr, ok := err.(*runtime.APIError); ok {
+type KnownError interface {
+    GetPayload() *models.Error
+}
+
+func handleAPIError(err error) error {
+    var knownErr KnownError
+    if errors.As(err, &knownErr) {
+        payload := knownErr.GetPayload()
         return &APIError{
-            StatusCode: apiErr.Code,
-            Message:    apiErr.Error(),
+            StatusCode: int(payload.Code),
+            Message:    payload.Message,
         }
     }
 
-	errStr := err.Error()
+    var runtimeErr *runtime.APIError
+    if errors.As(err, &runtimeErr) {
+        return &APIError{
+            StatusCode: runtimeErr.Code,
+            Message:    runtimeErr.Error(),
+        }
+    }
 
-	re := regexp.MustCompile(`\[(\d+)\] \w+ (.+)`)
-	matches := re.FindStringSubmatch(errStr)
-
-	if len(matches) == 3 {
-		jsonStr := matches[2]
-
-		var jsonError struct {
-			Code    int    `json:"code"`
-			Message string `json:"message"`
-		}
-
-		if err := json.Unmarshal([]byte(jsonStr), &jsonError); err == nil {
-			return &APIError{
-				StatusCode: jsonError.Code,
-				Message:    jsonError.Message,
-			}
-		}
-	}
-
-	v := reflect.ValueOf(err)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-
-	var statusCode int
-	var message string
-
-	if codeMethod := v.MethodByName("Code"); codeMethod.IsValid() {
-		if codeValue := codeMethod.Call(nil)[0]; codeValue.CanInt() {
-			statusCode = int(codeValue.Int())
-		}
-	}
-
-	if v.Kind() == reflect.Struct {
-		if messageField := v.FieldByName("Message"); messageField.IsValid() && messageField.Kind() == reflect.String {
-			message = messageField.String()
-		}
-	}
-
-	if statusCode != 0 && message != "" {
-		return &APIError{
-			StatusCode: statusCode,
-			Message:    message,
-		}
-	}
-
-	return err
+    return &APIError{
+        StatusCode: 500,
+        Message:    err.Error(),
+    }
 }
+
 
 func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
 	request := &operations.GetDatabasesParams{

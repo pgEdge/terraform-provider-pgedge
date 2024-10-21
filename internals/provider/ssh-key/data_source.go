@@ -1,13 +1,14 @@
 package sshkey
 
 import (
-    "context"
-    "fmt"
+	"context"
+	"fmt"
 
-    "github.com/hashicorp/terraform-plugin-framework/datasource"
-    "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-    "github.com/hashicorp/terraform-plugin-framework/types"
-    pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
+	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/common"
 )
 
 var (
@@ -91,10 +92,7 @@ func (d *sshKeysDataSource) Read(ctx context.Context, req datasource.ReadRequest
 
     sshKeys, err := d.client.GetSSHKeys(ctx)
     if err != nil {
-        resp.Diagnostics.AddError(
-            "Unable to Read pgEdge SSH Keys",
-            err.Error(),
-        )
+        resp.Diagnostics.Append(common.HandleProviderError(err, "ssh key retrieval"))
         return
     }
 

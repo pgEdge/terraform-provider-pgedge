@@ -1,9 +1,9 @@
 package common
 
 import (
-    "fmt"
-    "github.com/hashicorp/terraform-plugin-framework/diag"
-    "github.com/pgEdge/terraform-provider-pgedge/client"
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/pgEdge/terraform-provider-pgedge/client"
 )
 
 func HandleProviderError(err error, operation string) diag.Diagnostic {
