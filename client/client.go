@@ -2,14 +2,13 @@ package client
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
-	"regexp"
 	"strings"
 	"time"
 
+	"github.com/go-openapi/runtime"
 	"github.com/go-openapi/strfmt"
 	"github.com/pgEdge/terraform-provider-pgedge/client/models"
 	"github.com/pgEdge/terraform-provider-pgedge/client/operations"
@@ -82,30 +81,34 @@ type GeneratedAPIError interface {
     Message() string
 }
 
+type KnownError interface {
+    GetPayload() *models.Error
+}
+
 func handleAPIError(err error) error {
-    errStr := err.Error()
-
-    re := regexp.MustCompile(`\[(\d+)\] \w+ (.+)`)
-    matches := re.FindStringSubmatch(errStr)
-
-    if len(matches) == 3 {
-        jsonStr := matches[2]
-
-        var jsonError struct {
-            Code    int    `json:"code"`
-            Message string `json:"message"`
-        }
-
-        if err := json.Unmarshal([]byte(jsonStr), &jsonError); err == nil {
-            return &APIError{
-                StatusCode: jsonError.Code,
-                Message:    jsonError.Message,
-            }
+    var knownErr KnownError
+    if errors.As(err, &knownErr) {
+        payload := knownErr.GetPayload()
+        return &APIError{
+            StatusCode: int(payload.Code),
+            Message:    payload.Message,
         }
     }
 
-    return err
+    var runtimeErr *runtime.APIError
+    if errors.As(err, &runtimeErr) {
+        return &APIError{
+            StatusCode: runtimeErr.Code,
+            Message:    runtimeErr.Error(),
+        }
+    }
+
+    return &APIError{
+        StatusCode: 500,
+        Message:    err.Error(),
+    }
 }
+
 
 func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
 	request := &operations.GetDatabasesParams{
