@@ -27,6 +27,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-log/tflog"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
 	"github.com/pgEdge/terraform-provider-pgedge/client/models"
+	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/common"
 )
 
 var (
@@ -647,12 +648,9 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 
 	database, err := r.client.CreateDatabase(ctx, createInput)
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error creating database",
-			"Could not create database, unexpected error: "+err.Error(),
-		)
-		return
-	}
+        resp.Diagnostics.Append(common.HandleProviderError(err, "database creation"))
+        return
+    }
 
 	// Map response body to schema and populate Computed attribute values
 	plan = r.mapDatabaseToResourceModel(database)
@@ -679,12 +677,9 @@ func (r *databaseResource) Read(ctx context.Context, req resource.ReadRequest, r
 
 	database, err := r.client.GetDatabase(ctx, strfmt.UUID(state.ID.ValueString()))
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Reading pgEdge Database",
-			"Could not read pgEdge database ID "+state.ID.ValueString()+": "+err.Error(),
-		)
-		return
-	}
+        resp.Diagnostics.Append(common.HandleProviderError(err, "database retrieval"))
+        return
+    }
 
 	// Map response body to schema and populate Computed attribute values
 	state = r.mapDatabaseToResourceModel(database)
@@ -820,10 +815,7 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 
 		updatedDatabase, err := r.client.UpdateDatabase(ctx, strfmt.UUID(plan.ID.ValueString()), extensionsUpdateInput)
 		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Updating pgEdge Database Options",
-				"Could not update database options, unexpected error: "+err.Error(),
-			)
+			resp.Diagnostics.Append(common.HandleProviderError(err, "database options update"))
 			return
 		}
 		plan = r.mapDatabaseToResourceModel(updatedDatabase)
@@ -851,10 +843,7 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 
 		updatedDatabase, err := r.client.UpdateDatabase(ctx, strfmt.UUID(plan.ID.ValueString()), extensionsUpdateInput)
 		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Updating pgEdge Database Extensions",
-				"Could not update database extensions, unexpected error: "+err.Error(),
-			)
+			resp.Diagnostics.Append(common.HandleProviderError(err, "database extensions update"))
 			return
 		}
 
@@ -876,10 +865,7 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 
 		updatedDatabase, err := r.client.UpdateDatabase(ctx, strfmt.UUID(plan.ID.ValueString()), nodesUpdateInput)
 		if err != nil {
-			resp.Diagnostics.AddError(
-				"Error Updating pgEdge Database Nodes",
-				"Could not update database nodes, unexpected error: "+err.Error(),
-			)
+			resp.Diagnostics.Append(common.HandleProviderError(err, "database nodes update"))
 			return
 		}
 
@@ -911,10 +897,7 @@ func (r *databaseResource) Delete(ctx context.Context, req resource.DeleteReques
 
 	err := r.client.DeleteDatabase(ctx, strfmt.UUID(state.ID.ValueString()))
 	if err != nil {
-		resp.Diagnostics.AddError(
-			"Error Deleting pgEdge Database",
-			"Could not delete database, unexpected error: "+err.Error(),
-		)
+		resp.Diagnostics.Append(common.HandleProviderError(err, "database deletion"))
 		return
 	}
 

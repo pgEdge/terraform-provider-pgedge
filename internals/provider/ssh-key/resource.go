@@ -1,18 +1,19 @@
 package sshkey
 
 import (
-    "context"
-    "fmt"
+	"context"
+	"fmt"
 
-    "github.com/go-openapi/strfmt"
-    "github.com/hashicorp/terraform-plugin-framework/path"
-    "github.com/hashicorp/terraform-plugin-framework/resource"
-    "github.com/hashicorp/terraform-plugin-framework/resource/schema"
-    "github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
-    "github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
-    "github.com/hashicorp/terraform-plugin-framework/types"
-    pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
-    "github.com/pgEdge/terraform-provider-pgedge/client/models"
+	"github.com/go-openapi/strfmt"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
+	"github.com/pgEdge/terraform-provider-pgedge/client/models"
+	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/common"
 )
 
 var (
@@ -99,10 +100,7 @@ func (r *sshKeyResource) Create(ctx context.Context, req resource.CreateRequest,
 
     sshKey, err := r.client.CreateSSHKey(ctx, createInput)
     if err != nil {
-        resp.Diagnostics.AddError(
-            "Error creating SSH key",
-            "Could not create SSH key, unexpected error: "+err.Error(),
-        )
+        resp.Diagnostics.Append(common.HandleProviderError(err, "ssh key creation"))
         return
     }
 
@@ -126,10 +124,7 @@ func (r *sshKeyResource) Read(ctx context.Context, req resource.ReadRequest, res
 
     sshKey, err := r.client.GetSSHKey(ctx, strfmt.UUID(state.ID.ValueString()))
     if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Reading SSH Key",
-            "Could not read SSH key ID "+state.ID.ValueString()+": "+err.Error(),
-        )
+        resp.Diagnostics.Append(common.HandleProviderError(err, "ssh key retrieval"))
         return
     }
 
@@ -162,10 +157,7 @@ func (r *sshKeyResource) Delete(ctx context.Context, req resource.DeleteRequest,
 
     err := r.client.DeleteSSHKey(ctx, strfmt.UUID(state.ID.ValueString()))
     if err != nil {
-        resp.Diagnostics.AddError(
-            "Error Deleting SSH Key",
-            "Could not delete SSH key, unexpected error: "+err.Error(),
-        )
+        resp.Diagnostics.Append(common.HandleProviderError(err, "ssh key deletion"))
         return
     }
 }
