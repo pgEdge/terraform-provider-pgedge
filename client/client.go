@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"reflect"
 	"regexp"
 	"strings"
 	"time"
@@ -78,60 +77,34 @@ func (e *APIError) Error() string {
 	return fmt.Sprintf("API error (status %d): %s", e.StatusCode, e.Message)
 }
 
+type GeneratedAPIError interface {
+    Code() int
+    Message() string
+}
+
 func handleAPIError(err error) error {
-	if err == nil {
-		return nil
-	}
+    errStr := err.Error()
 
-	errStr := err.Error()
+    re := regexp.MustCompile(`\[(\d+)\] \w+ (.+)`)
+    matches := re.FindStringSubmatch(errStr)
 
-	re := regexp.MustCompile(`\[(\d+)\] \w+ (.+)`)
-	matches := re.FindStringSubmatch(errStr)
+    if len(matches) == 3 {
+        jsonStr := matches[2]
 
-	if len(matches) == 3 {
-		jsonStr := matches[2]
+        var jsonError struct {
+            Code    int    `json:"code"`
+            Message string `json:"message"`
+        }
 
-		var jsonError struct {
-			Code    int    `json:"code"`
-			Message string `json:"message"`
-		}
+        if err := json.Unmarshal([]byte(jsonStr), &jsonError); err == nil {
+            return &APIError{
+                StatusCode: jsonError.Code,
+                Message:    jsonError.Message,
+            }
+        }
+    }
 
-		if err := json.Unmarshal([]byte(jsonStr), &jsonError); err == nil {
-			return &APIError{
-				StatusCode: jsonError.Code,
-				Message:    jsonError.Message,
-			}
-		}
-	}
-
-	v := reflect.ValueOf(err)
-	if v.Kind() == reflect.Ptr {
-		v = v.Elem()
-	}
-
-	var statusCode int
-	var message string
-
-	if codeMethod := v.MethodByName("Code"); codeMethod.IsValid() {
-		if codeValue := codeMethod.Call(nil)[0]; codeValue.CanInt() {
-			statusCode = int(codeValue.Int())
-		}
-	}
-
-	if v.Kind() == reflect.Struct {
-		if messageField := v.FieldByName("Message"); messageField.IsValid() && messageField.Kind() == reflect.String {
-			message = messageField.String()
-		}
-	}
-
-	if statusCode != 0 && message != "" {
-		return &APIError{
-			StatusCode: statusCode,
-			Message:    message,
-		}
-	}
-
-	return err
+    return err
 }
 
 func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
