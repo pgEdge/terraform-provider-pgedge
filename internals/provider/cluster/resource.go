@@ -411,7 +411,12 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 	cluster, err := r.client.GetCluster(ctx, strfmt.UUID(state.ID.ValueString()))
 	if err != nil {
-        resp.Diagnostics.Append(common.HandleProviderError(err, "reading cluster"))
+		diag := common.HandleProviderError(err, "reading cluster")
+        if diag == nil {
+            resp.State.RemoveResource(ctx)
+            return
+        }
+        resp.Diagnostics.Append(diag)
         return
     }
 

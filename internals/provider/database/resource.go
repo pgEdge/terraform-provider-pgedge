@@ -677,7 +677,12 @@ func (r *databaseResource) Read(ctx context.Context, req resource.ReadRequest, r
 
 	database, err := r.client.GetDatabase(ctx, strfmt.UUID(state.ID.ValueString()))
 	if err != nil {
-        resp.Diagnostics.Append(common.HandleProviderError(err, "database retrieval"))
+        diag := common.HandleProviderError(err, "database retrieval")
+        if diag == nil {
+            resp.State.RemoveResource(ctx)
+            return
+        }
+        resp.Diagnostics.Append(diag)
         return
     }
 

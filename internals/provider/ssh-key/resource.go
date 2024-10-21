@@ -124,7 +124,12 @@ func (r *sshKeyResource) Read(ctx context.Context, req resource.ReadRequest, res
 
     sshKey, err := r.client.GetSSHKey(ctx, strfmt.UUID(state.ID.ValueString()))
     if err != nil {
-        resp.Diagnostics.Append(common.HandleProviderError(err, "ssh key retrieval"))
+		diag := common.HandleProviderError(err, "ssh key retrieval")
+        if diag == nil {
+            resp.State.RemoveResource(ctx)
+            return
+        }
+        resp.Diagnostics.Append(diag)
         return
     }
 
