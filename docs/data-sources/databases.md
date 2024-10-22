@@ -38,8 +38,6 @@ Read-Only:
 - `pg_version` (String) PostgreSQL version of the database
 - `roles` (Attributes List) Roles in the database (see [below for nested schema](#nestedatt--databases--roles))
 - `status` (String) Status of the database
-- `storage_used` (Number) Storage used by the database in bytes
-- `updated_at` (String) Last update timestamp of the database
 
 <a id="nestedatt--databases--backups"></a>
 ### Nested Schema for `databases.backups`

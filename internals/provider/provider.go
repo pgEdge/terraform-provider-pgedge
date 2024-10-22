@@ -198,7 +198,11 @@ resource "pgedge_cluster" "example" {
     },
   ]
 
-  depends_on = [pgedge_cloud_account.example]
+  depends_on = [
+    pgedge_cloud_account.example,
+    pgedge_backup_store.test_store,
+    pgedge_ssh_key.example
+  ]
 }
 
 # Database Resource

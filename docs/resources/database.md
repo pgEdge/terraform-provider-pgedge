@@ -37,8 +37,6 @@ Manages a pgEdge database.
 - `id` (String) Unique identifier for the database.
 - `pg_version` (String) The PostgreSQL version of the database.
 - `status` (String) The current status of the database.
-- `storage_used` (Number) The amount of storage used by the database in bytes.
-- `updated_at` (String) The timestamp when the database was last updated.
 
 <a id="nestedatt--nodes"></a>
 ### Nested Schema for `nodes`
