@@ -854,8 +854,6 @@ definitions:
         additionalProperties:
           type: string
         type: object
-      ssh_key_id:
-        type: string
     required:
     - regions
     type: object

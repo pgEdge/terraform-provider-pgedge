@@ -568,7 +568,6 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	updateInput := &models.UpdateClusterInput{
-		SSHKeyID: plan.SSHKeyID.ValueString(),
 		Nodes:    make([]*models.ClusterNodeSettings, 0),
 		Networks: make([]*models.ClusterNetworkSettings, 0),
 	}
