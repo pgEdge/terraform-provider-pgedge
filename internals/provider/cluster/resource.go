@@ -205,6 +205,15 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 
+	if err := validateRegions(plan.Nodes, plan.Regions, plan.Networks); err != nil {
+        resp.Diagnostics.AddError(
+            "Invalid Region Configuration",
+            err.Error(),
+        )
+        return
+    }
+
+
 	regions, diags := convertToStringSlice(ctx, plan.Regions)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -552,6 +561,14 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 		return
 	}
 
+	if err := validateRegions(plan.Nodes, plan.Regions, plan.Networks); err != nil {
+        resp.Diagnostics.AddError(
+            "Invalid Region Configuration",
+            err.Error(),
+        )
+        return
+    }
+
 	regions, diags := convertToStringSlice(ctx, plan.Regions)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
@@ -883,4 +900,42 @@ func compareStringSlices(a, b []string) bool {
 		}
 	}
 	return true
+}
+
+
+func validateRegions(nodes []nodeModel, regions types.List, networks []networkModel) error {
+    nodeRegions := make(map[string]bool)
+    for _, node := range nodes {
+        nodeRegions[node.Region.ValueString()] = true
+    }
+
+    networkRegions := make(map[string]bool)
+    for _, network := range networks {
+        networkRegions[network.Region.ValueString()] = true
+    }
+
+    regionsArray := make(map[string]bool)
+    for _, region := range regions.Elements() {
+        if str, ok := region.(types.String); ok {
+            regionsArray[str.ValueString()] = true
+        }
+    }
+
+    if len(nodeRegions) != len(networkRegions) || len(nodeRegions) != len(regionsArray) {
+        return fmt.Errorf("regions mismatch: the number of unique regions in nodes, networks, and regions array must be the same")
+    }
+
+    for region := range nodeRegions {
+        if !regionsArray[region] {
+            return fmt.Errorf("regions mismatch: all regions specified in nodes must be present in the regions array")
+        }
+    }
+
+    for region := range networkRegions {
+        if !regionsArray[region] {
+            return fmt.Errorf("regions mismatch: all regions specified in networks must be present in the regions array")
+        }
+    }
+
+    return nil
 }
