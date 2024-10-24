@@ -648,6 +648,11 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 
 	database, err := r.client.CreateDatabase(ctx, createInput)
 	if err != nil {
+		if database != nil {
+			mappedDatabase := r.mapDatabaseToResourceModel(database)
+            diags = resp.State.Set(ctx, mappedDatabase)
+            resp.Diagnostics.Append(diags...)
+        }
         resp.Diagnostics.Append(common.HandleProviderError(err, "database creation"))
         return
     }

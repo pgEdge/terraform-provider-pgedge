@@ -294,6 +294,15 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 
 	cluster, err := r.client.CreateCluster(ctx, createInput)
 	if err != nil {
+        if cluster != nil {
+            mappedCluster := r.mapClusterToResourceModel(cluster)
+            mappedCluster.ResourceTags = types.MapNull(types.StringType)
+			mappedCluster.BackupStoreIDs = types.ListNull(types.StringType)
+			mappedCluster.Regions = types.ListNull(types.StringType)
+            
+            diags = resp.State.Set(ctx, mappedCluster)
+            resp.Diagnostics.Append(diags...)
+        }
         resp.Diagnostics.Append(common.HandleProviderError(err, "cluster creation"))
         return
     }

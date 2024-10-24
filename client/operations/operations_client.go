@@ -90,6 +90,8 @@ type ClientService interface {
 
 	GetSSHKeysID(params *GetSSHKeysIDParams, opts ...ClientOption) (*GetSSHKeysIDOK, error)
 
+	GetTasks(params *GetTasksParams, opts ...ClientOption) (*GetTasksOK, error)
+
 	PatchClustersID(params *PatchClustersIDParams, opts ...ClientOption) (*PatchClustersIDOK, error)
 
 	PatchDatabasesID(params *PatchDatabasesIDParams, opts ...ClientOption) (*PatchDatabasesIDOK, error)
@@ -786,6 +788,46 @@ func (a *Client) GetSSHKeysID(params *GetSSHKeysIDParams, opts ...ClientOption) 
 	// unexpected success response
 	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
 	msg := fmt.Sprintf("unexpected success response for GetSSHKeysID: API contract not enforced by server. Client expected to get an error, but got: %T", result)
+	panic(msg)
+}
+
+/*
+GetTasks lists tasks
+
+List tasks.
+*/
+func (a *Client) GetTasks(params *GetTasksParams, opts ...ClientOption) (*GetTasksOK, error) {
+	// TODO: Validate the params before sending
+	if params == nil {
+		params = NewGetTasksParams()
+	}
+	op := &runtime.ClientOperation{
+		ID:                 "GetTasks",
+		Method:             "GET",
+		PathPattern:        "/tasks",
+		ProducesMediaTypes: []string{"application/json"},
+		ConsumesMediaTypes: []string{"application/json"},
+		Schemes:            []string{"http"},
+		Params:             params,
+		Reader:             &GetTasksReader{formats: a.formats},
+		Context:            params.Context,
+		Client:             params.HTTPClient,
+	}
+	for _, opt := range opts {
+		opt(op)
+	}
+
+	result, err := a.transport.Submit(op)
+	if err != nil {
+		return nil, err
+	}
+	success, ok := result.(*GetTasksOK)
+	if ok {
+		return success, nil
+	}
+	// unexpected success response
+	// safeguard: normally, absent a default response, unknown success responses return an error above: so this is a codegen issue
+	msg := fmt.Sprintf("unexpected success response for GetTasks: API contract not enforced by server. Client expected to get an error, but got: %T", result)
 	panic(msg)
 }
 

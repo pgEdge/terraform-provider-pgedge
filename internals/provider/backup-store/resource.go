@@ -126,6 +126,17 @@ func (r *backupStoreResource) Create(ctx context.Context, req resource.CreateReq
 
     backupStore, err := r.client.CreateBackupStore(ctx, input)
     if err != nil {
+        if backupStore != nil {
+            plan.ID = types.StringValue(backupStore.ID.String())
+            plan.CloudAccountType = types.StringPointerValue(backupStore.CloudAccountType)
+            plan.CreatedAt = types.StringPointerValue(backupStore.CreatedAt)
+            plan.UpdatedAt = types.StringPointerValue(backupStore.UpdatedAt)
+            plan.Status = types.StringPointerValue(backupStore.Status)
+            plan.ClusterIDs = types.ListValueMust(types.StringType, []attr.Value{types.StringValue("")})
+            plan.Properties = r.convertPropertiesToMap(backupStore.Properties)
+            diags = resp.State.Set(ctx, plan)
+            resp.Diagnostics.Append(diags...)
+        }
         resp.Diagnostics.Append(common.HandleProviderError(err, "backup store creation"))
         return
     }
