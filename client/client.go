@@ -77,35 +77,142 @@ func (e *APIError) Error() string {
 }
 
 type GeneratedAPIError interface {
-    Code() int
-    Message() string
+	Code() int
+	Message() string
 }
 
 type KnownError interface {
-    GetPayload() *models.Error
+	GetPayload() *models.Error
 }
 
 func handleAPIError(err error) error {
-    var knownErr KnownError
-    if errors.As(err, &knownErr) {
-        payload := knownErr.GetPayload()
-        return &APIError{
-            StatusCode: int(payload.Code),
-            Message:    payload.Message,
-        }
+	var knownErr KnownError
+	if errors.As(err, &knownErr) {
+		payload := knownErr.GetPayload()
+		return &APIError{
+			StatusCode: int(payload.Code),
+			Message:    payload.Message,
+		}
+	}
+
+	var runtimeErr *runtime.APIError
+	if errors.As(err, &runtimeErr) {
+		return &APIError{
+			StatusCode: runtimeErr.Code,
+			Message:    runtimeErr.Error(),
+		}
+	}
+
+	return &APIError{
+		StatusCode: 500,
+		Message:    err.Error(),
+	}
+}
+
+type TaskPollingConfig struct {
+    SubjectID   string
+    SubjectKind string
+    TaskName    string 
+    MaxAttempts int    
+    Interval    time.Duration 
+}
+
+func (c *Client) GetTasks(ctx context.Context, subjectID, subjectKind string, id, name *string, status string, limit, offset *int64) ([]*models.Task, error) {
+    request := &operations.GetTasksParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
     }
 
-    var runtimeErr *runtime.APIError
-    if errors.As(err, &runtimeErr) {
-        return &APIError{
-            StatusCode: runtimeErr.Code,
-            Message:    runtimeErr.Error(),
-        }
+    if subjectID != "" {
+        request.SubjectID = &subjectID
+    }
+    if subjectKind != "" {
+        request.SubjectKind = &subjectKind 
+    }
+    if id != nil {
+        request.ID = id
+    }
+    if name != nil {
+        request.Name = name
+    }
+    if status != "" {
+        request.Status = &status
+    }
+    if limit != nil {
+        request.Limit = limit
+    }
+    if offset != nil {
+        request.Offset = offset
     }
 
-    return &APIError{
-        StatusCode: 500,
-        Message:    err.Error(),
+    request.SetAuthorization(c.AuthHeader)
+
+    resp, err := c.PgEdgeAPIClient.Operations.GetTasks(request)
+    if err != nil {
+        return nil, handleAPIError(err)
+    }
+
+    return resp.Payload, nil
+}
+
+func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) error {
+    attempt := 0
+    for {
+        if attempt >= config.MaxAttempts {
+            return fmt.Errorf("timeout waiting for %s task to complete for %s %s", 
+                config.TaskName, config.SubjectKind, config.SubjectID)
+        }
+
+        tasks, err := c.GetTasks(ctx, config.SubjectID, config.SubjectKind, nil, nil, "", nil, nil)
+        if err != nil {
+            return fmt.Errorf("error checking task status: %w", err)
+        }
+
+        var latestTask *models.Task
+        for _, task := range tasks {
+            if task.Name != nil && *task.Name == config.TaskName {
+                if latestTask == nil {
+                    latestTask = task
+                    continue
+                }
+                
+                latestTime, err := time.Parse(time.RFC3339, *latestTask.CreatedAt)
+                if err != nil {
+                    continue
+                }
+                
+                currentTime, err := time.Parse(time.RFC3339, *task.CreatedAt)
+                if err != nil {
+                    continue
+                }
+                
+                if currentTime.After(latestTime) {
+                    latestTask = task
+                }
+            }
+        }
+
+        if latestTask != nil && latestTask.Status != nil {
+            status := *latestTask.Status
+            switch status {
+            case "succeeded":
+                return nil
+            case "failed":
+                if latestTask.Error != "" {
+                    return fmt.Errorf("task failed: %s", latestTask.Error)
+                }
+                return fmt.Errorf("task failed without error message")
+            case "running", "queued":
+                // Continue polling
+            }
+        }
+
+        select {
+        case <-ctx.Done():
+            return ctx.Err()
+        case <-time.After(config.Interval):
+        }
+        attempt++
     }
 }
 
@@ -127,40 +234,35 @@ func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
 }
 
 func (c *Client) CreateDatabase(ctx context.Context, database *models.CreateDatabaseInput) (*models.Database, error) {
-	request := &operations.PostDatabasesParams{
-		HTTPClient: c.HTTPClient,
-		Context:    ctx,
-		Body:       database,
-	}
-	request.SetAuthorization(c.AuthHeader)
+    request := &operations.PostDatabasesParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        Body:       database,
+    }
+    request.SetAuthorization(c.AuthHeader)
 
-	resp, err := c.PgEdgeAPIClient.Operations.PostDatabases(request)
+    resp, err := c.PgEdgeAPIClient.Operations.PostDatabases(request)
+    if err != nil {
+        return nil, handleAPIError(err)
+    }
+
+	DatabaseResp, err := c.GetDatabase(ctx, *resp.Payload.ID)
 	if err != nil {
 		return nil, handleAPIError(err)
 	}
 
-	// Poll for database creation
-	for {
-		databaseDetails, err := c.GetDatabase(ctx, *resp.Payload.ID)
-		if err != nil {
-			return nil, handleAPIError(err)
-		}
+    err = c.PollTaskStatus(ctx, TaskPollingConfig{
+        SubjectID:   resp.Payload.ID.String(),
+        SubjectKind: "database",
+        TaskName:    "create",
+        MaxAttempts: 360, // 30 minutes
+        Interval:    5 * time.Second,
+    })
+    if err != nil {
+        return DatabaseResp, err
+    }
 
-		if databaseDetails.Status == nil {
-			return nil, errors.New("database status is nil")
-		}
-
-		switch *databaseDetails.Status {
-		case "available":
-			return databaseDetails, nil
-		case "failed":
-			return nil, errors.New("database creation failed")
-		case "creating":
-			time.Sleep(5 * time.Second)
-		default:
-			return nil, fmt.Errorf("unexpected database status: %s", *databaseDetails.Status)
-		}
-	}
+    return DatabaseResp, nil
 }
 
 func (c *Client) GetDatabase(ctx context.Context, id strfmt.UUID) (*models.Database, error) {
@@ -181,66 +283,57 @@ func (c *Client) GetDatabase(ctx context.Context, id strfmt.UUID) (*models.Datab
 }
 
 func (c *Client) UpdateDatabase(ctx context.Context, id strfmt.UUID, body *models.UpdateDatabaseInput) (*models.Database, error) {
-	request := &operations.PatchDatabasesIDParams{
-		HTTPClient: c.HTTPClient,
-		Context:    ctx,
-		ID:         id,
-		Body:       body,
-	}
+    request := &operations.PatchDatabasesIDParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        ID:         id,
+        Body:       body,
+    }
 
-	request.SetAuthorization(c.AuthHeader)
+    request.SetAuthorization(c.AuthHeader)
 
-	resp, err := c.PgEdgeAPIClient.Operations.PatchDatabasesID(request)
-	if err != nil {
-		return nil, handleAPIError(err)
-	}
+    resp, err := c.PgEdgeAPIClient.Operations.PatchDatabasesID(request)
+    if err != nil {
+        return nil, handleAPIError(err)
+    }
 
-	// Poll for database update
-	for {
-		databaseDetails, err := c.GetDatabase(ctx, *resp.Payload.ID)
-		if err != nil {
-			return nil, handleAPIError(err)
-		}
+    err = c.PollTaskStatus(ctx, TaskPollingConfig{
+        SubjectID:   resp.Payload.ID.String(),
+        SubjectKind: "database",
+        TaskName:    "update",
+        MaxAttempts: 360, // 30 minutes
+        Interval:    5 * time.Second,
+    })
+    if err != nil {
+        return nil, err
+    }
 
-		if databaseDetails.Status == nil {
-			return nil, errors.New("database status is nil")
-		}
-
-		switch *databaseDetails.Status {
-		case "available":
-			return databaseDetails, nil
-		case "degraded":
-			return nil, errors.New("database degraded")
-		case "modifying":
-			time.Sleep(5 * time.Second)
-		default:
-			return nil, fmt.Errorf("unexpected database status: %s", *databaseDetails.Status)
-		}
-	}
+    return c.GetDatabase(ctx, *resp.Payload.ID) 
 }
 
 func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) error {
-	request := &operations.DeleteDatabasesIDParams{
-		HTTPClient: c.HTTPClient,
-		Context:    ctx,
-		ID:         id,
-	}
+    request := &operations.DeleteDatabasesIDParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        ID:         id,
+    }
 
-	request.SetAuthorization(c.AuthHeader)
+    request.SetAuthorization(c.AuthHeader)
 
-	_, err := c.PgEdgeAPIClient.Operations.DeleteDatabasesID(request)
-	if err == nil {
-		for {
-			_, err := c.GetDatabase(ctx, id)
-			if err != nil {
-				return nil
-			}
+    _, err := c.PgEdgeAPIClient.Operations.DeleteDatabasesID(request)
+    if err != nil {
+        return handleAPIError(err)
+    }
 
-			time.Sleep(5 * time.Second)
-		}
-	} else {
-		return handleAPIError(err)
-	}
+    err = c.PollTaskStatus(ctx, TaskPollingConfig{
+        SubjectID:   id.String(),
+        SubjectKind: "database", 
+        TaskName:    "delete",
+        MaxAttempts: 360, // 30 minutes
+        Interval:    5 * time.Second,
+    })
+
+    return err
 }
 
 func (c *Client) GetAllClusters(ctx context.Context) ([]*models.Cluster, error) {
@@ -277,94 +370,95 @@ func (c *Client) GetCluster(ctx context.Context, id strfmt.UUID) (*models.Cluste
 }
 
 func (c *Client) CreateCluster(ctx context.Context, cluster *models.CreateClusterInput) (*models.Cluster, error) {
-	request := &operations.PostClustersParams{
-		HTTPClient: c.HTTPClient,
-		Context:    ctx,
-		Body:       cluster,
-	}
+    request := &operations.PostClustersParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        Body:       cluster,
+    }
 
-	request.SetAuthorization(c.AuthHeader)
+    request.SetAuthorization(c.AuthHeader)
 
-	resp, err := c.PgEdgeAPIClient.Operations.PostClusters(request)
+    resp, err := c.PgEdgeAPIClient.Operations.PostClusters(request)
+    if err != nil {
+        return nil, handleAPIError(err)
+    }
+
+	clusterResp, err := c.GetCluster(ctx, *resp.Payload.ID)
 	if err != nil {
 		return nil, handleAPIError(err)
 	}
 
-	for {
-		clusterDetails, err := c.GetCluster(ctx, strfmt.UUID(*resp.Payload.ID))
-		if err != nil {
-			return nil, handleAPIError(err)
-		}
+    err = c.PollTaskStatus(ctx, TaskPollingConfig{
+        SubjectID:   resp.Payload.ID.String(),
+        SubjectKind: "cluster",
+        TaskName:    "create",
+        MaxAttempts: 540, // 45 minutes
+        Interval:    5 * time.Second,
+    })
 
-		switch *clusterDetails.Status {
-		case "available":
-			return clusterDetails, nil
-		case "failed":
-			return nil, errors.New("cluster creation failed")
-		case "creating":
-			time.Sleep(5 * time.Second)
-		default:
-			return nil, fmt.Errorf("unexpected cluster status: %s", *clusterDetails.Status)
-		}
-	}
+    if err != nil {
+        return clusterResp, err
+    }
+
+    return clusterResp, nil
 }
+
 
 func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models.UpdateClusterInput) (*models.Cluster, error) {
-	request := &operations.PatchClustersIDParams{
-		HTTPClient: c.HTTPClient,
-		Context:    ctx,
-		ID:         id,
-		Body:       body,
-	}
+    request := &operations.PatchClustersIDParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        ID:         id,
+        Body:       body,
+    }
 
-	request.SetAuthorization(c.AuthHeader)
+    request.SetAuthorization(c.AuthHeader)
 
-	resp, err := c.PgEdgeAPIClient.Operations.PatchClustersID(request)
-	if err != nil {
-		return nil, handleAPIError(err)
-	}
+    resp, err := c.PgEdgeAPIClient.Operations.PatchClustersID(request)
+    if err != nil {
+        return nil, handleAPIError(err)
+    }
 
-	for {
-		clusterDetails, err := c.GetCluster(ctx, strfmt.UUID(*resp.Payload.ID))
-		if err != nil {
-			return nil, handleAPIError(err)
-		}
+    err = c.PollTaskStatus(ctx, TaskPollingConfig{
+        SubjectID:   resp.Payload.ID.String(),
+        SubjectKind: "cluster",
+        TaskName:    "update",
+        MaxAttempts: 540, // 45 minutes
+        Interval:    5 * time.Second,
+    })
+    if err != nil {
+        return nil, err
+    }
 
-		switch *clusterDetails.Status {
-		case "available":
-			return clusterDetails, nil
-		case "failed":
-			return nil, errors.New("cluster update failed")
-		case "modifying":
-			time.Sleep(5 * time.Second)
-		default:
-			return nil, fmt.Errorf("unexpected cluster status: %s", *clusterDetails.Status)
-		}
-	}
+    return c.GetCluster(ctx, strfmt.UUID(*resp.Payload.ID))
 }
+
 
 func (c *Client) DeleteCluster(ctx context.Context, id strfmt.UUID) error {
-	request := &operations.DeleteClustersIDParams{
-		HTTPClient: c.HTTPClient,
-		Context:    ctx,
-		ID:         id,
-	}
+    request := &operations.DeleteClustersIDParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        ID:         id,
+    }
 
-	request.SetAuthorization(c.AuthHeader)
+    request.SetAuthorization(c.AuthHeader)
 
-	_, err := c.PgEdgeAPIClient.Operations.DeleteClustersID(request)
-	if err == nil {
-		for {
-			_, err := c.GetCluster(ctx, id)
-			if err != nil {
-				return nil
-			}
-			time.Sleep(5 * time.Second)
-		}
-	} else {
-		return handleAPIError(err)
-	}
+    _, err := c.PgEdgeAPIClient.Operations.DeleteClustersID(request)
+    if err != nil {
+        return handleAPIError(err)
+    }
+
+    err = c.PollTaskStatus(ctx, TaskPollingConfig{
+        SubjectID:   id.String(),
+        SubjectKind: "cluster",
+        TaskName:    "delete",
+        MaxAttempts: 540, // 45 minutes
+        Interval:    5 * time.Second,
+    })
+
+    return err
 }
+
 
 func (c *Client) GetClusterNodes(ctx context.Context, id strfmt.UUID, nearLat, nearLon, orderBy *string) ([]*models.ClusterNode, error) {
 	request := &operations.GetClustersIDNodesParams{
@@ -542,7 +636,7 @@ func (c *Client) DeleteSSHKey(ctx context.Context, id strfmt.UUID) error {
 	if err != nil {
 		return handleAPIError(err)
 	}
-	 return nil
+	return nil
 }
 
 func (c *Client) GetBackupStores(ctx context.Context, createdAfter, createdBefore *string, limit, offset *int64, descending *bool) ([]*models.BackupStore, error) {
@@ -567,42 +661,40 @@ func (c *Client) GetBackupStores(ctx context.Context, createdAfter, createdBefor
 }
 
 func (c *Client) CreateBackupStore(ctx context.Context, input *models.CreateBackupStoreInput) (*models.BackupStore, error) {
-	request := &operations.PostBackupStoresParams{
-		HTTPClient: c.HTTPClient,
-		Context:    ctx,
-		Body:       input,
-	}
+    request := &operations.PostBackupStoresParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        Body:       input,
+    }
 
-	request.SetAuthorization(c.AuthHeader)
+    request.SetAuthorization(c.AuthHeader)
 
-	resp, err := c.PgEdgeAPIClient.Operations.PostBackupStores(request)
+    resp, err := c.PgEdgeAPIClient.Operations.PostBackupStores(request)
+    if err != nil {
+        return nil, handleAPIError(err)
+    }
+
+	if resp == nil || resp.Payload == nil {
+        return nil, fmt.Errorf("received nil response or payload")
+    }
+
+	backupStoreResp, err := c.GetBackupStore(ctx, *resp.Payload.ID)
 	if err != nil {
 		return nil, handleAPIError(err)
 	}
 
-	if resp == nil || resp.Payload == nil {
-		return nil, fmt.Errorf("received nil response or payload")
-	}
+    err = c.PollTaskStatus(ctx, TaskPollingConfig{
+        SubjectID:   resp.Payload.ID.String(),
+        SubjectKind: "backup_store",
+        TaskName:    "create",
+        MaxAttempts: 360, // 30 minutes
+        Interval:    5 * time.Second,
+    })
+    if err != nil {
+        return backupStoreResp, err
+    }
 
-	backupStore := resp.Payload
-
-	for {
-		updatedStore, err := c.GetBackupStore(ctx, *backupStore.ID)
-		if err != nil {
-			return nil, handleAPIError(err)
-		}
-
-		switch *updatedStore.Status {
-		case "available":
-			return updatedStore, nil
-		case "failed":
-			return nil, errors.New("backup store creation failed")
-		case "creating":
-			time.Sleep(5 * time.Second)
-		default:
-			return nil, fmt.Errorf("unexpected backup store status: %s", *updatedStore.Status)
-		}
-	}
+    return backupStoreResp, nil
 }
 
 func (c *Client) GetBackupStore(ctx context.Context, id strfmt.UUID) (*models.BackupStore, error) {
@@ -623,28 +715,31 @@ func (c *Client) GetBackupStore(ctx context.Context, id strfmt.UUID) (*models.Ba
 }
 
 func (c *Client) DeleteBackupStore(ctx context.Context, id strfmt.UUID) error {
-	request := &operations.DeleteBackupStoresIDParams{
-		HTTPClient: c.HTTPClient,
-		Context:    ctx,
-		ID:         id,
-	}
+    request := &operations.DeleteBackupStoresIDParams{
+        HTTPClient: c.HTTPClient,
+        Context:    ctx,
+        ID:         id,
+    }
 
-	request.SetAuthorization(c.AuthHeader)
+    request.SetAuthorization(c.AuthHeader)
 
-	_, err := c.PgEdgeAPIClient.Operations.DeleteBackupStoresID(request)
-	if err == nil {
-		for {
-			_, err := c.GetBackupStore(ctx, id)
-			if err != nil {
-				return nil
-			}
+    _, err := c.PgEdgeAPIClient.Operations.DeleteBackupStoresID(request)
+    if err != nil {
+        return handleAPIError(err)
+    }
 
-			time.Sleep(5 * time.Second)
-		}
-	}else{
-		return handleAPIError(err)
-	}
+    // Poll for task completion
+    err = c.PollTaskStatus(ctx, TaskPollingConfig{
+        SubjectID:   id.String(),
+        SubjectKind: "backup_store",
+        TaskName:    "delete",
+        MaxAttempts: 360, // 30 minutes
+        Interval:    5 * time.Second,
+    })
+    
+    return err
 }
+
 
 func (c *Client) OAuthToken(ctx context.Context, clientId, clientSecret, grantType string) (*operations.PostOauthTokenOKBody, error) {
 	request := &operations.PostOauthTokenParams{
