@@ -38,9 +38,6 @@ type UpdateClusterInput struct {
 
 	// resource tags
 	ResourceTags map[string]string `json:"resource_tags,omitempty"`
-
-	// ssh key id
-	SSHKeyID string `json:"ssh_key_id,omitempty"`
 }
 
 // Validate validates this update cluster input

@@ -316,8 +316,6 @@ definitions:
     required:
       - regions
     properties:
-      ssh_key_id:
-        type: string
       regions:
         type: array
         items:
