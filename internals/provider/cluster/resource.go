@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
@@ -197,12 +199,136 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 	}
 }
 
+func ValidateFirewallRuleName(name string) error {
+    validChars := "abcdefghijklmnopqrstuvwxyz0123456789-"
+    for _, char := range name {
+        if !strings.ContainsRune(validChars, char) {
+            return fmt.Errorf("firewall rule name can only contain lowercase letters, numbers, and hyphens, got: %s", name)
+        }
+    }
+
+    if len(name) < 3 || len(name) > 63 {
+        return fmt.Errorf("firewall rule name must be between 3 and 63 characters, got length: %d", len(name))
+    }
+
+    if name[0] < 'a' || name[0] > 'z' {
+        return fmt.Errorf("firewall rule name must start with a lowercase letter, got: %s", name)
+    }
+
+    return nil
+}
+
+func ValidateClusterConfiguration(plan *clusterResourceModel) error {
+    if err := validateFirewallRules(plan.FirewallRules); err != nil {
+        return err
+    }
+
+    if err := validateNetworks(plan.Networks, plan.Nodes, plan.NodeLocation); err != nil {
+        return err
+    }
+
+    return nil
+}
+
+func validateFirewallRules(rules []firewallRuleModel) error {
+    for i, rule := range rules {
+        if err := ValidateFirewallRuleName(rule.Name.ValueString()); err != nil {
+            return fmt.Errorf("invalid firewall rule at index %d: %w", i, err)
+        }
+
+        port := rule.Port.ValueInt64()
+        if port < 1 || port > 65535 {
+            return fmt.Errorf("invalid port number %d at index %d: must be between 1 and 65535", port, i)
+        }
+
+        sources := common.ConvertTFListToStringSlice(rule.Sources)
+        if len(sources) == 0 {
+            return fmt.Errorf("firewall rule at index %d must have at least one source", i)
+        }
+        
+        for _, source := range sources {
+            if !isValidCIDR(source) {
+                return fmt.Errorf("invalid CIDR format %s in firewall rule at index %d", source, i)
+            }
+        }
+    }
+    return nil
+}
+
+func validateNetworks(networks []networkModel, nodes []nodeModel, nodeLocation types.String) error {
+    if nodeLocation.ValueString() == "private" {
+        nodesPerRegion := make(map[string]int)
+        for _, node := range nodes {
+            nodesPerRegion[node.Region.ValueString()]++
+        }
+
+        for i, network := range networks {
+            region := network.Region.ValueString()
+
+            if network.PrivateSubnets.IsNull() || len(network.PrivateSubnets.Elements()) == 0 {
+                return fmt.Errorf("private subnets are required at node_groups.aws[%d].private_subnets for private nodes", i)
+            }
+
+            nodeCount := nodesPerRegion[region]
+            subnetCount := len(network.PrivateSubnets.Elements())
+            if nodeCount > subnetCount {
+                return fmt.Errorf("more nodes (%d) than available subnets (%d) in node_groups.aws[%d] for private nodes", 
+                    nodeCount, subnetCount, i)
+            }
+        }
+    }
+    return nil
+}
+
+func isValidCIDR(cidr string) bool {
+    parts := strings.Split(cidr, "/")
+    if len(parts) != 2 {
+        return false
+    }
+
+    ipParts := strings.Split(parts[0], ".")
+    if len(ipParts) != 4 {
+        return false
+    }
+    
+    for _, part := range ipParts {
+        num := 0
+        for _, digit := range part {
+            if digit < '0' || digit > '9' {
+                return false
+            }
+            num = num*10 + int(digit-'0')
+        }
+        if num < 0 || num > 255 {
+            return false
+        }
+    }
+
+    prefix, err := strconv.Atoi(parts[1])
+    if err != nil {
+        return false
+    }
+    if prefix < 0 || prefix > 32 {
+        return false
+    }
+
+    return true
+}
+
 func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
 	var plan clusterResourceModel
 	diags := req.Plan.Get(ctx, &plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
+	}
+
+	if err := ValidateClusterConfiguration(&plan); err != nil {
+        resp.Diagnostics.AddError(
+            "Invalid Cluster Configuration",
+            err.Error(),
+        )
+        return
 	}
 
 	if err := validateRegions(plan.Nodes, plan.Regions, plan.Networks); err != nil {
