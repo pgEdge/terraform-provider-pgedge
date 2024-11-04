@@ -120,8 +120,17 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Computed:    true,
 				Optional:    true,
 				PlanModifiers: []planmodifier.Object{
-					objectplanmodifier.UseStateForUnknown(),
-				},
+                    objectplanmodifier.RequiresReplaceIf(
+                        func(ctx context.Context, req planmodifier.ObjectRequest, resp *objectplanmodifier.RequiresReplaceIfFuncResponse) {
+                            if !req.StateValue.IsNull() {
+                                // If state exists (not a new resource) and plan is different, require replace
+                                resp.RequiresReplace = !req.PlanValue.Equal(req.StateValue)
+                            }
+                        },
+                        "Backup configuration cannot be modified after creation",
+                        "Backup configuration cannot be modified after creation. Any changes will require creating a new database.",
+                    ),
+                },
 				Attributes: map[string]schema.Attribute{
 					"provider": schema.StringAttribute{
 						Description: "The backup provider.",
@@ -156,91 +165,101 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 								"repositories": schema.ListNestedAttribute{
 									Description: "List of backup repositories.",
 									Computed:    true,
+									Optional:    true,
 									PlanModifiers: []planmodifier.List{
 										listplanmodifier.UseStateForUnknown(),
 									},
 									NestedObject: schema.NestedAttributeObject{
-										Attributes: map[string]schema.Attribute{
-											"id": schema.StringAttribute{
-												Description: "Unique identifier for the repository.",
-												Computed:    true,
-												Optional:    true,
-											},
-											"type": schema.StringAttribute{
-												Description: "Type of the repository.",
-												Computed:    true,
-											},
-											"backup_store_id": schema.StringAttribute{
-												Description: "ID of the backup store.",
-												Computed:    true,
-											},
-											"base_path": schema.StringAttribute{
-												Description: "Base path for the repository.",
-												Computed:    true,
-											},
-											"s3_bucket": schema.StringAttribute{
-												Description: "S3 bucket name.",
-												Computed:    true,
-											},
-											"s3_region": schema.StringAttribute{
-												Description: "S3 region.",
-												Computed:    true,
-											},
-											"s3_endpoint": schema.StringAttribute{
-												Description: "S3 endpoint.",
-												Computed:    true,
-											},
-											"gcs_bucket": schema.StringAttribute{
-												Description: "GCS bucket name.",
-												Computed:    true,
-											},
-											"gcs_endpoint": schema.StringAttribute{
-												Description: "GCS endpoint.",
-												Computed:    true,
-											},
-											"azure_account": schema.StringAttribute{
-												Description: "Azure account.",
-												Computed:    true,
-											},
-											"azure_container": schema.StringAttribute{
-												Description: "Azure container.",
-												Computed:    true,
-											},
-											"azure_endpoint": schema.StringAttribute{
-												Description: "Azure endpoint.",
-												Computed:    true,
-											},
-											"retention_full": schema.Int64Attribute{
-												Description: "Retention period for full backups.",
-												Computed:    true,
-											},
-											"retention_full_type": schema.StringAttribute{
-												Description: "Type of retention for full backups.",
-												Computed:    true,
-											},
-										},
-									},
-								},
+                                        Attributes: map[string]schema.Attribute{
+                                            "id": schema.StringAttribute{
+                                                Description: "Repository identifier.",
+                                                Optional:    true,
+                                                Computed:    true,
+                                            },
+                                            "type": schema.StringAttribute{
+                                                Description: "Repository type (e.g., s3, gcs, azure).",
+                                                Optional:    true,
+                                                Computed:    true,
+                                            },
+                                            "backup_store_id": schema.StringAttribute{
+                                                Description: "ID of the backup store to use. If specified, other fields will be " +
+                                                           "automatically populated.",
+                                                Optional:    true,
+                                            },
+                                            "s3_bucket": schema.StringAttribute{
+                                                Description: "S3 bucket name for s3-type repositories.",
+                                                Optional:    true,
+                                                Computed:    true,
+                                            },
+                                            "s3_region": schema.StringAttribute{
+                                                Description: "S3 region for s3-type repositories.",
+                                                Optional:    true,
+                                                Computed:    true,
+                                            },
+                                            "s3_endpoint": schema.StringAttribute{
+                                                Description: "S3 endpoint for s3-type repositories.",
+                                                Optional:    true,
+                                                Computed:    true,
+                                            },
+                                            "gcs_bucket": schema.StringAttribute{
+                                                Description: "GCS bucket name for gcs-type repositories.",
+                                                Optional:    true,
+                                                Computed:    true,
+                                            },
+                                            "gcs_endpoint": schema.StringAttribute{
+                                                Description: "GCS endpoint for gcs-type repositories.",
+                                                Optional:    true,
+                                                Computed:    true,
+                                            },
+                                            "azure_account": schema.StringAttribute{
+                                                Description: "Azure account for azure-type repositories.",
+                                                Optional:    true,
+                                                Computed:    true,
+                                            },
+                                            "azure_container": schema.StringAttribute{
+                                                Description: "Azure container for azure-type repositories.",
+                                                Optional:    true,
+                                                Computed:    true,
+                                            },
+                                            "azure_endpoint": schema.StringAttribute{
+                                                Description: "Azure endpoint for azure-type repositories.",
+                                                Optional:    true,
+                                                Computed:    true,
+                                            },
+                                            "base_path": schema.StringAttribute{
+                                                Description: "Base path for the repository.",
+                                                Optional:    true,
+                                                Computed:    true,
+                                            },
+                                            "retention_full": schema.Int64Attribute{
+                                                Description: "Retention period for full backups.",
+                                                Optional:    true,
+                                                Computed:    true,
+                                            },
+                                            "retention_full_type": schema.StringAttribute{
+                                                Description: "Type of retention for full backups.",
+                                                Optional:    true,
+                                                Computed:    true,
+                                            },
+                                        },
+                                    },
+                                },
 								"schedules": schema.ListNestedAttribute{
 									Description: "List of backup schedules.",
-									Computed:    true,
 									Optional:    true,
 									NestedObject: schema.NestedAttributeObject{
 										Attributes: map[string]schema.Attribute{
 											"id": schema.StringAttribute{
 												Description: "Unique identifier for the schedule.",
-												Computed:    true,
-												Optional:    true,
+												Required:    true,
 											},
 											"type": schema.StringAttribute{
 												Description: "Type of the schedule.",
-												Computed:    true,
-												Optional:    true,
+												Required:    true,
 											},
 											"cron_expression": schema.StringAttribute{
 												Description: "Cron expression for the schedule.",
-												Computed:    true,
-												Optional:    true,
+												Required:    true,
 											},
 										},
 									},

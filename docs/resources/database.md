@@ -123,44 +123,38 @@ Optional:
 
 - `id` (String) Unique identifier for the backup config.
 - `node_name` (String) Name of the node.
-- `schedules` (Attributes List) List of backup schedules. (see [below for nested schema](#nestedatt--backups--config--schedules))
-
-Read-Only:
-
 - `repositories` (Attributes List) List of backup repositories. (see [below for nested schema](#nestedatt--backups--config--repositories))
-
-<a id="nestedatt--backups--config--schedules"></a>
-### Nested Schema for `backups.config.schedules`
-
-Optional:
-
-- `cron_expression` (String) Cron expression for the schedule.
-- `id` (String) Unique identifier for the schedule.
-- `type` (String) Type of the schedule.
-
+- `schedules` (Attributes List) List of backup schedules. (see [below for nested schema](#nestedatt--backups--config--schedules))
 
 <a id="nestedatt--backups--config--repositories"></a>
 ### Nested Schema for `backups.config.repositories`
 
 Optional:
 
-- `id` (String) Unique identifier for the repository.
-
-Read-Only:
-
-- `azure_account` (String) Azure account.
-- `azure_container` (String) Azure container.
-- `azure_endpoint` (String) Azure endpoint.
-- `backup_store_id` (String) ID of the backup store.
+- `azure_account` (String) Azure account for azure-type repositories.
+- `azure_container` (String) Azure container for azure-type repositories.
+- `azure_endpoint` (String) Azure endpoint for azure-type repositories.
+- `backup_store_id` (String) ID of the backup store to use. If specified, other fields will be automatically populated.
 - `base_path` (String) Base path for the repository.
-- `gcs_bucket` (String) GCS bucket name.
-- `gcs_endpoint` (String) GCS endpoint.
+- `gcs_bucket` (String) GCS bucket name for gcs-type repositories.
+- `gcs_endpoint` (String) GCS endpoint for gcs-type repositories.
+- `id` (String) Repository identifier.
 - `retention_full` (Number) Retention period for full backups.
 - `retention_full_type` (String) Type of retention for full backups.
-- `s3_bucket` (String) S3 bucket name.
-- `s3_endpoint` (String) S3 endpoint.
-- `s3_region` (String) S3 region.
-- `type` (String) Type of the repository.
+- `s3_bucket` (String) S3 bucket name for s3-type repositories.
+- `s3_endpoint` (String) S3 endpoint for s3-type repositories.
+- `s3_region` (String) S3 region for s3-type repositories.
+- `type` (String) Repository type (e.g., s3, gcs, azure).
+
+
+<a id="nestedatt--backups--config--schedules"></a>
+### Nested Schema for `backups.config.schedules`
+
+Required:
+
+- `cron_expression` (String) Cron expression for the schedule.
+- `id` (String) Unique identifier for the schedule.
+- `type` (String) Type of the schedule.
 
 
 
