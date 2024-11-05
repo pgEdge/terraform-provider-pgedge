@@ -548,7 +548,7 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 
 		createInput.Extensions = &models.Extensions{
 			AutoManage: extensionsData.AutoManage.ValueBool(),
-			Requested:  convertTFListToStringSlice(extensionsData.Requested),
+			Requested:  common.ConvertTFListToStringSlice(extensionsData.Requested),
 		}
 	}
 
@@ -669,12 +669,12 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 	if err != nil {
 		if database != nil {
 			mappedDatabase := r.mapDatabaseToResourceModel(database)
-            diags = resp.State.Set(ctx, mappedDatabase)
-            resp.Diagnostics.Append(diags...)
-        }
-        resp.Diagnostics.Append(common.HandleProviderError(err, "database creation"))
-        return
-    }
+			diags = resp.State.Set(ctx, mappedDatabase)
+			resp.Diagnostics.Append(diags...)
+		}
+		resp.Diagnostics.Append(common.HandleProviderError(err, "database creation"))
+		return
+	}
 
 	// Map response body to schema and populate Computed attribute values
 	plan = r.mapDatabaseToResourceModel(database)
@@ -701,14 +701,14 @@ func (r *databaseResource) Read(ctx context.Context, req resource.ReadRequest, r
 
 	database, err := r.client.GetDatabase(ctx, strfmt.UUID(state.ID.ValueString()))
 	if err != nil {
-        diag := common.HandleProviderError(err, "database retrieval")
-        if diag == nil {
-            resp.State.RemoveResource(ctx)
-            return
-        }
-        resp.Diagnostics.Append(diag)
-        return
-    }
+		diag := common.HandleProviderError(err, "database retrieval")
+		if diag == nil {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.Append(diag)
+		return
+	}
 
 	// Map response body to schema and populate Computed attribute values
 	state = r.mapDatabaseToResourceModel(database)
@@ -862,7 +862,7 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 
 			extensionsUpdateInput.Extensions = &models.Extensions{
 				AutoManage: extensionsData.AutoManage.ValueBool(),
-				Requested:  convertTFListToStringSlice(extensionsData.Requested),
+				Requested:  common.ConvertTFListToStringSlice(extensionsData.Requested),
 			}
 		}
 
@@ -1063,7 +1063,7 @@ func (r *databaseResource) regionFromObject(ctx context.Context, obj types.Objec
 
 	return &models.Region{
 		Active:            reg.Active.ValueBool(),
-		AvailabilityZones: convertTFListToStringSlice(reg.AvailabilityZones),
+		AvailabilityZones: common.ConvertTFListToStringSlice(reg.AvailabilityZones),
 		Cloud:             reg.Cloud.ValueStringPointer(),
 		Code:              reg.Code.ValueStringPointer(),
 		Name:              reg.Name.ValueStringPointer(),
@@ -1092,18 +1092,18 @@ func (r *databaseResource) extensionsFromObject(ctx context.Context, obj types.O
 
 	return &models.DatabaseNodeExtensions{
 		Errors:    errors,
-		Installed: convertTFListToStringSlice(ext.Installed),
+		Installed: common.ConvertTFListToStringSlice(ext.Installed),
 	}
 }
 
 func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database) databaseResourceModel {
 	return databaseResourceModel{
-		ID:            types.StringValue(database.ID.String()),
-		Name:          types.StringPointerValue(database.Name),
-		ClusterID:     types.StringValue(database.ClusterID.String()),
-		Status:        types.StringPointerValue(database.Status),
-		CreatedAt:     types.StringPointerValue(database.CreatedAt),
-		PgVersion:     types.StringValue(database.PgVersion),
+		ID:        types.StringValue(database.ID.String()),
+		Name:      types.StringPointerValue(database.Name),
+		ClusterID: types.StringValue(database.ClusterID.String()),
+		Status:    types.StringPointerValue(database.Status),
+		CreatedAt: types.StringPointerValue(database.CreatedAt),
+		PgVersion: types.StringValue(database.PgVersion),
 		// StorageUsed:   types.Int64Value(database.StorageUsed),
 		Domain:        types.StringValue(database.Domain),
 		ConfigVersion: types.StringValue(database.ConfigVersion),
@@ -1235,56 +1235,56 @@ func (r *databaseResource) mapExtensionsToResourceModel(extensions *models.Exten
 }
 
 func (r *databaseResource) nodeAttrTypes() map[string]attr.Type {
-    return map[string]attr.Type{
-        "name":       types.StringType,
-        "connection": types.ObjectType{AttrTypes: r.connectionAttrTypes()},
-        "location":   types.ObjectType{AttrTypes: r.locationAttrTypes()},
-        "region":     types.ObjectType{AttrTypes: r.regionAttrTypes()},
-        "extensions": types.ObjectType{AttrTypes: r.nodeExtensionsAttrTypes()},
-    }
+	return map[string]attr.Type{
+		"name":       types.StringType,
+		"connection": types.ObjectType{AttrTypes: r.connectionAttrTypes()},
+		"location":   types.ObjectType{AttrTypes: r.locationAttrTypes()},
+		"region":     types.ObjectType{AttrTypes: r.regionAttrTypes()},
+		"extensions": types.ObjectType{AttrTypes: r.nodeExtensionsAttrTypes()},
+	}
 }
 
 func (r *databaseResource) mapNodesToResourceModel(nodes []*models.DatabaseNode) types.Map {
-    nodeMap := make(map[string]attr.Value)
-    nodeAttrTypes := map[string]attr.Type{
-        "name":       types.StringType,
-        "connection": types.ObjectType{AttrTypes: r.connectionAttrTypes()},
-        "location":   types.ObjectType{AttrTypes: r.locationAttrTypes()},
-        "region":     types.ObjectType{AttrTypes: r.regionAttrTypes()},
-        "extensions": types.ObjectType{AttrTypes: r.nodeExtensionsAttrTypes()},
-    }
+	nodeMap := make(map[string]attr.Value)
+	nodeAttrTypes := map[string]attr.Type{
+		"name":       types.StringType,
+		"connection": types.ObjectType{AttrTypes: r.connectionAttrTypes()},
+		"location":   types.ObjectType{AttrTypes: r.locationAttrTypes()},
+		"region":     types.ObjectType{AttrTypes: r.regionAttrTypes()},
+		"extensions": types.ObjectType{AttrTypes: r.nodeExtensionsAttrTypes()},
+	}
 
-    for _, node := range nodes {
-        if node.Name == nil {
-            continue
-        }
+	for _, node := range nodes {
+		if node.Name == nil {
+			continue
+		}
 
-        regionObj := r.mapRegionToResourceModel(node.Region)
-        if regionObj.IsNull() {
-            regionObj, _ = types.ObjectValue(r.regionAttrTypes(), map[string]attr.Value{
-                "active":             types.BoolNull(),
-                "availability_zones": types.ListNull(types.StringType),
-                "cloud":              types.StringNull(),
-                "code":               types.StringNull(),
-                "name":               types.StringNull(),
-                "parent":             types.StringNull(),
-            })
-        }
+		regionObj := r.mapRegionToResourceModel(node.Region)
+		if regionObj.IsNull() {
+			regionObj, _ = types.ObjectValue(r.regionAttrTypes(), map[string]attr.Value{
+				"active":             types.BoolNull(),
+				"availability_zones": types.ListNull(types.StringType),
+				"cloud":              types.StringNull(),
+				"code":               types.StringNull(),
+				"name":               types.StringNull(),
+				"parent":             types.StringNull(),
+			})
+		}
 
-        nodeObj, _ := types.ObjectValue(
-            nodeAttrTypes,
-            map[string]attr.Value{
-                "name":       types.StringValue(*node.Name),
-                "connection": r.mapConnectionToResourceModel(node.Connection),
-                "location":   r.mapLocationToResourceModel(node.Location),
-                "region":     regionObj,
-                "extensions": r.mapNodeExtensionsToResourceModel(node.Extensions),
-            },
-        )
-        nodeMap[*node.Name] = nodeObj
-    }
+		nodeObj, _ := types.ObjectValue(
+			nodeAttrTypes,
+			map[string]attr.Value{
+				"name":       types.StringValue(*node.Name),
+				"connection": r.mapConnectionToResourceModel(node.Connection),
+				"location":   r.mapLocationToResourceModel(node.Location),
+				"region":     regionObj,
+				"extensions": r.mapNodeExtensionsToResourceModel(node.Extensions),
+			},
+		)
+		nodeMap[*node.Name] = nodeObj
+	}
 
-    return types.MapValueMust(types.ObjectType{AttrTypes: nodeAttrTypes}, nodeMap)
+	return types.MapValueMust(types.ObjectType{AttrTypes: nodeAttrTypes}, nodeMap)
 }
 
 func sortNodes(nodes []*models.DatabaseNode) []*models.DatabaseNode {
@@ -1515,12 +1515,12 @@ func (r *databaseResource) ImportState(ctx context.Context, req resource.ImportS
 }
 
 type databaseResourceModel struct {
-	ID            types.String `tfsdk:"id"`
-	Name          types.String `tfsdk:"name"`
-	ClusterID     types.String `tfsdk:"cluster_id"`
-	Status        types.String `tfsdk:"status"`
-	CreatedAt     types.String `tfsdk:"created_at"`
-	PgVersion     types.String `tfsdk:"pg_version"`
+	ID        types.String `tfsdk:"id"`
+	Name      types.String `tfsdk:"name"`
+	ClusterID types.String `tfsdk:"cluster_id"`
+	Status    types.String `tfsdk:"status"`
+	CreatedAt types.String `tfsdk:"created_at"`
+	PgVersion types.String `tfsdk:"pg_version"`
 	// StorageUsed   types.Int64  `tfsdk:"storage_used"`
 	Domain        types.String `tfsdk:"domain"`
 	ConfigVersion types.String `tfsdk:"config_version"`
@@ -1551,18 +1551,4 @@ func convertToListValue(slice []string) types.List {
 		elements[i] = types.StringValue(s)
 	}
 	return types.ListValueMust(types.StringType, elements)
-}
-
-// Helper function to convert types.List to []string
-func convertTFListToStringSlice(list types.List) []string {
-	if list.IsNull() || list.IsUnknown() {
-		return nil
-	}
-	var result []string
-	for _, elem := range list.Elements() {
-		if str, ok := elem.(types.String); ok {
-			result = append(result, str.ValueString())
-		}
-	}
-	return result
 }
