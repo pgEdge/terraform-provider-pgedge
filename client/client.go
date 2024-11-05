@@ -169,7 +169,13 @@ func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) e
 			return fmt.Errorf("timeout waiting for task %s to complete", *taskID)
 		}
 
-		tasks, err := c.GetTasks(ctx, config.SubjectID, config.SubjectKind, taskID, nil, "", nil, nil)
+		var tasks []*models.Task
+		var err error
+		if taskID == nil {
+			tasks, err = c.GetTasks(ctx, config.SubjectID, config.SubjectKind, nil, nil, "", nil, nil)
+		} else {
+			tasks, err = c.GetTasks(ctx, config.SubjectID, config.SubjectKind, taskID, nil, "", nil, nil)
+		}
 		if err != nil {
 			return fmt.Errorf("error checking task status: %w", err)
 		}
@@ -177,13 +183,15 @@ func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) e
 		if taskID == nil {
 			var latestTime time.Time
 			for _, task := range tasks {
-				taskTime, err := time.Parse(time.RFC3339, *task.CreatedAt)
-				if err != nil {
-					continue
-				}
-				if taskID == nil || taskTime.After(latestTime) {
-					taskID = task.ID
-					latestTime = taskTime
+				if task.Status != nil && (*task.Status == "running" || *task.Status == "queued") {
+					taskTime, err := time.Parse(time.RFC3339, *task.CreatedAt)
+					if err != nil {
+						continue
+					}
+					if taskID == nil || taskTime.After(latestTime) {
+						taskID = task.ID
+						latestTime = taskTime
+					}
 				}
 			}
 			if taskID == nil {
@@ -196,7 +204,8 @@ func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) e
 					attempt++
 					continue
 				}
-				return fmt.Errorf("no task found for %s %s", config.SubjectKind, config.SubjectID)
+				return fmt.Errorf("no active task found for %s %s",
+					config.SubjectKind, config.SubjectID)
 			}
 			continue
 		}
@@ -230,7 +239,6 @@ func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) e
 		attempt++
 	}
 }
-
 func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
 	request := &operations.GetDatabasesParams{
 		HTTPClient: c.HTTPClient,
