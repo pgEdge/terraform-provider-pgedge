@@ -794,9 +794,21 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 
 	updatedPlan := r.mapClusterToResourceModel(cluster)
 
+	if len(updateInput.BackupStoreIds) > 0 {
+        updatedPlan.BackupStoreIDs = types.ListValueMust(types.StringType, 
+            func() []attr.Value {
+                values := make([]attr.Value, len(updateInput.BackupStoreIds))
+                for i, id := range updateInput.BackupStoreIds {
+                    values[i] = types.StringValue(id)
+                }
+                return values
+            }(),
+        )
+    } else {
+        updatedPlan.BackupStoreIDs = state.BackupStoreIDs
+    }
 	updatedPlan.Regions = plan.Regions
 	updatedPlan.Status = types.StringPointerValue(cluster.Status)
-	updatedPlan.BackupStoreIDs = plan.BackupStoreIDs
 	updatedPlan.ResourceTags = plan.ResourceTags
 
 	updatedPlan.Networks = make([]networkModel, 0)
