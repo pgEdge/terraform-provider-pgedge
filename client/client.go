@@ -158,41 +158,14 @@ func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) e
 	time.Sleep(2 * time.Second)
 
 	var taskID *string
-	var latestTime time.Time
-
-	for i := 0; i < 3; i++ {
-		tasks, err := c.GetTasks(ctx, config.SubjectID, config.SubjectKind, nil, nil, "", nil, nil)
-		if err != nil {
-			return fmt.Errorf("error checking initial task status: %w", err)
-		}
-
-		for _, task := range tasks {
-			taskTime, err := time.Parse(time.RFC3339, *task.CreatedAt)
-			if err != nil {
-				continue
-			}
-			if taskID == nil || taskTime.After(latestTime) {
-				taskID = task.ID
-				latestTime = taskTime
-			}
-		}
-
-		if taskID != nil {
-			break
-		}
-
-		if i < 2 {
-			time.Sleep(2 * time.Second)
-		}
-	}
-
-	if taskID == nil {
-		return fmt.Errorf("no task found for %s %s", config.SubjectKind, config.SubjectID)
-	}
-
 	attempt := 0
+
 	for {
 		if attempt >= config.MaxAttempts {
+			if taskID == nil {
+				return fmt.Errorf("no task found for %s %s after %d attempts",
+					config.SubjectKind, config.SubjectID, attempt)
+			}
 			return fmt.Errorf("timeout waiting for task %s to complete", *taskID)
 		}
 
@@ -201,12 +174,38 @@ func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) e
 			return fmt.Errorf("error checking task status: %w", err)
 		}
 
+		if taskID == nil {
+			var latestTime time.Time
+			for _, task := range tasks {
+				taskTime, err := time.Parse(time.RFC3339, *task.CreatedAt)
+				if err != nil {
+					continue
+				}
+				if taskID == nil || taskTime.After(latestTime) {
+					taskID = task.ID
+					latestTime = taskTime
+				}
+			}
+			if taskID == nil {
+				if attempt < 3 {
+					select {
+					case <-ctx.Done():
+						return ctx.Err()
+					case <-time.After(2 * time.Second):
+					}
+					attempt++
+					continue
+				}
+				return fmt.Errorf("no task found for %s %s", config.SubjectKind, config.SubjectID)
+			}
+			continue
+		}
+
 		if len(tasks) == 0 {
 			return fmt.Errorf("task %s not found", *taskID)
 		}
 
 		task := tasks[0]
-
 		if task.Status == nil {
 			return fmt.Errorf("task %s has no status", *taskID)
 		}
