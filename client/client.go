@@ -116,7 +116,7 @@ type TaskPollingConfig struct {
 	Interval    time.Duration
 }
 
-func (c *Client) GetTasks(ctx context.Context, subjectID, subjectKind string, id, name *string, status string, limit, offset *int64) ([]*models.Task, error) {
+func (c *Client) GetTasks(ctx context.Context, subjectID, subjectKind string, id, name *string, status *string, limit, offset *int64) ([]*models.Task, error) {
 	request := &operations.GetTasksParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
@@ -134,8 +134,8 @@ func (c *Client) GetTasks(ctx context.Context, subjectID, subjectKind string, id
 	if name != nil {
 		request.Name = name
 	}
-	if status != "" {
-		request.Status = &status
+	if status != nil {
+		request.Status = status
 	}
 	if limit != nil {
 		request.Limit = limit
@@ -155,8 +155,6 @@ func (c *Client) GetTasks(ctx context.Context, subjectID, subjectKind string, id
 }
 
 func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) error {
-	time.Sleep(2 * time.Second)
-
 	var taskID *string
 	attempt := 0
 
@@ -169,18 +167,14 @@ func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) e
 			return fmt.Errorf("timeout waiting for task %s to complete", *taskID)
 		}
 
-		var tasks []*models.Task
-		var err error
+		// Locate the most recent task if we don't have one
 		if taskID == nil {
-			tasks, err = c.GetTasks(ctx, config.SubjectID, config.SubjectKind, nil, nil, "", nil, nil)
-		} else {
-			tasks, err = c.GetTasks(ctx, config.SubjectID, config.SubjectKind, taskID, nil, "", nil, nil)
-		}
-		if err != nil {
-			return fmt.Errorf("error checking task status: %w", err)
-		}
+			tasks, err := c.GetTasks(ctx, config.SubjectID, config.SubjectKind, nil, nil, nil, nil, nil)
 
-		if taskID == nil {
+			if err != nil {
+				return fmt.Errorf("error checking task status: %w", err)
+			}
+
 			var latestTime time.Time
 			for _, task := range tasks {
 				if task.Status != nil && (*task.Status == "running" || *task.Status == "queued") {
@@ -195,7 +189,7 @@ func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) e
 				}
 			}
 			if taskID == nil {
-				if attempt < 3 {
+				if attempt < 4 {
 					select {
 					case <-ctx.Done():
 						return ctx.Err()
@@ -210,8 +204,14 @@ func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) e
 			continue
 		}
 
+		// Poll the task by ID
+		tasks, err := c.GetTasks(ctx, config.SubjectID, config.SubjectKind, taskID, nil, nil, nil, nil)
 		if len(tasks) == 0 {
 			return fmt.Errorf("task %s not found", *taskID)
+		}
+
+		if err != nil {
+			return fmt.Errorf("error checking task status: %w", err)
 		}
 
 		task := tasks[0]
