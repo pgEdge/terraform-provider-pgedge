@@ -155,21 +155,34 @@ func (c *Client) GetTasks(ctx context.Context, subjectID, subjectKind string, id
 }
 
 func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) error {
-	tasks, err := c.GetTasks(ctx, config.SubjectID, config.SubjectKind, nil, nil, "", nil, nil)
-	if err != nil {
-		return fmt.Errorf("error checking initial task status: %w", err)
-	}
+	time.Sleep(2 * time.Second)
 
 	var taskID *string
 	var latestTime time.Time
-	for _, task := range tasks {
-		taskTime, err := time.Parse(time.RFC3339, *task.CreatedAt)
+
+	for i := 0; i < 3; i++ {
+		tasks, err := c.GetTasks(ctx, config.SubjectID, config.SubjectKind, nil, nil, "", nil, nil)
 		if err != nil {
-			continue
+			return fmt.Errorf("error checking initial task status: %w", err)
 		}
-		if taskID == nil || taskTime.After(latestTime) {
-			taskID = task.ID
-			latestTime = taskTime
+
+		for _, task := range tasks {
+			taskTime, err := time.Parse(time.RFC3339, *task.CreatedAt)
+			if err != nil {
+				continue
+			}
+			if taskID == nil || taskTime.After(latestTime) {
+				taskID = task.ID
+				latestTime = taskTime
+			}
+		}
+
+		if taskID != nil {
+			break
+		}
+
+		if i < 2 {
+			time.Sleep(2 * time.Second)
 		}
 	}
 
@@ -180,7 +193,7 @@ func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) e
 	attempt := 0
 	for {
 		if attempt >= config.MaxAttempts {
-			return fmt.Errorf("timeout waiting for task %s to complete", taskID)
+			return fmt.Errorf("timeout waiting for task %s to complete", *taskID)
 		}
 
 		tasks, err := c.GetTasks(ctx, config.SubjectID, config.SubjectKind, taskID, nil, "", nil, nil)
@@ -189,13 +202,13 @@ func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) e
 		}
 
 		if len(tasks) == 0 {
-			return fmt.Errorf("task %s not found", taskID)
+			return fmt.Errorf("task %s not found", *taskID)
 		}
 
 		task := tasks[0]
 
 		if task.Status == nil {
-			return fmt.Errorf("task %s has no status", taskID)
+			return fmt.Errorf("task %s has no status", *taskID)
 		}
 
 		switch *task.Status {
