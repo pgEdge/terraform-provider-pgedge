@@ -110,11 +110,11 @@ func handleAPIError(err error) error {
 }
 
 type TaskPollingConfig struct {
-	SubjectID   string
-	SubjectKind string
-	TaskName    string
-	MaxAttempts int
-	Interval    time.Duration
+	SubjectID    string
+	SubjectKind  string
+	TaskName     string
+	MaxAttempts  int
+	Interval     time.Duration
 }
 
 func (c *Client) GetTasks(ctx context.Context, subjectID, subjectKind string, id, name *string, status string, limit, offset *int64) ([]*models.Task, error) {
@@ -164,8 +164,28 @@ func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) e
 		}
 
 		tasks, err := c.GetTasks(ctx, config.SubjectID, config.SubjectKind, nil, nil, "", nil, nil)
-		if err != nil {
-			return fmt.Errorf("error checking task status: %w", err)
+        if err != nil {
+            return fmt.Errorf("error checking task status: %w", err)
+        }
+
+		switch config.SubjectKind {
+		case "database":
+			database, err := c.GetDatabase(ctx, strfmt.UUID(config.SubjectID))
+			if err != nil {
+				return fmt.Errorf("error checking database state: %w", err)
+			}
+			if database.Status != nil && *database.Status == "degraded" {
+				return fmt.Errorf("database entered degraded state during operation")
+			}
+
+		case "cluster":
+			cluster, err := c.GetCluster(ctx, strfmt.UUID(config.SubjectID))
+			if err != nil {
+				return fmt.Errorf("error checking cluster state: %w", err)
+			}
+			if cluster.Status != nil && *cluster.Status == "degraded" {
+				return fmt.Errorf("cluster entered degraded state during operation")
+			}
 		}
 
 		var latestTask *models.Task
