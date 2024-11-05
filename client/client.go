@@ -189,28 +189,28 @@ func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) e
 		}
 
 		var latestTask *models.Task
-		for _, task := range tasks {
-			if task.Name != nil && *task.Name == config.TaskName {
-				if latestTask == nil {
-					latestTask = task
-					continue
-				}
+        for _, task := range tasks {
+            if task.Status != nil && (*task.Status == "running" || *task.Status == "queued") {
+                if latestTask == nil {
+                    latestTask = task
+                    continue
+                }
 
-				latestTime, err := time.Parse(time.RFC3339, *latestTask.CreatedAt)
-				if err != nil {
-					continue
-				}
+                latestTime, err := time.Parse(time.RFC3339, *latestTask.CreatedAt)
+                if err != nil {
+                    continue
+                }
 
-				currentTime, err := time.Parse(time.RFC3339, *task.CreatedAt)
-				if err != nil {
-					continue
-				}
+                currentTime, err := time.Parse(time.RFC3339, *task.CreatedAt)
+                if err != nil {
+                    continue
+                }
 
-				if currentTime.After(latestTime) {
-					latestTask = task
-				}
-			}
-		}
+                if currentTime.After(latestTime) {
+                    latestTask = task
+                }
+            }
+        }
 
 		if latestTask != nil && latestTask.Status != nil {
 			status := *latestTask.Status
