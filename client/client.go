@@ -112,12 +112,11 @@ func handleAPIError(err error) error {
 type TaskPollingConfig struct {
 	SubjectID   string
 	SubjectKind string
-	TaskName    string
 	MaxAttempts int
 	Interval    time.Duration
 }
 
-func (c *Client) GetTasks(ctx context.Context, subjectID, subjectKind string, id, name *string, status string, limit, offset *int64) ([]*models.Task, error) {
+func (c *Client) GetTasks(ctx context.Context, subjectID, subjectKind string, id, name *string, status *string, limit, offset *int64) ([]*models.Task, error) {
 	request := &operations.GetTasksParams{
 		HTTPClient: c.HTTPClient,
 		Context:    ctx,
@@ -135,8 +134,8 @@ func (c *Client) GetTasks(ctx context.Context, subjectID, subjectKind string, id
 	if name != nil {
 		request.Name = name
 	}
-	if status != "" {
-		request.Status = &status
+	if status != nil {
+		request.Status = status
 	}
 	if limit != nil {
 		request.Limit = limit
@@ -156,55 +155,80 @@ func (c *Client) GetTasks(ctx context.Context, subjectID, subjectKind string, id
 }
 
 func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) error {
+	var taskID *string
 	attempt := 0
+
 	for {
 		if attempt >= config.MaxAttempts {
-			return fmt.Errorf("timeout waiting for %s task to complete for %s %s",
-				config.TaskName, config.SubjectKind, config.SubjectID)
+			if taskID == nil {
+				return fmt.Errorf("no task found for %s %s after %d attempts",
+					config.SubjectKind, config.SubjectID, attempt)
+			}
+			return fmt.Errorf("timeout waiting for task %s to complete", *taskID)
 		}
 
-		tasks, err := c.GetTasks(ctx, config.SubjectID, config.SubjectKind, nil, nil, "", nil, nil)
+		// Locate the most recent task if we don't have one
+		if taskID == nil {
+			tasks, err := c.GetTasks(ctx, config.SubjectID, config.SubjectKind, nil, nil, nil, nil, nil)
+
+			if err != nil {
+				return fmt.Errorf("error checking task status: %w", err)
+			}
+
+			var latestTime time.Time
+			for _, task := range tasks {
+				if task.Status != nil && (*task.Status == "running" || *task.Status == "queued") {
+					taskTime, err := time.Parse(time.RFC3339, *task.CreatedAt)
+					if err != nil {
+						continue
+					}
+					if taskID == nil || taskTime.After(latestTime) {
+						taskID = task.ID
+						latestTime = taskTime
+					}
+				}
+			}
+			if taskID == nil {
+				if attempt < 4 {
+					select {
+					case <-ctx.Done():
+						return ctx.Err()
+					case <-time.After(2 * time.Second):
+					}
+					attempt++
+					continue
+				}
+				return fmt.Errorf("no active task found for %s %s",
+					config.SubjectKind, config.SubjectID)
+			}
+			continue
+		}
+
+		// Poll the task by ID
+		tasks, err := c.GetTasks(ctx, config.SubjectID, config.SubjectKind, taskID, nil, nil, nil, nil)
+		if len(tasks) == 0 {
+			return fmt.Errorf("task %s not found", *taskID)
+		}
+
 		if err != nil {
 			return fmt.Errorf("error checking task status: %w", err)
 		}
 
-		var latestTask *models.Task
-		for _, task := range tasks {
-			if task.Name != nil && *task.Name == config.TaskName {
-				if latestTask == nil {
-					latestTask = task
-					continue
-				}
-
-				latestTime, err := time.Parse(time.RFC3339, *latestTask.CreatedAt)
-				if err != nil {
-					continue
-				}
-
-				currentTime, err := time.Parse(time.RFC3339, *task.CreatedAt)
-				if err != nil {
-					continue
-				}
-
-				if currentTime.After(latestTime) {
-					latestTask = task
-				}
-			}
+		task := tasks[0]
+		if task.Status == nil {
+			return fmt.Errorf("task %s has no status", *taskID)
 		}
 
-		if latestTask != nil && latestTask.Status != nil {
-			status := *latestTask.Status
-			switch status {
-			case "succeeded":
-				return nil
-			case "failed":
-				if latestTask.Error != "" {
-					return fmt.Errorf("task failed: %s", latestTask.Error)
-				}
-				return fmt.Errorf("task failed without error message")
-			case "running", "queued":
-				// Continue polling
+		switch *task.Status {
+		case "succeeded":
+			return nil
+		case "failed":
+			if task.Error != "" {
+				return fmt.Errorf("task failed: %s", task.Error)
 			}
+			return fmt.Errorf("task failed without error message")
+		case "running", "queued":
+			// Continue polling
 		}
 
 		select {
@@ -215,7 +239,6 @@ func (c *Client) PollTaskStatus(ctx context.Context, config TaskPollingConfig) e
 		attempt++
 	}
 }
-
 func (c *Client) GetDatabases(ctx context.Context) ([]*models.Database, error) {
 	request := &operations.GetDatabasesParams{
 		HTTPClient: c.HTTPClient,
@@ -253,7 +276,6 @@ func (c *Client) CreateDatabase(ctx context.Context, database *models.CreateData
 	err = c.PollTaskStatus(ctx, TaskPollingConfig{
 		SubjectID:   resp.Payload.ID.String(),
 		SubjectKind: "database",
-		TaskName:    "create",
 		MaxAttempts: 360, // 30 minutes
 		Interval:    5 * time.Second,
 	})
@@ -299,7 +321,6 @@ func (c *Client) UpdateDatabase(ctx context.Context, id strfmt.UUID, body *model
 	err = c.PollTaskStatus(ctx, TaskPollingConfig{
 		SubjectID:   resp.Payload.ID.String(),
 		SubjectKind: "database",
-		TaskName:    "update",
 		MaxAttempts: 360, // 30 minutes
 		Interval:    5 * time.Second,
 	})
@@ -327,7 +348,6 @@ func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) error {
 	err = c.PollTaskStatus(ctx, TaskPollingConfig{
 		SubjectID:   id.String(),
 		SubjectKind: "database",
-		TaskName:    "delete",
 		MaxAttempts: 360, // 30 minutes
 		Interval:    5 * time.Second,
 	})
@@ -390,7 +410,6 @@ func (c *Client) CreateCluster(ctx context.Context, cluster *models.CreateCluste
 	err = c.PollTaskStatus(ctx, TaskPollingConfig{
 		SubjectID:   resp.Payload.ID.String(),
 		SubjectKind: "cluster",
-		TaskName:    "create",
 		MaxAttempts: 540, // 45 minutes
 		Interval:    5 * time.Second,
 	})
@@ -420,7 +439,6 @@ func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models
 	err = c.PollTaskStatus(ctx, TaskPollingConfig{
 		SubjectID:   resp.Payload.ID.String(),
 		SubjectKind: "cluster",
-		TaskName:    "update",
 		MaxAttempts: 540, // 45 minutes
 		Interval:    5 * time.Second,
 	})
@@ -448,7 +466,6 @@ func (c *Client) DeleteCluster(ctx context.Context, id strfmt.UUID) error {
 	err = c.PollTaskStatus(ctx, TaskPollingConfig{
 		SubjectID:   id.String(),
 		SubjectKind: "cluster",
-		TaskName:    "delete",
 		MaxAttempts: 540, // 45 minutes
 		Interval:    5 * time.Second,
 	})
@@ -682,7 +699,6 @@ func (c *Client) CreateBackupStore(ctx context.Context, input *models.CreateBack
 	err = c.PollTaskStatus(ctx, TaskPollingConfig{
 		SubjectID:   resp.Payload.ID.String(),
 		SubjectKind: "backup_store",
-		TaskName:    "create",
 		MaxAttempts: 360, // 30 minutes
 		Interval:    5 * time.Second,
 	})
@@ -728,7 +744,6 @@ func (c *Client) DeleteBackupStore(ctx context.Context, id strfmt.UUID) error {
 	err = c.PollTaskStatus(ctx, TaskPollingConfig{
 		SubjectID:   id.String(),
 		SubjectKind: "backup_store",
-		TaskName:    "delete",
 		MaxAttempts: 360, // 30 minutes
 		Interval:    5 * time.Second,
 	})
