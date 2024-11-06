@@ -48,6 +48,28 @@ func (r *databaseResource) Metadata(_ context.Context, req resource.MetadataRequ
 	resp.TypeName = req.ProviderTypeName + "_database"
 }
 
+type backupsPlanModifier struct{}
+
+func (b backupsPlanModifier) Description(_ context.Context) string {
+    return "Prevents unnecessary recreation when backups configuration hasn't changed"
+}
+
+func (b backupsPlanModifier) MarkdownDescription(_ context.Context) string {
+    return "Prevents unnecessary recreation when backups configuration hasn't changed"
+}
+
+func (b backupsPlanModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+    if req.StateValue.IsNull() || req.StateValue.IsUnknown() {
+        return
+    }
+
+    if !req.PlanValue.IsUnknown() {
+        return
+    }
+
+    resp.PlanValue = req.StateValue
+}
+
 func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages a pgEdge database.",
@@ -120,16 +142,7 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Computed:    true,
 				Optional:    true,
 				PlanModifiers: []planmodifier.Object{
-                    objectplanmodifier.RequiresReplaceIf(
-                        func(ctx context.Context, req planmodifier.ObjectRequest, resp *objectplanmodifier.RequiresReplaceIfFuncResponse) {
-                            if !req.StateValue.IsNull() {
-                                // If state exists (not a new resource) and plan is different, require replace
-                                resp.RequiresReplace = !req.PlanValue.Equal(req.StateValue)
-                            }
-                        },
-                        "Backup configuration cannot be modified after creation",
-                        "Backup configuration cannot be modified after creation. Any changes will require creating a new database.",
-                    ),
+                    backupsPlanModifier{},
                 },
 				Attributes: map[string]schema.Attribute{
 					"provider": schema.StringAttribute{
@@ -1097,7 +1110,7 @@ func (r *databaseResource) extensionsFromObject(ctx context.Context, obj types.O
 }
 
 func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database) databaseResourceModel {
-	return databaseResourceModel{
+	model := databaseResourceModel{
 		ID:        types.StringValue(database.ID.String()),
 		Name:      types.StringPointerValue(database.Name),
 		ClusterID: types.StringValue(database.ClusterID.String()),
@@ -1114,6 +1127,12 @@ func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database)
 		Nodes:         r.mapNodesToResourceModel(database.Nodes),
 		Roles:         r.mapRolesToResourceModel(database.Roles),
 	}
+	if r.backupsChanged(database.Backups, model.Backups) {
+        model.Backups = r.mapBackupsToResourceModel(database.Backups)
+    }
+
+
+	return model
 }
 
 var backupConfigType = map[string]attr.Type{
@@ -1180,6 +1199,57 @@ func (r *databaseResource) mapBackupsToResourceModel(backups *models.Backups) ty
 	)
 
 	return backupsObj
+}
+
+func (r *databaseResource) backupsChanged(apiBackups *models.Backups, modelBackups types.Object) bool {
+    if apiBackups == nil {
+        return false
+    }
+
+    if modelBackups.IsNull() || modelBackups.IsUnknown() {
+        return true
+    }
+
+    // Compare relevant fields only
+    var stateBackups struct {
+        Provider string `tfsdk:"provider"`
+        Config   []struct {
+            ID           string `tfsdk:"id"`
+            Repositories []struct {
+                BackupStoreID string `tfsdk:"backup_store_id"`
+            } `tfsdk:"repositories"`
+        } `tfsdk:"config"`
+    }
+
+    modelBackups.As(context.Background(), &stateBackups, basetypes.ObjectAsOptions{})
+
+    if stateBackups.Provider != *apiBackups.Provider {
+        return true
+    }
+
+    configsMatch := len(stateBackups.Config) == len(apiBackups.Config)
+    if !configsMatch {
+        return true
+    }
+
+    for i, config := range stateBackups.Config {
+        apiConfig := apiBackups.Config[i]
+        if config.ID != *apiConfig.ID {
+            return true
+        }
+
+        if len(config.Repositories) != len(apiConfig.Repositories) {
+            return true
+        }
+
+        for j, repo := range config.Repositories {
+            if repo.BackupStoreID != apiConfig.Repositories[j].BackupStoreID {
+                return true
+            }
+        }
+    }
+
+    return false
 }
 
 func (r *databaseResource) mapComponentsToResourceModel(components []*models.DatabaseComponentVersion) types.List {
