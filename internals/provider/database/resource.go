@@ -51,11 +51,11 @@ func (r *databaseResource) Metadata(_ context.Context, req resource.MetadataRequ
 type backupsPlanModifier struct{}
 
 func (m backupsPlanModifier) Description(_ context.Context) string {
-    return "Prevents modifications to backup configuration while allowing computed value changes"
+	return "Prevents modifications to backup configuration while allowing computed value changes"
 }
 
 func (m backupsPlanModifier) MarkdownDescription(_ context.Context) string {
-    return "Prevents modifications to backup configuration while allowing computed value changes"
+	return "Prevents modifications to backup configuration while allowing computed value changes"
 }
 
 func (m backupsPlanModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
@@ -68,19 +68,82 @@ func (m backupsPlanModifier) PlanModifyObject(ctx context.Context, req planmodif
         return
     }
 
-    planBackups, diags := m.extractBackupConfig(ctx, req.PlanValue)
-    if diags.HasError() {
-        resp.Diagnostics.Append(diags...)
+    planValue := req.PlanValue
+    stateValue := req.StateValue
+    
+    planAttrs := planValue.Attributes()
+    stateAttrs := stateValue.Attributes()
+
+    planConfigs, ok := planAttrs["config"].(types.List)
+    if !ok {
+        return
+    }
+    stateConfigs, ok := stateAttrs["config"].(types.List)
+    if !ok {
         return
     }
 
-    stateBackups, diags := m.extractBackupConfig(ctx, req.StateValue)
-    if diags.HasError() {
-        resp.Diagnostics.Append(diags...)
-        return
+    hasBackupChanges := false
+
+    for i, planConfig := range planConfigs.Elements() {
+        if i >= len(stateConfigs.Elements()) {
+            hasBackupChanges = true
+            break
+        }
+        stateConfig := stateConfigs.Elements()[i]
+
+        planConfigObj := planConfig.(types.Object)
+        stateConfigObj := stateConfig.(types.Object)
+
+        planRepos := planConfigObj.Attributes()["repositories"].(types.List)
+        stateRepos := stateConfigObj.Attributes()["repositories"].(types.List)
+
+        for j, planRepo := range planRepos.Elements() {
+            if j >= len(stateRepos.Elements()) {
+                hasBackupChanges = true
+                break
+            }
+            stateRepo := stateRepos.Elements()[j]
+
+            planRepoObj := planRepo.(types.Object)
+            stateRepoObj := stateRepo.(types.Object)
+
+            planBackupStoreID := planRepoObj.Attributes()["backup_store_id"].(types.String)
+            stateBackupStoreID := stateRepoObj.Attributes()["backup_store_id"].(types.String)
+
+            if !planBackupStoreID.IsNull() && !stateBackupStoreID.IsNull() &&
+               planBackupStoreID.ValueString() != stateBackupStoreID.ValueString() {
+                hasBackupChanges = true
+            }
+
+            if m.hasRetentionChanges(planRepoObj.Attributes(), stateRepoObj.Attributes()) {
+                hasBackupChanges = true
+            }
+        }
+
+        planSchedules, hasPS := planConfigObj.Attributes()["schedules"].(types.List)
+        stateSchedules, hasSS := stateConfigObj.Attributes()["schedules"].(types.List)
+
+        if hasPS && hasSS {
+            planSchedsElements := planSchedules.Elements()
+            stateSchedsElements := stateSchedules.Elements()
+
+            if len(planSchedsElements) != len(stateSchedsElements) {
+                hasBackupChanges = true
+            } else {
+                for k := range planSchedsElements {
+                    planSched := planSchedsElements[k].(types.Object)
+                    stateSched := stateSchedsElements[k].(types.Object)
+
+                    if !m.schedulesEqual(planSched.Attributes(), stateSched.Attributes()) {
+                        hasBackupChanges = true
+                    }
+                }
+            }
+        }
     }
 
-    if !m.backupConfigsEqual(planBackups, stateBackups) {
+    if hasBackupChanges {
         resp.Diagnostics.AddError(
             "Invalid Backup Configuration Modification",
             "Backup configuration cannot be modified after database creation. You must create a new database to change backup settings.",
@@ -91,159 +154,53 @@ func (m backupsPlanModifier) PlanModifyObject(ctx context.Context, req planmodif
     resp.PlanValue = req.StateValue
 }
 
-type backupConfig struct {
-    Provider string
-    Configs  []struct {
-        ID           string
-        BackupStores []string
-        Schedules    []struct {
-            ID             string
-            Type           string
-            CronExpression string
+func (m backupsPlanModifier) hasRetentionChanges(plan, state map[string]attr.Value) bool {
+    if planRetention, ok := plan["retention_full"].(types.Int64); ok && !planRetention.IsNull() {
+        if stateRetention, ok := state["retention_full"].(types.Int64); ok && !stateRetention.IsNull() {
+            if planRetention.ValueInt64() != stateRetention.ValueInt64() {
+                return true
+            }
         }
     }
+
+    if planType, ok := plan["retention_full_type"].(types.String); ok && !planType.IsNull() {
+        if stateType, ok := state["retention_full_type"].(types.String); ok && !stateType.IsNull() {
+            if planType.ValueString() != stateType.ValueString() {
+                return true
+            }
+        }
+    }
+
+    return false
 }
 
-func (m backupsPlanModifier) extractBackupConfig(ctx context.Context, value attr.Value) (backupConfig, diag.Diagnostics) {
-    var diags diag.Diagnostics
-    var config backupConfig
-
-    if value.IsNull() || value.IsUnknown() {
-        return config, diags
-    }
-
-    objValue, ok := value.(types.Object)
-    if !ok {
-        diags.AddError("Invalid Value Type", "Expected object type for backup configuration")
-        return config, diags
-    }
-
-    provider := objValue.Attributes()["provider"]
-    if provider != nil && !provider.IsNull() {
-        config.Provider = provider.(types.String).ValueString()
-    }
-
-    configsAttr := objValue.Attributes()["config"]
-    if configsAttr == nil || configsAttr.IsNull() {
-        return config, diags
-    }
-
-    configsList, ok := configsAttr.(types.List)
-    if !ok {
-        return config, diags
-    }
-
-    for _, configElem := range configsList.Elements() {
-        configObj, ok := configElem.(types.Object)
-        if !ok {
-            continue
-        }
-
-        var configItem struct {
-            ID string
-            BackupStores []string
-            Schedules []struct {
-                ID string
-                Type string
-                CronExpression string
-            }
-        }
-
-        if id, ok := configObj.Attributes()["id"].(types.String); ok {
-            configItem.ID = id.ValueString()
-        }
-
-        if repos, ok := configObj.Attributes()["repositories"].(types.List); ok {
-            for _, repoElem := range repos.Elements() {
-                if repoObj, ok := repoElem.(types.Object); ok {
-                    if storeID, ok := repoObj.Attributes()["backup_store_id"].(types.String); ok && !storeID.IsNull() {
-                        configItem.BackupStores = append(configItem.BackupStores, storeID.ValueString())
-                    }
-                }
-            }
-        }
-
-        if schedules, ok := configObj.Attributes()["schedules"].(types.List); ok {
-            for _, schedElem := range schedules.Elements() {
-                if schedObj, ok := schedElem.(types.Object); ok {
-                    var schedule struct {
-                        ID string
-                        Type string
-                        CronExpression string
-                    }
-
-                    if id, ok := schedObj.Attributes()["id"].(types.String); ok {
-                        schedule.ID = id.ValueString()
-                    }
-                    if typ, ok := schedObj.Attributes()["type"].(types.String); ok {
-                        schedule.Type = typ.ValueString()
-                    }
-                    if cron, ok := schedObj.Attributes()["cron_expression"].(types.String); ok {
-                        schedule.CronExpression = cron.ValueString()
-                    }
-
-                    configItem.Schedules = append(configItem.Schedules, schedule)
-                }
-            }
-        }
-
-        config.Configs = append(config.Configs, configItem)
-    }
-
-    return config, diags
-}
-
-func (m backupsPlanModifier) backupConfigsEqual(a, b backupConfig) bool {
-    if a.Provider != b.Provider {
+func (m backupsPlanModifier) schedulesEqual(plan, state map[string]attr.Value) bool {
+    if !m.stringAttrEqual(plan["type"], state["type"]) {
         return false
     }
 
-    if len(a.Configs) != len(b.Configs) {
+    if !m.stringAttrEqual(plan["cron_expression"], state["cron_expression"]) {
         return false
-    }
-
-    for i := range a.Configs {
-        if a.Configs[i].ID != b.Configs[i].ID {
-            return false
-        }
-
-        if !m.stringSlicesEqual(a.Configs[i].BackupStores, b.Configs[i].BackupStores) {
-            return false
-        }
-
-        if !m.schedulesEqual(a.Configs[i].Schedules, b.Configs[i].Schedules) {
-            return false
-        }
     }
 
     return true
 }
 
-func (m backupsPlanModifier) stringSlicesEqual(a, b []string) bool {
-    if len(a) != len(b) {
-        return false
+func (m backupsPlanModifier) stringAttrEqual(plan, state attr.Value) bool {
+    planStr, ok1 := plan.(types.String)
+    stateStr, ok2 := state.(types.String)
+
+    if !ok1 || !ok2 {
+        return true
     }
-    for i := range a {
-        if a[i] != b[i] {
-            return false
-        }
+
+    if planStr.IsNull() || stateStr.IsNull() {
+        return true
     }
-    return true
+
+    return planStr.ValueString() == stateStr.ValueString()
 }
 
-func (m backupsPlanModifier) schedulesEqual(a, b []struct{ID, Type, CronExpression string}) bool {
-    if len(a) != len(b) {
-        return false
-    }
-    for i := range a {
-        if a[i].ID != b[i].ID || 
-           a[i].Type != b[i].Type ||
-           a[i].CronExpression != b[i].CronExpression {
-            return false
-        }
-    }
-    return true
-}
 
 func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
@@ -305,6 +262,7 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
+					configVersionPlanModifier{},
 				},
 			},
 			"options": schema.ListAttribute{
@@ -317,8 +275,8 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Computed:    true,
 				Optional:    true,
 				PlanModifiers: []planmodifier.Object{
-                    backupsPlanModifier{},
-                },
+					backupsPlanModifier{},
+				},
 				Attributes: map[string]schema.Attribute{
 					"provider": schema.StringAttribute{
 						Description: "The backup provider.",
@@ -358,80 +316,80 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 										listplanmodifier.UseStateForUnknown(),
 									},
 									NestedObject: schema.NestedAttributeObject{
-                                        Attributes: map[string]schema.Attribute{
-                                            "id": schema.StringAttribute{
-                                                Description: "Repository identifier.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "type": schema.StringAttribute{
-                                                Description: "Repository type (e.g., s3, gcs, azure).",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "backup_store_id": schema.StringAttribute{
-                                                Description: "ID of the backup store to use. If specified, other fields will be " +
-                                                           "automatically populated.",
-                                                Optional:    true,
-                                            },
-                                            "s3_bucket": schema.StringAttribute{
-                                                Description: "S3 bucket name for s3-type repositories.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "s3_region": schema.StringAttribute{
-                                                Description: "S3 region for s3-type repositories.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "s3_endpoint": schema.StringAttribute{
-                                                Description: "S3 endpoint for s3-type repositories.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "gcs_bucket": schema.StringAttribute{
-                                                Description: "GCS bucket name for gcs-type repositories.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "gcs_endpoint": schema.StringAttribute{
-                                                Description: "GCS endpoint for gcs-type repositories.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "azure_account": schema.StringAttribute{
-                                                Description: "Azure account for azure-type repositories.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "azure_container": schema.StringAttribute{
-                                                Description: "Azure container for azure-type repositories.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "azure_endpoint": schema.StringAttribute{
-                                                Description: "Azure endpoint for azure-type repositories.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "base_path": schema.StringAttribute{
-                                                Description: "Base path for the repository.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "retention_full": schema.Int64Attribute{
-                                                Description: "Retention period for full backups.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "retention_full_type": schema.StringAttribute{
-                                                Description: "Type of retention for full backups.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                        },
-                                    },
-                                },
+										Attributes: map[string]schema.Attribute{
+											"id": schema.StringAttribute{
+												Description: "Repository identifier.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"type": schema.StringAttribute{
+												Description: "Repository type (e.g., s3, gcs, azure).",
+												Optional:    true,
+												Computed:    true,
+											},
+											"backup_store_id": schema.StringAttribute{
+												Description: "ID of the backup store to use. If specified, other fields will be " +
+													"automatically populated.",
+												Optional: true,
+											},
+											"s3_bucket": schema.StringAttribute{
+												Description: "S3 bucket name for s3-type repositories.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"s3_region": schema.StringAttribute{
+												Description: "S3 region for s3-type repositories.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"s3_endpoint": schema.StringAttribute{
+												Description: "S3 endpoint for s3-type repositories.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"gcs_bucket": schema.StringAttribute{
+												Description: "GCS bucket name for gcs-type repositories.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"gcs_endpoint": schema.StringAttribute{
+												Description: "GCS endpoint for gcs-type repositories.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"azure_account": schema.StringAttribute{
+												Description: "Azure account for azure-type repositories.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"azure_container": schema.StringAttribute{
+												Description: "Azure container for azure-type repositories.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"azure_endpoint": schema.StringAttribute{
+												Description: "Azure endpoint for azure-type repositories.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"base_path": schema.StringAttribute{
+												Description: "Base path for the repository.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"retention_full": schema.Int64Attribute{
+												Description: "Retention period for full backups.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"retention_full_type": schema.StringAttribute{
+												Description: "Type of retention for full backups.",
+												Optional:    true,
+												Computed:    true,
+											},
+										},
+									},
+								},
 								"schedules": schema.ListNestedAttribute{
 									Description: "List of backup schedules.",
 									Optional:    true,
@@ -587,6 +545,25 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 		},
 	}
 }
+
+type configVersionPlanModifier struct{}
+
+func (m configVersionPlanModifier) Description(_ context.Context) string {
+	return "Prevents modifications to config_version after resource creation"
+}
+
+func (m configVersionPlanModifier) MarkdownDescription(_ context.Context) string {
+	return "Prevents modifications to config_version after resource creation"
+}
+
+func (m configVersionPlanModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	if req.StateValue.IsNull() {
+		return
+	}
+
+	resp.PlanValue = req.StateValue
+}
+
 // Plan modifier for node extensions
 type conditionalUseStateForUnknownModifier struct{}
 
@@ -975,21 +952,21 @@ func (r *databaseResource) nodesEqual(planNodes, stateNodes types.Map) bool {
 
 func (r *databaseResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var plan, state databaseResourceModel
-    diags := req.Plan.Get(ctx, &plan)
-    resp.Diagnostics.Append(diags...)
-    diags = req.State.Get(ctx, &state)
-    resp.Diagnostics.Append(diags...)
-    if resp.Diagnostics.HasError() {
-        return
-    }
+	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	diags = req.State.Get(ctx, &state)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-    if !plan.Backups.Equal(state.Backups) {
-        resp.Diagnostics.AddError(
-            "Invalid Update Operation",
-            "Backup configuration cannot be modified after database creation. You must create a new database to change backup settings.",
-        )
-        return
-    }
+	if !plan.Backups.Equal(state.Backups) {
+		resp.Diagnostics.AddError(
+			"Invalid Update Operation",
+			"Backup configuration cannot be modified after database creation. You must create a new database to change backup settings.",
+		)
+		return
+	}
 
 	// Check how many fields are being updated
 	updateCount := 0
@@ -1091,6 +1068,8 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 
 		plan = r.mapDatabaseToResourceModel(updatedDatabase)
 	}
+
+	plan.ConfigVersion = state.ConfigVersion
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -1306,9 +1285,8 @@ func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database)
 		Roles:         r.mapRolesToResourceModel(database.Roles),
 	}
 	if r.backupsChanged(database.Backups, model.Backups) {
-        model.Backups = r.mapBackupsToResourceModel(database.Backups)
-    }
-
+		model.Backups = r.mapBackupsToResourceModel(database.Backups)
+	}
 
 	return model
 }
@@ -1380,54 +1358,54 @@ func (r *databaseResource) mapBackupsToResourceModel(backups *models.Backups) ty
 }
 
 func (r *databaseResource) backupsChanged(apiBackups *models.Backups, modelBackups types.Object) bool {
-    if apiBackups == nil {
-        return false
-    }
+	if apiBackups == nil {
+		return false
+	}
 
-    if modelBackups.IsNull() || modelBackups.IsUnknown() {
-        return true
-    }
+	if modelBackups.IsNull() || modelBackups.IsUnknown() {
+		return true
+	}
 
-    // Compare relevant fields only
-    var stateBackups struct {
-        Provider string `tfsdk:"provider"`
-        Config   []struct {
-            ID           string `tfsdk:"id"`
-            Repositories []struct {
-                BackupStoreID string `tfsdk:"backup_store_id"`
-            } `tfsdk:"repositories"`
-        } `tfsdk:"config"`
-    }
+	// Compare relevant fields only
+	var stateBackups struct {
+		Provider string `tfsdk:"provider"`
+		Config   []struct {
+			ID           string `tfsdk:"id"`
+			Repositories []struct {
+				BackupStoreID string `tfsdk:"backup_store_id"`
+			} `tfsdk:"repositories"`
+		} `tfsdk:"config"`
+	}
 
-    modelBackups.As(context.Background(), &stateBackups, basetypes.ObjectAsOptions{})
+	modelBackups.As(context.Background(), &stateBackups, basetypes.ObjectAsOptions{})
 
-    if stateBackups.Provider != *apiBackups.Provider {
-        return true
-    }
+	if stateBackups.Provider != *apiBackups.Provider {
+		return true
+	}
 
-    configsMatch := len(stateBackups.Config) == len(apiBackups.Config)
-    if !configsMatch {
-        return true
-    }
+	configsMatch := len(stateBackups.Config) == len(apiBackups.Config)
+	if !configsMatch {
+		return true
+	}
 
-    for i, config := range stateBackups.Config {
-        apiConfig := apiBackups.Config[i]
-        if config.ID != *apiConfig.ID {
-            return true
-        }
+	for i, config := range stateBackups.Config {
+		apiConfig := apiBackups.Config[i]
+		if config.ID != *apiConfig.ID {
+			return true
+		}
 
-        if len(config.Repositories) != len(apiConfig.Repositories) {
-            return true
-        }
+		if len(config.Repositories) != len(apiConfig.Repositories) {
+			return true
+		}
 
-        for j, repo := range config.Repositories {
-            if repo.BackupStoreID != apiConfig.Repositories[j].BackupStoreID {
-                return true
-            }
-        }
-    }
+		for j, repo := range config.Repositories {
+			if repo.BackupStoreID != apiConfig.Repositories[j].BackupStoreID {
+				return true
+			}
+		}
+	}
 
-    return false
+	return false
 }
 
 func (r *databaseResource) mapComponentsToResourceModel(components []*models.DatabaseComponentVersion) types.List {
