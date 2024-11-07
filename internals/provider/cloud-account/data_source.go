@@ -55,7 +55,6 @@ type CloudAccountDetails struct {
 	Name        types.String `tfsdk:"name"`
 	Type        types.String `tfsdk:"type"`
 	CreatedAt   types.String `tfsdk:"created_at"`
-	UpdatedAt   types.String `tfsdk:"updated_at"`
 	Description types.String `tfsdk:"description"`
 	Properties  types.Map    `tfsdk:"properties"`
 }
@@ -82,10 +81,6 @@ func (d *cloudAccountsDataSource) Schema(_ context.Context, _ datasource.SchemaR
 						"created_at": schema.StringAttribute{
 							Computed:    true,
 							Description: "Creation time of the cloud account",
-						},
-						"updated_at": schema.StringAttribute{
-							Computed:    true,
-							Description: "Last update time of the cloud account",
 						},
 						"description": schema.StringAttribute{
 							Computed:    true,
@@ -134,7 +129,6 @@ func (d *cloudAccountsDataSource) Read(ctx context.Context, req datasource.ReadR
 			Name:        types.StringValue(*account.Name),
 			Type:        types.StringValue(*account.Type),
 			CreatedAt:   types.StringValue(*account.CreatedAt),
-			UpdatedAt:   types.StringValue(*account.UpdatedAt),
 			Description: types.StringValue(account.Description),
 			Properties:  propertiesMap,
 		}

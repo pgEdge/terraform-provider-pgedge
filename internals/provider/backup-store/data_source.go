@@ -55,7 +55,6 @@ type BackupStoreModel struct {
     CloudAccountID   types.String `tfsdk:"cloud_account_id"`
     CloudAccountType types.String `tfsdk:"cloud_account_type"`
     CreatedAt        types.String `tfsdk:"created_at"`
-    UpdatedAt        types.String `tfsdk:"updated_at"`
     Status           types.String `tfsdk:"status"`
     Name             types.String `tfsdk:"name"`
     Properties       types.Map    `tfsdk:"properties"`
@@ -79,9 +78,6 @@ func (d *backupStoresDataSource) Schema(_ context.Context, _ datasource.SchemaRe
                             Computed: true,
                         },
                         "created_at": schema.StringAttribute{
-                            Computed: true,
-                        },
-                        "updated_at": schema.StringAttribute{
                             Computed: true,
                         },
                         "status": schema.StringAttribute{
@@ -120,7 +116,6 @@ func (d *backupStoresDataSource) Read(ctx context.Context, req datasource.ReadRe
             CloudAccountID:   types.StringPointerValue(store.CloudAccountID),
             CloudAccountType: types.StringPointerValue(store.CloudAccountType),
             CreatedAt:        types.StringPointerValue(store.CreatedAt),
-            UpdatedAt:        types.StringPointerValue(store.UpdatedAt),
             Status:           types.StringPointerValue(store.Status),
             Name:             types.StringPointerValue(store.Name),
             Properties:       d.convertPropertiesToMap(store.Properties),

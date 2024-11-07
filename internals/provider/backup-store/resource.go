@@ -36,7 +36,6 @@ type backupStoreResourceModel struct {
     CloudAccountID   types.String `tfsdk:"cloud_account_id"`
     CloudAccountType types.String `tfsdk:"cloud_account_type"`
     CreatedAt        types.String `tfsdk:"created_at"`
-    UpdatedAt        types.String `tfsdk:"updated_at"`
     Status           types.String `tfsdk:"status"`
     Name             types.String `tfsdk:"name"`
     Properties       types.Map    `tfsdk:"properties"`
@@ -62,12 +61,15 @@ func (r *backupStoreResource) Schema(_ context.Context, _ resource.SchemaRequest
             },
             "cloud_account_type": schema.StringAttribute{
                 Computed: true,
+                PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
             },
             "created_at": schema.StringAttribute{
                 Computed: true,
-            },
-            "updated_at": schema.StringAttribute{
-                Computed: true,
+                PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
             },
             "status": schema.StringAttribute{
                 Computed: true,
@@ -130,7 +132,6 @@ func (r *backupStoreResource) Create(ctx context.Context, req resource.CreateReq
             plan.ID = types.StringValue(backupStore.ID.String())
             plan.CloudAccountType = types.StringPointerValue(backupStore.CloudAccountType)
             plan.CreatedAt = types.StringPointerValue(backupStore.CreatedAt)
-            plan.UpdatedAt = types.StringPointerValue(backupStore.UpdatedAt)
             plan.Status = types.StringPointerValue(backupStore.Status)
             plan.ClusterIDs = types.ListValueMust(types.StringType, []attr.Value{types.StringValue("")})
             plan.Properties = r.convertPropertiesToMap(backupStore.Properties)
@@ -144,7 +145,6 @@ func (r *backupStoreResource) Create(ctx context.Context, req resource.CreateReq
     plan.ID = types.StringValue(backupStore.ID.String())
     plan.CloudAccountType = types.StringPointerValue(backupStore.CloudAccountType)
     plan.CreatedAt = types.StringPointerValue(backupStore.CreatedAt)
-    plan.UpdatedAt = types.StringPointerValue(backupStore.UpdatedAt)
     plan.Status = types.StringPointerValue(backupStore.Status)
 
     // Handle Properties
@@ -186,7 +186,6 @@ func (r *backupStoreResource) Read(ctx context.Context, req resource.ReadRequest
     state.CloudAccountID = types.StringPointerValue(backupStore.CloudAccountID)
     state.CloudAccountType = types.StringPointerValue(backupStore.CloudAccountType)
     state.CreatedAt = types.StringPointerValue(backupStore.CreatedAt)
-    state.UpdatedAt = types.StringPointerValue(backupStore.UpdatedAt)
     state.Status = types.StringPointerValue(backupStore.Status)
     state.Name = types.StringPointerValue(backupStore.Name)
 

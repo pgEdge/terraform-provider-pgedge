@@ -50,24 +50,199 @@ func (r *databaseResource) Metadata(_ context.Context, req resource.MetadataRequ
 
 type backupsPlanModifier struct{}
 
-func (b backupsPlanModifier) Description(_ context.Context) string {
-    return "Prevents unnecessary recreation when backups configuration hasn't changed"
+func (m backupsPlanModifier) Description(_ context.Context) string {
+    return "Prevents modifications to backup configuration while allowing computed value changes"
 }
 
-func (b backupsPlanModifier) MarkdownDescription(_ context.Context) string {
-    return "Prevents unnecessary recreation when backups configuration hasn't changed"
+func (m backupsPlanModifier) MarkdownDescription(_ context.Context) string {
+    return "Prevents modifications to backup configuration while allowing computed value changes"
 }
 
-func (b backupsPlanModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
-    if req.StateValue.IsNull() || req.StateValue.IsUnknown() {
+func (m backupsPlanModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+    if req.StateValue.IsNull() {
         return
     }
 
-    if !req.PlanValue.IsUnknown() {
+    if req.PlanValue.IsUnknown() {
+        resp.PlanValue = req.StateValue
+        return
+    }
+
+    planBackups, diags := m.extractBackupConfig(ctx, req.PlanValue)
+    if diags.HasError() {
+        resp.Diagnostics.Append(diags...)
+        return
+    }
+
+    stateBackups, diags := m.extractBackupConfig(ctx, req.StateValue)
+    if diags.HasError() {
+        resp.Diagnostics.Append(diags...)
+        return
+    }
+
+    if !m.backupConfigsEqual(planBackups, stateBackups) {
+        resp.Diagnostics.AddError(
+            "Invalid Backup Configuration Modification",
+            "Backup configuration cannot be modified after database creation. You must create a new database to change backup settings.",
+        )
         return
     }
 
     resp.PlanValue = req.StateValue
+}
+
+type backupConfig struct {
+    Provider string
+    Configs  []struct {
+        ID           string
+        BackupStores []string
+        Schedules    []struct {
+            ID             string
+            Type           string
+            CronExpression string
+        }
+    }
+}
+
+func (m backupsPlanModifier) extractBackupConfig(ctx context.Context, value attr.Value) (backupConfig, diag.Diagnostics) {
+    var diags diag.Diagnostics
+    var config backupConfig
+
+    if value.IsNull() || value.IsUnknown() {
+        return config, diags
+    }
+
+    objValue, ok := value.(types.Object)
+    if !ok {
+        diags.AddError("Invalid Value Type", "Expected object type for backup configuration")
+        return config, diags
+    }
+
+    provider := objValue.Attributes()["provider"]
+    if provider != nil && !provider.IsNull() {
+        config.Provider = provider.(types.String).ValueString()
+    }
+
+    configsAttr := objValue.Attributes()["config"]
+    if configsAttr == nil || configsAttr.IsNull() {
+        return config, diags
+    }
+
+    configsList, ok := configsAttr.(types.List)
+    if !ok {
+        return config, diags
+    }
+
+    for _, configElem := range configsList.Elements() {
+        configObj, ok := configElem.(types.Object)
+        if !ok {
+            continue
+        }
+
+        var configItem struct {
+            ID string
+            BackupStores []string
+            Schedules []struct {
+                ID string
+                Type string
+                CronExpression string
+            }
+        }
+
+        if id, ok := configObj.Attributes()["id"].(types.String); ok {
+            configItem.ID = id.ValueString()
+        }
+
+        if repos, ok := configObj.Attributes()["repositories"].(types.List); ok {
+            for _, repoElem := range repos.Elements() {
+                if repoObj, ok := repoElem.(types.Object); ok {
+                    if storeID, ok := repoObj.Attributes()["backup_store_id"].(types.String); ok && !storeID.IsNull() {
+                        configItem.BackupStores = append(configItem.BackupStores, storeID.ValueString())
+                    }
+                }
+            }
+        }
+
+        if schedules, ok := configObj.Attributes()["schedules"].(types.List); ok {
+            for _, schedElem := range schedules.Elements() {
+                if schedObj, ok := schedElem.(types.Object); ok {
+                    var schedule struct {
+                        ID string
+                        Type string
+                        CronExpression string
+                    }
+
+                    if id, ok := schedObj.Attributes()["id"].(types.String); ok {
+                        schedule.ID = id.ValueString()
+                    }
+                    if typ, ok := schedObj.Attributes()["type"].(types.String); ok {
+                        schedule.Type = typ.ValueString()
+                    }
+                    if cron, ok := schedObj.Attributes()["cron_expression"].(types.String); ok {
+                        schedule.CronExpression = cron.ValueString()
+                    }
+
+                    configItem.Schedules = append(configItem.Schedules, schedule)
+                }
+            }
+        }
+
+        config.Configs = append(config.Configs, configItem)
+    }
+
+    return config, diags
+}
+
+func (m backupsPlanModifier) backupConfigsEqual(a, b backupConfig) bool {
+    if a.Provider != b.Provider {
+        return false
+    }
+
+    if len(a.Configs) != len(b.Configs) {
+        return false
+    }
+
+    for i := range a.Configs {
+        if a.Configs[i].ID != b.Configs[i].ID {
+            return false
+        }
+
+        if !m.stringSlicesEqual(a.Configs[i].BackupStores, b.Configs[i].BackupStores) {
+            return false
+        }
+
+        if !m.schedulesEqual(a.Configs[i].Schedules, b.Configs[i].Schedules) {
+            return false
+        }
+    }
+
+    return true
+}
+
+func (m backupsPlanModifier) stringSlicesEqual(a, b []string) bool {
+    if len(a) != len(b) {
+        return false
+    }
+    for i := range a {
+        if a[i] != b[i] {
+            return false
+        }
+    }
+    return true
+}
+
+func (m backupsPlanModifier) schedulesEqual(a, b []struct{ID, Type, CronExpression string}) bool {
+    if len(a) != len(b) {
+        return false
+    }
+    for i := range a {
+        if a[i].ID != b[i].ID || 
+           a[i].Type != b[i].Type ||
+           a[i].CronExpression != b[i].CronExpression {
+            return false
+        }
+    }
+    return true
 }
 
 func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
@@ -333,7 +508,7 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 							Attributes: map[string]schema.Attribute{
 								"database":            schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 								"host":                schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
-								"password":            schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"password":            schema.StringAttribute{Computed: true, Sensitive: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 								"port":                schema.Int64Attribute{Computed: true, PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()}},
 								"username":            schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 								"external_ip_address": schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
@@ -799,19 +974,22 @@ func (r *databaseResource) nodesEqual(planNodes, stateNodes types.Map) bool {
 }
 
 func (r *databaseResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan databaseResourceModel
-	diags := req.Plan.Get(ctx, &plan)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	var plan, state databaseResourceModel
+    diags := req.Plan.Get(ctx, &plan)
+    resp.Diagnostics.Append(diags...)
+    diags = req.State.Get(ctx, &state)
+    resp.Diagnostics.Append(diags...)
+    if resp.Diagnostics.HasError() {
+        return
+    }
 
-	var state databaseResourceModel
-	diags = req.State.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+    if !plan.Backups.Equal(state.Backups) {
+        resp.Diagnostics.AddError(
+            "Invalid Update Operation",
+            "Backup configuration cannot be modified after database creation. You must create a new database to change backup settings.",
+        )
+        return
+    }
 
 	// Check how many fields are being updated
 	updateCount := 0
