@@ -48,6 +48,160 @@ func (r *databaseResource) Metadata(_ context.Context, req resource.MetadataRequ
 	resp.TypeName = req.ProviderTypeName + "_database"
 }
 
+type backupsPlanModifier struct{}
+
+func (m backupsPlanModifier) Description(_ context.Context) string {
+	return "Prevents modifications to backup configuration while allowing computed value changes"
+}
+
+func (m backupsPlanModifier) MarkdownDescription(_ context.Context) string {
+	return "Prevents modifications to backup configuration while allowing computed value changes"
+}
+
+func (m backupsPlanModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
+    if req.StateValue.IsNull() {
+        return
+    }
+
+    if req.PlanValue.IsUnknown() {
+        resp.PlanValue = req.StateValue
+        return
+    }
+
+    planValue := req.PlanValue
+    stateValue := req.StateValue
+    
+    planAttrs := planValue.Attributes()
+    stateAttrs := stateValue.Attributes()
+
+    planConfigs, ok := planAttrs["config"].(types.List)
+    if !ok {
+        return
+    }
+    stateConfigs, ok := stateAttrs["config"].(types.List)
+    if !ok {
+        return
+    }
+
+    hasBackupChanges := false
+
+    for i, planConfig := range planConfigs.Elements() {
+        if i >= len(stateConfigs.Elements()) {
+            hasBackupChanges = true
+            break
+        }
+        stateConfig := stateConfigs.Elements()[i]
+
+        planConfigObj := planConfig.(types.Object)
+        stateConfigObj := stateConfig.(types.Object)
+
+        planRepos := planConfigObj.Attributes()["repositories"].(types.List)
+        stateRepos := stateConfigObj.Attributes()["repositories"].(types.List)
+
+        for j, planRepo := range planRepos.Elements() {
+            if j >= len(stateRepos.Elements()) {
+                hasBackupChanges = true
+                break
+            }
+            stateRepo := stateRepos.Elements()[j]
+
+            planRepoObj := planRepo.(types.Object)
+            stateRepoObj := stateRepo.(types.Object)
+
+            planBackupStoreID := planRepoObj.Attributes()["backup_store_id"].(types.String)
+            stateBackupStoreID := stateRepoObj.Attributes()["backup_store_id"].(types.String)
+
+            if !planBackupStoreID.IsNull() && !stateBackupStoreID.IsNull() &&
+               planBackupStoreID.ValueString() != stateBackupStoreID.ValueString() {
+                hasBackupChanges = true
+            }
+
+            if m.hasRetentionChanges(planRepoObj.Attributes(), stateRepoObj.Attributes()) {
+                hasBackupChanges = true
+            }
+        }
+
+        planSchedules, hasPS := planConfigObj.Attributes()["schedules"].(types.List)
+        stateSchedules, hasSS := stateConfigObj.Attributes()["schedules"].(types.List)
+
+        if hasPS && hasSS {
+            planSchedsElements := planSchedules.Elements()
+            stateSchedsElements := stateSchedules.Elements()
+
+            if len(planSchedsElements) != len(stateSchedsElements) {
+                hasBackupChanges = true
+            } else {
+                for k := range planSchedsElements {
+                    planSched := planSchedsElements[k].(types.Object)
+                    stateSched := stateSchedsElements[k].(types.Object)
+
+                    if !m.schedulesEqual(planSched.Attributes(), stateSched.Attributes()) {
+                        hasBackupChanges = true
+                    }
+                }
+            }
+        }
+    }
+
+    if hasBackupChanges {
+        resp.Diagnostics.AddError(
+            "Invalid Backup Configuration Modification",
+            "Backup configuration cannot be modified after database creation. You must create a new database to change backup settings.",
+        )
+        return
+    }
+
+    resp.PlanValue = req.StateValue
+}
+
+func (m backupsPlanModifier) hasRetentionChanges(plan, state map[string]attr.Value) bool {
+    if planRetention, ok := plan["retention_full"].(types.Int64); ok && !planRetention.IsNull() {
+        if stateRetention, ok := state["retention_full"].(types.Int64); ok && !stateRetention.IsNull() {
+            if planRetention.ValueInt64() != stateRetention.ValueInt64() {
+                return true
+            }
+        }
+    }
+
+    if planType, ok := plan["retention_full_type"].(types.String); ok && !planType.IsNull() {
+        if stateType, ok := state["retention_full_type"].(types.String); ok && !stateType.IsNull() {
+            if planType.ValueString() != stateType.ValueString() {
+                return true
+            }
+        }
+    }
+
+    return false
+}
+
+func (m backupsPlanModifier) schedulesEqual(plan, state map[string]attr.Value) bool {
+    if !m.stringAttrEqual(plan["type"], state["type"]) {
+        return false
+    }
+
+    if !m.stringAttrEqual(plan["cron_expression"], state["cron_expression"]) {
+        return false
+    }
+
+    return true
+}
+
+func (m backupsPlanModifier) stringAttrEqual(plan, state attr.Value) bool {
+    planStr, ok1 := plan.(types.String)
+    stateStr, ok2 := state.(types.String)
+
+    if !ok1 || !ok2 {
+        return true
+    }
+
+    if planStr.IsNull() || stateStr.IsNull() {
+        return true
+    }
+
+    return planStr.ValueString() == stateStr.ValueString()
+}
+
+
 func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		Description: "Manages a pgEdge database.",
@@ -108,6 +262,7 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Computed:    true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.UseStateForUnknown(),
+					configVersionPlanModifier{},
 				},
 			},
 			"options": schema.ListAttribute{
@@ -120,17 +275,8 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Computed:    true,
 				Optional:    true,
 				PlanModifiers: []planmodifier.Object{
-                    objectplanmodifier.RequiresReplaceIf(
-                        func(ctx context.Context, req planmodifier.ObjectRequest, resp *objectplanmodifier.RequiresReplaceIfFuncResponse) {
-                            if !req.StateValue.IsNull() {
-                                // If state exists (not a new resource) and plan is different, require replace
-                                resp.RequiresReplace = !req.PlanValue.Equal(req.StateValue)
-                            }
-                        },
-                        "Backup configuration cannot be modified after creation",
-                        "Backup configuration cannot be modified after creation. Any changes will require creating a new database.",
-                    ),
-                },
+					backupsPlanModifier{},
+				},
 				Attributes: map[string]schema.Attribute{
 					"provider": schema.StringAttribute{
 						Description: "The backup provider.",
@@ -170,80 +316,80 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 										listplanmodifier.UseStateForUnknown(),
 									},
 									NestedObject: schema.NestedAttributeObject{
-                                        Attributes: map[string]schema.Attribute{
-                                            "id": schema.StringAttribute{
-                                                Description: "Repository identifier.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "type": schema.StringAttribute{
-                                                Description: "Repository type (e.g., s3, gcs, azure).",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "backup_store_id": schema.StringAttribute{
-                                                Description: "ID of the backup store to use. If specified, other fields will be " +
-                                                           "automatically populated.",
-                                                Optional:    true,
-                                            },
-                                            "s3_bucket": schema.StringAttribute{
-                                                Description: "S3 bucket name for s3-type repositories.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "s3_region": schema.StringAttribute{
-                                                Description: "S3 region for s3-type repositories.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "s3_endpoint": schema.StringAttribute{
-                                                Description: "S3 endpoint for s3-type repositories.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "gcs_bucket": schema.StringAttribute{
-                                                Description: "GCS bucket name for gcs-type repositories.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "gcs_endpoint": schema.StringAttribute{
-                                                Description: "GCS endpoint for gcs-type repositories.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "azure_account": schema.StringAttribute{
-                                                Description: "Azure account for azure-type repositories.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "azure_container": schema.StringAttribute{
-                                                Description: "Azure container for azure-type repositories.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "azure_endpoint": schema.StringAttribute{
-                                                Description: "Azure endpoint for azure-type repositories.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "base_path": schema.StringAttribute{
-                                                Description: "Base path for the repository.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "retention_full": schema.Int64Attribute{
-                                                Description: "Retention period for full backups.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                            "retention_full_type": schema.StringAttribute{
-                                                Description: "Type of retention for full backups.",
-                                                Optional:    true,
-                                                Computed:    true,
-                                            },
-                                        },
-                                    },
-                                },
+										Attributes: map[string]schema.Attribute{
+											"id": schema.StringAttribute{
+												Description: "Repository identifier.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"type": schema.StringAttribute{
+												Description: "Repository type (e.g., s3, gcs, azure).",
+												Optional:    true,
+												Computed:    true,
+											},
+											"backup_store_id": schema.StringAttribute{
+												Description: "ID of the backup store to use. If specified, other fields will be " +
+													"automatically populated.",
+												Optional: true,
+											},
+											"s3_bucket": schema.StringAttribute{
+												Description: "S3 bucket name for s3-type repositories.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"s3_region": schema.StringAttribute{
+												Description: "S3 region for s3-type repositories.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"s3_endpoint": schema.StringAttribute{
+												Description: "S3 endpoint for s3-type repositories.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"gcs_bucket": schema.StringAttribute{
+												Description: "GCS bucket name for gcs-type repositories.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"gcs_endpoint": schema.StringAttribute{
+												Description: "GCS endpoint for gcs-type repositories.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"azure_account": schema.StringAttribute{
+												Description: "Azure account for azure-type repositories.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"azure_container": schema.StringAttribute{
+												Description: "Azure container for azure-type repositories.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"azure_endpoint": schema.StringAttribute{
+												Description: "Azure endpoint for azure-type repositories.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"base_path": schema.StringAttribute{
+												Description: "Base path for the repository.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"retention_full": schema.Int64Attribute{
+												Description: "Retention period for full backups.",
+												Optional:    true,
+												Computed:    true,
+											},
+											"retention_full_type": schema.StringAttribute{
+												Description: "Type of retention for full backups.",
+												Optional:    true,
+												Computed:    true,
+											},
+										},
+									},
+								},
 								"schedules": schema.ListNestedAttribute{
 									Description: "List of backup schedules.",
 									Optional:    true,
@@ -320,7 +466,7 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 							Attributes: map[string]schema.Attribute{
 								"database":            schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 								"host":                schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
-								"password":            schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"password":            schema.StringAttribute{Computed: true, Sensitive: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 								"port":                schema.Int64Attribute{Computed: true, PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()}},
 								"username":            schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 								"external_ip_address": schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
@@ -399,6 +545,25 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 		},
 	}
 }
+
+type configVersionPlanModifier struct{}
+
+func (m configVersionPlanModifier) Description(_ context.Context) string {
+	return "Prevents modifications to config_version after resource creation"
+}
+
+func (m configVersionPlanModifier) MarkdownDescription(_ context.Context) string {
+	return "Prevents modifications to config_version after resource creation"
+}
+
+func (m configVersionPlanModifier) PlanModifyString(ctx context.Context, req planmodifier.StringRequest, resp *planmodifier.StringResponse) {
+	if req.StateValue.IsNull() {
+		return
+	}
+
+	resp.PlanValue = req.StateValue
+}
+
 // Plan modifier for node extensions
 type conditionalUseStateForUnknownModifier struct{}
 
@@ -786,17 +951,20 @@ func (r *databaseResource) nodesEqual(planNodes, stateNodes types.Map) bool {
 }
 
 func (r *databaseResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
-	var plan databaseResourceModel
+	var plan, state databaseResourceModel
 	diags := req.Plan.Get(ctx, &plan)
+	resp.Diagnostics.Append(diags...)
+	diags = req.State.Get(ctx, &state)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 
-	var state databaseResourceModel
-	diags = req.State.Get(ctx, &state)
-	resp.Diagnostics.Append(diags...)
-	if resp.Diagnostics.HasError() {
+	if !plan.Backups.Equal(state.Backups) {
+		resp.Diagnostics.AddError(
+			"Invalid Update Operation",
+			"Backup configuration cannot be modified after database creation. You must create a new database to change backup settings.",
+		)
 		return
 	}
 
@@ -900,6 +1068,8 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 
 		plan = r.mapDatabaseToResourceModel(updatedDatabase)
 	}
+
+	plan.ConfigVersion = state.ConfigVersion
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -1097,7 +1267,7 @@ func (r *databaseResource) extensionsFromObject(ctx context.Context, obj types.O
 }
 
 func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database) databaseResourceModel {
-	return databaseResourceModel{
+	model := databaseResourceModel{
 		ID:        types.StringValue(database.ID.String()),
 		Name:      types.StringPointerValue(database.Name),
 		ClusterID: types.StringValue(database.ClusterID.String()),
@@ -1114,6 +1284,11 @@ func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database)
 		Nodes:         r.mapNodesToResourceModel(database.Nodes),
 		Roles:         r.mapRolesToResourceModel(database.Roles),
 	}
+	if r.backupsChanged(database.Backups, model.Backups) {
+		model.Backups = r.mapBackupsToResourceModel(database.Backups)
+	}
+
+	return model
 }
 
 var backupConfigType = map[string]attr.Type{
@@ -1180,6 +1355,57 @@ func (r *databaseResource) mapBackupsToResourceModel(backups *models.Backups) ty
 	)
 
 	return backupsObj
+}
+
+func (r *databaseResource) backupsChanged(apiBackups *models.Backups, modelBackups types.Object) bool {
+	if apiBackups == nil {
+		return false
+	}
+
+	if modelBackups.IsNull() || modelBackups.IsUnknown() {
+		return true
+	}
+
+	// Compare relevant fields only
+	var stateBackups struct {
+		Provider string `tfsdk:"provider"`
+		Config   []struct {
+			ID           string `tfsdk:"id"`
+			Repositories []struct {
+				BackupStoreID string `tfsdk:"backup_store_id"`
+			} `tfsdk:"repositories"`
+		} `tfsdk:"config"`
+	}
+
+	modelBackups.As(context.Background(), &stateBackups, basetypes.ObjectAsOptions{})
+
+	if stateBackups.Provider != *apiBackups.Provider {
+		return true
+	}
+
+	configsMatch := len(stateBackups.Config) == len(apiBackups.Config)
+	if !configsMatch {
+		return true
+	}
+
+	for i, config := range stateBackups.Config {
+		apiConfig := apiBackups.Config[i]
+		if config.ID != *apiConfig.ID {
+			return true
+		}
+
+		if len(config.Repositories) != len(apiConfig.Repositories) {
+			return true
+		}
+
+		for j, repo := range config.Repositories {
+			if repo.BackupStoreID != apiConfig.Repositories[j].BackupStoreID {
+				return true
+			}
+		}
+	}
+
+	return false
 }
 
 func (r *databaseResource) mapComponentsToResourceModel(components []*models.DatabaseComponentVersion) types.List {

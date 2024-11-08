@@ -7,6 +7,8 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
 	"github.com/pgEdge/terraform-provider-pgedge/client/models"
@@ -53,7 +55,6 @@ type CloudAccountResourceModel struct {
 	Type        types.String `tfsdk:"type"`
 	Description types.String `tfsdk:"description"`
 	CreatedAt   types.String `tfsdk:"created_at"`
-	UpdatedAt   types.String `tfsdk:"updated_at"`
 	Credentials types.Map    `tfsdk:"credentials"`
 }
 
@@ -62,6 +63,9 @@ func (r *cloudAccountResource) Schema(_ context.Context, _ resource.SchemaReques
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"name": schema.StringAttribute{
 				Required: true,
@@ -74,9 +78,9 @@ func (r *cloudAccountResource) Schema(_ context.Context, _ resource.SchemaReques
 			},
 			"created_at": schema.StringAttribute{
 				Computed: true,
-			},
-			"updated_at": schema.StringAttribute{
-				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"credentials": schema.MapAttribute{
 				Required:    true,
@@ -100,9 +104,9 @@ func (r *cloudAccountResource) Create(ctx context.Context, req resource.CreateRe
 	}
 
 	createInput := &models.CreateCloudAccountInput{
-		Name:        *plan.Name.ValueStringPointer(),
+		Name:        plan.Name.ValueString(),
 		Type:        plan.Type.ValueStringPointer(),
-		Description: *plan.Description.ValueStringPointer(),
+		Description: plan.Description.ValueString(),
 		Credentials: credentials,
 	}
 
@@ -114,7 +118,6 @@ func (r *cloudAccountResource) Create(ctx context.Context, req resource.CreateRe
 
 	plan.ID = types.StringValue(account.ID.String())
 	plan.CreatedAt = types.StringValue(*account.CreatedAt)
-	plan.UpdatedAt = types.StringValue(*account.UpdatedAt)
 
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
@@ -146,7 +149,6 @@ func (r *cloudAccountResource) Read(ctx context.Context, req resource.ReadReques
 	state.Type = types.StringValue(*account.Type)
 	state.Description = types.StringValue(account.Description)
 	state.CreatedAt = types.StringValue(*account.CreatedAt)
-	state.UpdatedAt = types.StringValue(*account.UpdatedAt)
 
 	// Note: We don't update the credentials here as they are not returned by the API for security reasons
 
