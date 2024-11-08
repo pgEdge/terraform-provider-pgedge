@@ -21,7 +21,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
-	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	// "github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -59,148 +58,147 @@ func (m backupsPlanModifier) MarkdownDescription(_ context.Context) string {
 }
 
 func (m backupsPlanModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
-    if req.StateValue.IsNull() {
-        return
-    }
+	if req.StateValue.IsNull() {
+		return
+	}
 
-    if req.PlanValue.IsUnknown() {
-        resp.PlanValue = req.StateValue
-        return
-    }
+	if req.PlanValue.IsUnknown() {
+		resp.PlanValue = req.StateValue
+		return
+	}
 
-    planValue := req.PlanValue
-    stateValue := req.StateValue
-    
-    planAttrs := planValue.Attributes()
-    stateAttrs := stateValue.Attributes()
+	planValue := req.PlanValue
+	stateValue := req.StateValue
 
-    planConfigs, ok := planAttrs["config"].(types.List)
-    if !ok {
-        return
-    }
-    stateConfigs, ok := stateAttrs["config"].(types.List)
-    if !ok {
-        return
-    }
+	planAttrs := planValue.Attributes()
+	stateAttrs := stateValue.Attributes()
 
-    hasBackupChanges := false
+	planConfigs, ok := planAttrs["config"].(types.List)
+	if !ok {
+		return
+	}
+	stateConfigs, ok := stateAttrs["config"].(types.List)
+	if !ok {
+		return
+	}
 
-    for i, planConfig := range planConfigs.Elements() {
-        if i >= len(stateConfigs.Elements()) {
-            hasBackupChanges = true
-            break
-        }
-        stateConfig := stateConfigs.Elements()[i]
+	hasBackupChanges := false
 
-        planConfigObj := planConfig.(types.Object)
-        stateConfigObj := stateConfig.(types.Object)
+	for i, planConfig := range planConfigs.Elements() {
+		if i >= len(stateConfigs.Elements()) {
+			hasBackupChanges = true
+			break
+		}
+		stateConfig := stateConfigs.Elements()[i]
 
-        planRepos := planConfigObj.Attributes()["repositories"].(types.List)
-        stateRepos := stateConfigObj.Attributes()["repositories"].(types.List)
+		planConfigObj := planConfig.(types.Object)
+		stateConfigObj := stateConfig.(types.Object)
 
-        for j, planRepo := range planRepos.Elements() {
-            if j >= len(stateRepos.Elements()) {
-                hasBackupChanges = true
-                break
-            }
-            stateRepo := stateRepos.Elements()[j]
+		planRepos := planConfigObj.Attributes()["repositories"].(types.List)
+		stateRepos := stateConfigObj.Attributes()["repositories"].(types.List)
 
-            planRepoObj := planRepo.(types.Object)
-            stateRepoObj := stateRepo.(types.Object)
+		for j, planRepo := range planRepos.Elements() {
+			if j >= len(stateRepos.Elements()) {
+				hasBackupChanges = true
+				break
+			}
+			stateRepo := stateRepos.Elements()[j]
 
-            planBackupStoreID := planRepoObj.Attributes()["backup_store_id"].(types.String)
-            stateBackupStoreID := stateRepoObj.Attributes()["backup_store_id"].(types.String)
+			planRepoObj := planRepo.(types.Object)
+			stateRepoObj := stateRepo.(types.Object)
 
-            if !planBackupStoreID.IsNull() && !stateBackupStoreID.IsNull() &&
-               planBackupStoreID.ValueString() != stateBackupStoreID.ValueString() {
-                hasBackupChanges = true
-            }
+			planBackupStoreID := planRepoObj.Attributes()["backup_store_id"].(types.String)
+			stateBackupStoreID := stateRepoObj.Attributes()["backup_store_id"].(types.String)
 
-            if m.hasRetentionChanges(planRepoObj.Attributes(), stateRepoObj.Attributes()) {
-                hasBackupChanges = true
-            }
-        }
+			if !planBackupStoreID.IsNull() && !stateBackupStoreID.IsNull() &&
+				planBackupStoreID.ValueString() != stateBackupStoreID.ValueString() {
+				hasBackupChanges = true
+			}
 
-        planSchedules, hasPS := planConfigObj.Attributes()["schedules"].(types.List)
-        stateSchedules, hasSS := stateConfigObj.Attributes()["schedules"].(types.List)
+			if m.hasRetentionChanges(planRepoObj.Attributes(), stateRepoObj.Attributes()) {
+				hasBackupChanges = true
+			}
+		}
 
-        if hasPS && hasSS {
-            planSchedsElements := planSchedules.Elements()
-            stateSchedsElements := stateSchedules.Elements()
+		planSchedules, hasPS := planConfigObj.Attributes()["schedules"].(types.List)
+		stateSchedules, hasSS := stateConfigObj.Attributes()["schedules"].(types.List)
 
-            if len(planSchedsElements) != len(stateSchedsElements) {
-                hasBackupChanges = true
-            } else {
-                for k := range planSchedsElements {
-                    planSched := planSchedsElements[k].(types.Object)
-                    stateSched := stateSchedsElements[k].(types.Object)
+		if hasPS && hasSS {
+			planSchedsElements := planSchedules.Elements()
+			stateSchedsElements := stateSchedules.Elements()
 
-                    if !m.schedulesEqual(planSched.Attributes(), stateSched.Attributes()) {
-                        hasBackupChanges = true
-                    }
-                }
-            }
-        }
-    }
+			if len(planSchedsElements) != len(stateSchedsElements) {
+				hasBackupChanges = true
+			} else {
+				for k := range planSchedsElements {
+					planSched := planSchedsElements[k].(types.Object)
+					stateSched := stateSchedsElements[k].(types.Object)
 
-    if hasBackupChanges {
-        resp.Diagnostics.AddError(
-            "Invalid Backup Configuration Modification",
-            "Backup configuration cannot be modified after database creation. You must create a new database to change backup settings.",
-        )
-        return
-    }
+					if !m.schedulesEqual(planSched.Attributes(), stateSched.Attributes()) {
+						hasBackupChanges = true
+					}
+				}
+			}
+		}
+	}
 
-    resp.PlanValue = req.StateValue
+	if hasBackupChanges {
+		resp.Diagnostics.AddError(
+			"Invalid Backup Configuration Modification",
+			"Backup configuration cannot be modified after database creation. You must create a new database to change backup settings.",
+		)
+		return
+	}
+
+	resp.PlanValue = req.StateValue
 }
 
 func (m backupsPlanModifier) hasRetentionChanges(plan, state map[string]attr.Value) bool {
-    if planRetention, ok := plan["retention_full"].(types.Int64); ok && !planRetention.IsNull() {
-        if stateRetention, ok := state["retention_full"].(types.Int64); ok && !stateRetention.IsNull() {
-            if planRetention.ValueInt64() != stateRetention.ValueInt64() {
-                return true
-            }
-        }
-    }
+	if planRetention, ok := plan["retention_full"].(types.Int64); ok && !planRetention.IsNull() {
+		if stateRetention, ok := state["retention_full"].(types.Int64); ok && !stateRetention.IsNull() {
+			if planRetention.ValueInt64() != stateRetention.ValueInt64() {
+				return true
+			}
+		}
+	}
 
-    if planType, ok := plan["retention_full_type"].(types.String); ok && !planType.IsNull() {
-        if stateType, ok := state["retention_full_type"].(types.String); ok && !stateType.IsNull() {
-            if planType.ValueString() != stateType.ValueString() {
-                return true
-            }
-        }
-    }
+	if planType, ok := plan["retention_full_type"].(types.String); ok && !planType.IsNull() {
+		if stateType, ok := state["retention_full_type"].(types.String); ok && !stateType.IsNull() {
+			if planType.ValueString() != stateType.ValueString() {
+				return true
+			}
+		}
+	}
 
-    return false
+	return false
 }
 
 func (m backupsPlanModifier) schedulesEqual(plan, state map[string]attr.Value) bool {
-    if !m.stringAttrEqual(plan["type"], state["type"]) {
-        return false
-    }
+	if !m.stringAttrEqual(plan["type"], state["type"]) {
+		return false
+	}
 
-    if !m.stringAttrEqual(plan["cron_expression"], state["cron_expression"]) {
-        return false
-    }
+	if !m.stringAttrEqual(plan["cron_expression"], state["cron_expression"]) {
+		return false
+	}
 
-    return true
+	return true
 }
 
 func (m backupsPlanModifier) stringAttrEqual(plan, state attr.Value) bool {
-    planStr, ok1 := plan.(types.String)
-    stateStr, ok2 := state.(types.String)
+	planStr, ok1 := plan.(types.String)
+	stateStr, ok2 := state.(types.String)
 
-    if !ok1 || !ok2 {
-        return true
-    }
+	if !ok1 || !ok2 {
+		return true
+	}
 
-    if planStr.IsNull() || stateStr.IsNull() {
-        return true
-    }
+	if planStr.IsNull() || stateStr.IsNull() {
+		return true
+	}
 
-    return planStr.ValueString() == stateStr.ValueString()
+	return planStr.ValueString() == stateStr.ValueString()
 }
-
 
 func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
@@ -568,93 +566,88 @@ func (m configVersionPlanModifier) PlanModifyString(ctx context.Context, req pla
 type conditionalUseStateForUnknownModifier struct{}
 
 func (m conditionalUseStateForUnknownModifier) Description(_ context.Context) string {
-	return "Uses the prior state for nodeextensions if extensions hasn't been modified."
+    return "Uses the prior state for node extensions if extensions hasn't been modified or is disabled."
 }
 
 func (m conditionalUseStateForUnknownModifier) MarkdownDescription(_ context.Context) string {
-	return "Uses the prior state for nodeextensions if extensions hasn't been modified."
+    return "Uses the prior state for node extensions if extensions hasn't been modified or is disabled."
 }
 
 func (m conditionalUseStateForUnknownModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
-	if req.StateValue.IsNull() {
-		return
-	}
+    if req.StateValue.IsNull() || !req.PlanValue.IsUnknown() {
+        return
+    }
 
-	if !req.PlanValue.IsUnknown() {
-		return
-	}
+    shouldPreserveState := true
 
-	var configRequested, stateInstalled []string
+    var configData struct {
+        Extensions types.Object `tfsdk:"extensions"`
+    }
+    diags := req.Config.Get(ctx, &configData)
+    if diags.HasError() {
+        resp.PlanValue = req.StateValue
+        return
+    }
 
-	if !req.Config.Raw.IsNull() {
-		var configData map[string]tftypes.Value
-		err := req.Config.Raw.As(&configData)
-		if err == nil {
-			if extVal, ok := configData["extensions"]; ok {
-				var extMap map[string]tftypes.Value
-				err = extVal.As(&extMap)
-				if err == nil {
-					if reqVal, ok := extMap["requested"]; ok {
-						var requestedList []tftypes.Value
-						err = reqVal.As(&requestedList)
-						if err == nil {
-							for _, v := range requestedList {
-								var s string
-								if err := v.As(&s); err == nil {
-									configRequested = append(configRequested, s)
-								}
-							}
-						} else {
-							// TODO: log error
-						}
-					}
-				}
-			}
-		}
-	}
+    if !configData.Extensions.IsNull() && !configData.Extensions.IsUnknown() {
+        var extensions struct {
+            AutoManage types.Bool   `tfsdk:"auto_manage"`
+            Requested  types.List   `tfsdk:"requested"`
+        }
+        diags = configData.Extensions.As(ctx, &extensions, basetypes.ObjectAsOptions{})
+        if diags.HasError() {
+            resp.PlanValue = req.StateValue
+            return
+        }
 
-	if !req.StateValue.IsNull() {
-		stateData := req.StateValue.Attributes()
-		if installedVal, ok := stateData["installed"].(types.List); ok {
-			stateInstalled = make([]string, 0, len(installedVal.Elements()))
-			for _, elem := range installedVal.Elements() {
-				if strVal, ok := elem.(types.String); ok {
-					stateInstalled = append(stateInstalled, strVal.ValueString())
-				}
-			}
-		}
-	}
+        if !extensions.AutoManage.IsNull() && extensions.AutoManage.ValueBool() && 
+           !extensions.Requested.IsNull() && !extensions.Requested.IsUnknown() {
+            
+            var configRequested []string
+            for _, elem := range extensions.Requested.Elements() {
+                if strVal, ok := elem.(types.String); ok {
+                    configRequested = append(configRequested, strVal.ValueString())
+                }
+            }
 
-	if len(stateInstalled) == 0 {
-		return
-	}
+            var stateInstalled []string
+            if !req.StateValue.IsNull() {
+                stateData := req.StateValue.Attributes()
+                if installedVal, ok := stateData["installed"].(types.List); ok {
+                    for _, elem := range installedVal.Elements() {
+                        if strVal, ok := elem.(types.String); ok {
+                            stateInstalled = append(stateInstalled, strVal.ValueString())
+                        }
+                    }
+                }
+            }
 
-	if compareStringSlices(configRequested, stateInstalled) {
-		resp.PlanValue = req.StateValue
-		return
-	}
+            shouldPreserveState = compareExtensionSlices(configRequested, stateInstalled)
+        }
+    }
 
+    if shouldPreserveState {
+        resp.PlanValue = req.StateValue
+    }
 }
 
-func compareStringSlices(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
+func compareExtensionSlices(a, b []string) bool {
+    if len(a) != len(b) {
+        return false
+    }
 
-	countMap := make(map[string]int)
+    aMap := make(map[string]bool)
+    for _, v := range a {
+        aMap[v] = true
+    }
 
-	for _, v := range a {
-		countMap[v]++
-	}
+    for _, v := range b {
+        if !aMap[v] {
+            return false
+        }
+    }
 
-	for _, v := range b {
-		countMap[v]--
-		if countMap[v] == 0 {
-			delete(countMap, v)
-		}
-	}
-
-	return len(countMap) == 0
+    return true
 }
 
 func New() planmodifier.Object {
