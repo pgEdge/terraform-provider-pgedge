@@ -21,6 +21,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
+	"github.com/hashicorp/terraform-plugin-go/tftypes"
 
 	// "github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -566,88 +567,102 @@ func (m configVersionPlanModifier) PlanModifyString(ctx context.Context, req pla
 type conditionalUseStateForUnknownModifier struct{}
 
 func (m conditionalUseStateForUnknownModifier) Description(_ context.Context) string {
-    return "Uses the prior state for node extensions if extensions hasn't been modified or is disabled."
+	return "Uses the prior state for nodeextensions if extensions hasn't been modified."
 }
 
 func (m conditionalUseStateForUnknownModifier) MarkdownDescription(_ context.Context) string {
-    return "Uses the prior state for node extensions if extensions hasn't been modified or is disabled."
+	return "Uses the prior state for nodeextensions if extensions hasn't been modified."
 }
 
 func (m conditionalUseStateForUnknownModifier) PlanModifyObject(ctx context.Context, req planmodifier.ObjectRequest, resp *planmodifier.ObjectResponse) {
-    if req.StateValue.IsNull() || !req.PlanValue.IsUnknown() {
-        return
-    }
+	if req.StateValue.IsNull() {
+		return
+	}
 
-    shouldPreserveState := true
+	if !req.PlanValue.IsUnknown() {
+		return
+	}
 
-    var configData struct {
-        Extensions types.Object `tfsdk:"extensions"`
-    }
-    diags := req.Config.Get(ctx, &configData)
-    if diags.HasError() {
-        resp.PlanValue = req.StateValue
-        return
-    }
+	resp.PlanValue = req.StateValue
 
-    if !configData.Extensions.IsNull() && !configData.Extensions.IsUnknown() {
-        var extensions struct {
-            AutoManage types.Bool   `tfsdk:"auto_manage"`
-            Requested  types.List   `tfsdk:"requested"`
-        }
-        diags = configData.Extensions.As(ctx, &extensions, basetypes.ObjectAsOptions{})
-        if diags.HasError() {
-            resp.PlanValue = req.StateValue
-            return
-        }
+	if !req.Config.Raw.IsNull() {
+		var configData map[string]tftypes.Value
+		err := req.Config.Raw.As(&configData)
+		if err == nil {
+			if extVal, ok := configData["extensions"]; ok {
+				var extMap map[string]tftypes.Value
+				err = extVal.As(&extMap)
+				if err == nil {
+					if autoManageVal, ok := extMap["auto_manage"]; ok {
+						var autoManage bool
+						if err := autoManageVal.As(&autoManage); err == nil {
+							if !autoManage {
+								return
+							}
+						}
+					} else {
+						return
+					}
 
-        if !extensions.AutoManage.IsNull() && extensions.AutoManage.ValueBool() && 
-           !extensions.Requested.IsNull() && !extensions.Requested.IsUnknown() {
-            
-            var configRequested []string
-            for _, elem := range extensions.Requested.Elements() {
-                if strVal, ok := elem.(types.String); ok {
-                    configRequested = append(configRequested, strVal.ValueString())
-                }
-            }
+					if reqVal, ok := extMap["requested"]; ok {
+						var requestedList []tftypes.Value
+						err = reqVal.As(&requestedList)
+						if err == nil {
+							var configRequested []string
+							for _, v := range requestedList {
+								var s string
+								if err := v.As(&s); err == nil {
+									configRequested = append(configRequested, s)
+								}
+							}
 
-            var stateInstalled []string
-            if !req.StateValue.IsNull() {
-                stateData := req.StateValue.Attributes()
-                if installedVal, ok := stateData["installed"].(types.List); ok {
-                    for _, elem := range installedVal.Elements() {
-                        if strVal, ok := elem.(types.String); ok {
-                            stateInstalled = append(stateInstalled, strVal.ValueString())
-                        }
-                    }
-                }
-            }
+							var stateInstalled []string
+							stateData := req.StateValue.Attributes()
+							if installedVal, ok := stateData["installed"].(types.List); ok {
+								for _, elem := range installedVal.Elements() {
+									if strVal, ok := elem.(types.String); ok {
+										stateInstalled = append(stateInstalled, strVal.ValueString())
+									}
+								}
+							}
 
-            shouldPreserveState = compareExtensionSlices(configRequested, stateInstalled)
-        }
-    }
+							if len(stateInstalled) == 0 {
+								return
+							}
 
-    if shouldPreserveState {
-        resp.PlanValue = req.StateValue
-    }
+							if compareStringSlices(configRequested, stateInstalled) {
+								return
+							}
+							resp.PlanValue = req.PlanValue
+						}
+					}
+				}
+			} else {
+				return
+			}
+		}
+	}
 }
 
-func compareExtensionSlices(a, b []string) bool {
-    if len(a) != len(b) {
-        return false
-    }
+func compareStringSlices(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
 
-    aMap := make(map[string]bool)
-    for _, v := range a {
-        aMap[v] = true
-    }
+	countMap := make(map[string]int)
 
-    for _, v := range b {
-        if !aMap[v] {
-            return false
-        }
-    }
+	for _, v := range a {
+		countMap[v]++
+	}
 
-    return true
+	for _, v := range b {
+		countMap[v]--
+		if countMap[v] == 0 {
+			delete(countMap, v)
+		}
+	}
+
+	return len(countMap) == 0
 }
 
 func New() planmodifier.Object {
