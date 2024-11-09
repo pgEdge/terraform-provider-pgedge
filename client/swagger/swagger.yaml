@@ -741,6 +741,8 @@ definitions:
         items:
           type: string
         type: array
+    required:
+    - auto_manage
     type: object
   GoogleCredentials:
     properties:

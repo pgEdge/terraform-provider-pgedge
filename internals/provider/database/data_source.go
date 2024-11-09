@@ -568,7 +568,7 @@ func (d *databasesDataSource) mapExtensionsToModel(extensions *models.Extensions
             "requested":   types.ListType{ElemType: types.StringType},
         },
         map[string]attr.Value{
-            "auto_manage": types.BoolValue(extensions.AutoManage),
+            "auto_manage": types.BoolPointerValue(extensions.AutoManage),
             "available":   d.convertToListValue(extensions.Available),
             "requested":   d.convertToListValue(extensions.Requested),
         },

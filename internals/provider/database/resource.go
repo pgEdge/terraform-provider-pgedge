@@ -3,6 +3,7 @@ package database
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"sort"
 
 	"github.com/go-openapi/strfmt"
@@ -438,7 +439,9 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					objectplanmodifier.UseStateForUnknown(),
 				},
 				Attributes: map[string]schema.Attribute{
-					"auto_manage": schema.BoolAttribute{Computed: true, Optional: true},
+					"auto_manage": schema.BoolAttribute{
+						Optional: true,
+					},
 					"available": schema.ListAttribute{
 						Computed:    true,
 						ElementType: types.StringType,
@@ -465,7 +468,7 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 							Attributes: map[string]schema.Attribute{
 								"database":            schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 								"host":                schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
-								"password":            schema.StringAttribute{Computed: true, Sensitive: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
+								"password":            schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 								"port":                schema.Int64Attribute{Computed: true, PlanModifiers: []planmodifier.Int64{int64planmodifier.UseStateForUnknown()}},
 								"username":            schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 								"external_ip_address": schema.StringAttribute{Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
@@ -585,84 +588,73 @@ func (m conditionalUseStateForUnknownModifier) PlanModifyObject(ctx context.Cont
 
 	resp.PlanValue = req.StateValue
 
-	if !req.Config.Raw.IsNull() {
-		var configData map[string]tftypes.Value
-		err := req.Config.Raw.As(&configData)
-		if err == nil {
-			if extVal, ok := configData["extensions"]; ok {
-				var extMap map[string]tftypes.Value
-				err = extVal.As(&extMap)
-				if err == nil {
-					if autoManageVal, ok := extMap["auto_manage"]; ok {
-						var autoManage bool
-						if err := autoManageVal.As(&autoManage); err == nil {
-							if !autoManage {
-								return
-							}
-						}
-					} else {
-						return
-					}
+	if req.Config.Raw.IsNull() {
+		return
+	}
 
-					if reqVal, ok := extMap["requested"]; ok {
-						var requestedList []tftypes.Value
-						err = reqVal.As(&requestedList)
-						if err == nil {
-							var configRequested []string
-							for _, v := range requestedList {
-								var s string
-								if err := v.As(&s); err == nil {
-									configRequested = append(configRequested, s)
-								}
-							}
+	var configData map[string]tftypes.Value
+	if err := req.Config.Raw.As(&configData); err != nil {
+		return
+	}
 
-							var stateInstalled []string
-							stateData := req.StateValue.Attributes()
-							if installedVal, ok := stateData["installed"].(types.List); ok {
-								for _, elem := range installedVal.Elements() {
-									if strVal, ok := elem.(types.String); ok {
-										stateInstalled = append(stateInstalled, strVal.ValueString())
-									}
-								}
-							}
+	extVal, ok := configData["extensions"]
+	if !ok {
+		return
+	}
 
-							if len(stateInstalled) == 0 {
-								return
-							}
+	var extMap map[string]tftypes.Value
+	if err := extVal.As(&extMap); err != nil {
+		return
+	}
 
-							if compareStringSlices(configRequested, stateInstalled) {
-								return
-							}
-							resp.PlanValue = req.PlanValue
-						}
-					}
-				}
-			} else {
-				return
+	autoManageVal, hasAutoManage := extMap["auto_manage"]
+	if !hasAutoManage {
+		return
+	}
+
+	var autoManage bool
+	if err := autoManageVal.As(&autoManage); err != nil {
+		return
+	}
+
+	if !autoManage {
+		return
+	}
+
+	reqVal, hasRequested := extMap["requested"]
+	if !hasRequested {
+		return
+	}
+
+	var requestedList []tftypes.Value
+	if err := reqVal.As(&requestedList); err != nil {
+		return
+	}
+
+	var configRequested []string
+	for _, v := range requestedList {
+		var s string
+		if err := v.As(&s); err == nil {
+			configRequested = append(configRequested, s)
+		}
+	}
+
+	var stateInstalled []string
+	stateData := req.StateValue.Attributes()
+	if installedVal, ok := stateData["installed"].(types.List); ok {
+		for _, elem := range installedVal.Elements() {
+			if strVal, ok := elem.(types.String); ok {
+				stateInstalled = append(stateInstalled, strVal.ValueString())
 			}
 		}
 	}
-}
 
-func compareStringSlices(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
+	sort.Strings(configRequested)
+	sort.Strings(stateInstalled)
+
+	if !reflect.DeepEqual(configRequested, stateInstalled) {
+		resp.PlanValue = req.PlanValue
 	}
-
-	countMap := make(map[string]int)
-
-	for _, v := range a {
-		countMap[v]++
-	}
-
-	for _, v := range b {
-		countMap[v]--
-		if countMap[v] == 0 {
-			delete(countMap, v)
-		}
-	}
-
-	return len(countMap) == 0
 }
 
 func New() planmodifier.Object {
@@ -720,7 +712,7 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 		}
 
 		createInput.Extensions = &models.Extensions{
-			AutoManage: extensionsData.AutoManage.ValueBool(),
+			AutoManage: extensionsData.AutoManage.ValueBoolPointer(),
 			Requested:  common.ConvertTFListToStringSlice(extensionsData.Requested),
 		}
 	}
@@ -993,7 +985,6 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 		updateField = "nodes"
 	}
 
-	// If more than one field is being updated, throw an error
 	if updateCount > 1 {
 		resp.Diagnostics.AddError(
 			"Multiple Field Update Not Allowed",
@@ -1002,12 +993,6 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
-	// If no fields are being updated, return early
-	// if updateCount == 0 {
-	// 	return
-	// }
-
-	// Proceed with the update based on which field is being changed
 	switch updateField {
 	case "options":
 		extensionsUpdateInput := &models.UpdateDatabaseInput{
@@ -1037,22 +1022,52 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 			}
 
 			extensionsUpdateInput.Extensions = &models.Extensions{
-				AutoManage: extensionsData.AutoManage.ValueBool(),
+				AutoManage: extensionsData.AutoManage.ValueBoolPointer(),
 				Requested:  common.ConvertTFListToStringSlice(extensionsData.Requested),
 			}
+
+			tflog.Debug(ctx, "Updating pgEdge database extensions", map[string]interface{}{
+				"auto_manage": extensionsData.AutoManage.ValueBool(),
+				"requested":   extensionsData.Requested,
+			})
+
+			updatedDatabase, err := r.client.UpdateDatabase(ctx, strfmt.UUID(plan.ID.ValueString()), extensionsUpdateInput)
+			if err != nil {
+				resp.Diagnostics.Append(common.HandleProviderError(err, "database extensions update"))
+				return
+			}
+
+			updatedModel := r.mapDatabaseToResourceModel(updatedDatabase)
+
+			if !updatedModel.Extensions.IsNull() {
+				var extensions extensionsModel
+				diags := updatedModel.Extensions.As(ctx, &extensions, basetypes.ObjectAsOptions{})
+				if !diags.HasError() {
+					extensions.AutoManage = extensionsData.AutoManage
+
+					attrTypes := map[string]attr.Type{
+						"auto_manage": types.BoolType,
+						"available":   types.ListType{ElemType: types.StringType},
+						"requested":   types.ListType{ElemType: types.StringType},
+					}
+
+					updatedModel.Extensions, diags = types.ObjectValue(
+						attrTypes,
+						map[string]attr.Value{
+							"auto_manage": types.BoolValue(extensionsData.AutoManage.ValueBool()),
+							"available":   extensions.Available,
+							"requested":   extensions.Requested,
+						},
+					)
+					resp.Diagnostics.Append(diags...)
+					if resp.Diagnostics.HasError() {
+						return
+					}
+				}
+			}
+
+			plan = updatedModel
 		}
-
-		tflog.Debug(ctx, "Updating pgEdge database extensions", map[string]interface{}{
-			"update_input": extensionsUpdateInput,
-		})
-
-		updatedDatabase, err := r.client.UpdateDatabase(ctx, strfmt.UUID(plan.ID.ValueString()), extensionsUpdateInput)
-		if err != nil {
-			resp.Diagnostics.Append(common.HandleProviderError(err, "database extensions update"))
-			return
-		}
-
-		plan = r.mapDatabaseToResourceModel(updatedDatabase)
 
 	case "nodes":
 		nodesUpdateInput := &models.UpdateDatabaseInput{}
@@ -1452,20 +1467,20 @@ func (r *databaseResource) mapExtensionsToResourceModel(extensions *models.Exten
 		})
 	}
 
-	extensionsObj, _ := types.ObjectValue(
-		map[string]attr.Type{
-			"auto_manage": types.BoolType,
-			"available":   types.ListType{ElemType: types.StringType},
-			"requested":   types.ListType{ElemType: types.StringType},
-		},
-		map[string]attr.Value{
-			"auto_manage": types.BoolValue(extensions.AutoManage),
-			"available":   types.ListValueMust(types.StringType, r.stringSliceToValueSlice(extensions.Available)),
-			"requested":   types.ListValueMust(types.StringType, r.stringSliceToValueSlice(extensions.Requested)),
-		},
-	)
+	attrTypes := map[string]attr.Type{
+		"auto_manage": types.BoolType,
+		"available":   types.ListType{ElemType: types.StringType},
+		"requested":   types.ListType{ElemType: types.StringType},
+	}
 
-	return extensionsObj
+	values := map[string]attr.Value{
+		"auto_manage": types.BoolPointerValue(extensions.AutoManage),
+		"available":   types.ListValueMust(types.StringType, r.stringSliceToValueSlice(extensions.Available)),
+		"requested":   types.ListValueMust(types.StringType, r.stringSliceToValueSlice(extensions.Requested)),
+	}
+
+	obj, _ := types.ObjectValue(attrTypes, values)
+	return obj
 }
 
 func (r *databaseResource) nodeAttrTypes() map[string]attr.Type {

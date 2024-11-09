@@ -240,6 +240,8 @@ definitions:
         $ref: "#/definitions/Backups"
   Extensions:
     type: object
+    required:
+      - auto_manage
     properties:
       auto_manage:
         type: boolean
