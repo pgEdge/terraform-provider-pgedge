@@ -275,7 +275,7 @@ func (c *Client) CreateDatabase(ctx context.Context, database *models.CreateData
 		Interval:    5 * time.Second,
 	})
 	if err != nil {
-		return nil, err
+		return resp.Payload, err
 	}
 
 	return c.GetDatabase(ctx, *resp.Payload.ID)
@@ -404,7 +404,7 @@ func (c *Client) CreateCluster(ctx context.Context, cluster *models.CreateCluste
 		Interval:    5 * time.Second,
 	})
 	if err != nil {
-		return nil, err
+		return resp.Payload, err
 	}
 
 	return c.GetCluster(ctx, *resp.Payload.ID)
@@ -687,7 +687,7 @@ func (c *Client) CreateBackupStore(ctx context.Context, input *models.CreateBack
 		Interval:    5 * time.Second,
 	})
 	if err != nil {
-		return nil, err
+		return resp.Payload, err
 	}
 
 	return c.GetBackupStore(ctx, *resp.Payload.ID)
