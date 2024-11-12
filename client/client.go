@@ -268,17 +268,15 @@ func (c *Client) CreateDatabase(ctx context.Context, database *models.CreateData
 		return nil, handleAPIError(err)
 	}
 
-	err = c.PollTaskStatus(ctx, TaskPollingConfig{
+	taskErr := c.PollTaskStatus(ctx, TaskPollingConfig{
 		SubjectID:   resp.Payload.ID.String(),
 		SubjectKind: "database",
 		MaxAttempts: 360, // 30 minutes
 		Interval:    5 * time.Second,
 	})
-	if err != nil {
-		return resp.Payload, err
-	}
+	currentState, getErr := c.GetDatabase(ctx, *resp.Payload.ID)
 
-	return c.GetDatabase(ctx, *resp.Payload.ID)
+	return currentState, errors.Join(taskErr, getErr)
 }
 
 func (c *Client) GetDatabase(ctx context.Context, id strfmt.UUID) (*models.Database, error) {
@@ -313,17 +311,15 @@ func (c *Client) UpdateDatabase(ctx context.Context, id strfmt.UUID, body *model
 		return nil, handleAPIError(err)
 	}
 
-	err = c.PollTaskStatus(ctx, TaskPollingConfig{
+	taskErr := c.PollTaskStatus(ctx, TaskPollingConfig{
 		SubjectID:   resp.Payload.ID.String(),
 		SubjectKind: "database",
 		MaxAttempts: 360, // 30 minutes
 		Interval:    5 * time.Second,
 	})
-	if err != nil {
-		return nil, err
-	}
+	currentState, getErr := c.GetDatabase(ctx, id)
 
-	return c.GetDatabase(ctx, id)
+	return currentState, errors.Join(taskErr, getErr)
 }
 
 func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) error {
@@ -397,17 +393,15 @@ func (c *Client) CreateCluster(ctx context.Context, cluster *models.CreateCluste
 		return nil, handleAPIError(err)
 	}
 
-	err = c.PollTaskStatus(ctx, TaskPollingConfig{
+	taskErr := c.PollTaskStatus(ctx, TaskPollingConfig{
 		SubjectID:   resp.Payload.ID.String(),
 		SubjectKind: "cluster",
 		MaxAttempts: 540, // 45 minutes
 		Interval:    5 * time.Second,
 	})
-	if err != nil {
-		return resp.Payload, err
-	}
+	currentState, getErr := c.GetCluster(ctx, *resp.Payload.ID)
 
-	return c.GetCluster(ctx, *resp.Payload.ID)
+	return currentState, errors.Join(taskErr, getErr)
 }
 
 func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models.UpdateClusterInput) (*models.Cluster, error) {
@@ -425,17 +419,15 @@ func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models
 		return nil, handleAPIError(err)
 	}
 
-	err = c.PollTaskStatus(ctx, TaskPollingConfig{
+	taskErr := c.PollTaskStatus(ctx, TaskPollingConfig{
 		SubjectID:   resp.Payload.ID.String(),
 		SubjectKind: "cluster",
 		MaxAttempts: 540, // 45 minutes
 		Interval:    5 * time.Second,
 	})
-	if err != nil {
-		return nil, err
-	}
+	currentState, getErr := c.GetCluster(ctx, strfmt.UUID(*resp.Payload.ID))
 
-	return c.GetCluster(ctx, strfmt.UUID(*resp.Payload.ID))
+	return currentState, errors.Join(taskErr, getErr)
 }
 
 func (c *Client) DeleteCluster(ctx context.Context, id strfmt.UUID) error {
@@ -680,17 +672,15 @@ func (c *Client) CreateBackupStore(ctx context.Context, input *models.CreateBack
 		return nil, fmt.Errorf("received nil response or payload")
 	}
 
-	err = c.PollTaskStatus(ctx, TaskPollingConfig{
+	taskErr := c.PollTaskStatus(ctx, TaskPollingConfig{
 		SubjectID:   resp.Payload.ID.String(),
 		SubjectKind: "backup_store",
 		MaxAttempts: 360, // 30 minutes
 		Interval:    5 * time.Second,
 	})
-	if err != nil {
-		return resp.Payload, err
-	}
+	currentState, getErr := c.GetBackupStore(ctx, *resp.Payload.ID)
 
-	return c.GetBackupStore(ctx, *resp.Payload.ID)
+	return currentState, errors.Join(taskErr, getErr)
 }
 
 func (c *Client) GetBackupStore(ctx context.Context, id strfmt.UUID) (*models.BackupStore, error) {
