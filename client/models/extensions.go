@@ -8,8 +8,10 @@ package models
 import (
 	"context"
 
+	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
 )
 
 // Extensions extensions
@@ -18,7 +20,8 @@ import (
 type Extensions struct {
 
 	// auto manage
-	AutoManage bool `json:"auto_manage,omitempty"`
+	// Required: true
+	AutoManage *bool `json:"auto_manage"`
 
 	// available
 	Available []string `json:"available"`
@@ -29,6 +32,24 @@ type Extensions struct {
 
 // Validate validates this extensions
 func (m *Extensions) Validate(formats strfmt.Registry) error {
+	var res []error
+
+	if err := m.validateAutoManage(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if len(res) > 0 {
+		return errors.CompositeValidationError(res...)
+	}
+	return nil
+}
+
+func (m *Extensions) validateAutoManage(formats strfmt.Registry) error {
+
+	if err := validate.Required("auto_manage", "body", m.AutoManage); err != nil {
+		return err
+	}
+
 	return nil
 }
 

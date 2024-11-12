@@ -328,7 +328,7 @@ func (c *Client) UpdateDatabase(ctx context.Context, id strfmt.UUID, body *model
 		return nil, err
 	}
 
-	return c.GetDatabase(ctx, *resp.Payload.ID)
+	return c.GetDatabase(ctx, id)
 }
 
 func (c *Client) DeleteDatabase(ctx context.Context, id strfmt.UUID) error {
