@@ -268,11 +268,6 @@ func (c *Client) CreateDatabase(ctx context.Context, database *models.CreateData
 		return nil, handleAPIError(err)
 	}
 
-	DatabaseResp, err := c.GetDatabase(ctx, *resp.Payload.ID)
-	if err != nil {
-		return nil, handleAPIError(err)
-	}
-
 	err = c.PollTaskStatus(ctx, TaskPollingConfig{
 		SubjectID:   resp.Payload.ID.String(),
 		SubjectKind: "database",
@@ -280,10 +275,10 @@ func (c *Client) CreateDatabase(ctx context.Context, database *models.CreateData
 		Interval:    5 * time.Second,
 	})
 	if err != nil {
-		return DatabaseResp, err
+		return resp.Payload, err
 	}
 
-	return DatabaseResp, nil
+	return c.GetDatabase(ctx, *resp.Payload.ID)
 }
 
 func (c *Client) GetDatabase(ctx context.Context, id strfmt.UUID) (*models.Database, error) {
@@ -402,23 +397,17 @@ func (c *Client) CreateCluster(ctx context.Context, cluster *models.CreateCluste
 		return nil, handleAPIError(err)
 	}
 
-	clusterResp, err := c.GetCluster(ctx, *resp.Payload.ID)
-	if err != nil {
-		return nil, handleAPIError(err)
-	}
-
 	err = c.PollTaskStatus(ctx, TaskPollingConfig{
 		SubjectID:   resp.Payload.ID.String(),
 		SubjectKind: "cluster",
 		MaxAttempts: 540, // 45 minutes
 		Interval:    5 * time.Second,
 	})
-
 	if err != nil {
-		return clusterResp, err
+		return resp.Payload, err
 	}
 
-	return clusterResp, nil
+	return c.GetCluster(ctx, *resp.Payload.ID)
 }
 
 func (c *Client) UpdateCluster(ctx context.Context, id strfmt.UUID, body *models.UpdateClusterInput) (*models.Cluster, error) {
@@ -691,11 +680,6 @@ func (c *Client) CreateBackupStore(ctx context.Context, input *models.CreateBack
 		return nil, fmt.Errorf("received nil response or payload")
 	}
 
-	backupStoreResp, err := c.GetBackupStore(ctx, *resp.Payload.ID)
-	if err != nil {
-		return nil, handleAPIError(err)
-	}
-
 	err = c.PollTaskStatus(ctx, TaskPollingConfig{
 		SubjectID:   resp.Payload.ID.String(),
 		SubjectKind: "backup_store",
@@ -703,10 +687,10 @@ func (c *Client) CreateBackupStore(ctx context.Context, input *models.CreateBack
 		Interval:    5 * time.Second,
 	})
 	if err != nil {
-		return backupStoreResp, err
+		return resp.Payload, err
 	}
 
-	return backupStoreResp, nil
+	return c.GetBackupStore(ctx, *resp.Payload.ID)
 }
 
 func (c *Client) GetBackupStore(ctx context.Context, id strfmt.UUID) (*models.BackupStore, error) {
