@@ -1,0 +1,66 @@
+paths:
+  /oauth/token:
+    post:
+      summary: Generate an access token.
+      description: Generate an access token.
+      operationId: generateAccessToken
+      tags:
+        - oauth
+      security: []
+      requestBody:
+        description: The access token request.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccessTokenRequest"
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: "#/components/schemas/AccessTokenRequest"
+      responses:
+        "200":
+          description: Response containing the generated access token.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessToken"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    AccessTokenRequest:
+      type: object
+      required:
+        - client_id
+        - client_secret
+      properties:
+        client_id:
+          type: string
+        client_secret:
+          type: string
+        grant_type:
+          type: string
+          example: client_credentials
+    AccessToken:
+      type: object
+      required:
+        - token_type
+        - access_token
+        - expires_in
+      properties:
+        token_type:
+          type: string
+        access_token:
+          type: string
+        expires_in:
+          type: integer

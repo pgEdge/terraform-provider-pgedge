@@ -1,0 +1,245 @@
+paths:
+  /backup-stores:
+    x-pgedge-plan: ["enterprise"]
+    get:
+      summary: List backup stores.
+      description: List backup stores.
+      operationId: listBackupStores
+      security:
+        - AccessToken: []
+      tags:
+        - backup-stores
+      parameters:
+        - description: Start time for backup store retrieval as an RFC3339 timestamp.
+          in: query
+          name: created_after
+          schema:
+            type: string
+            format: date-time
+        - description: End time for backup store retrieval as an RFC3339 timestamp.
+          in: query
+          name: created_before
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          description: Maximum number of results to return.
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: Offset into the results for pagination.
+          required: false
+          schema:
+            type: integer
+        - description: Sort in descending order.
+          in: query
+          name: descending
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Response containing a list of backup stores.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BackupStore"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create a backup store.
+      description: Create a backup store.
+      operationId: createBackupStore
+      security:
+        - AccessToken: []
+      tags:
+        - backup-stores
+      requestBody:
+        description: The backup store details.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBackupStoreInput"
+      responses:
+        "200":
+          description: Response containing details about the newly created backup store.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackupStore"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /backup-stores/{id}:
+    x-pgedge-plan: ["enterprise"]
+    get:
+      summary: Retrieve a backup store.
+      description: Retrieve a backup store.
+      operationId: getBackupStore
+      security:
+        - AccessToken: []
+      tags:
+        - backup-stores
+      parameters:
+        - name: id
+          in: path
+          description: The ID of the backup store to get.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Response containing details about the specified backup store.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BackupStore"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete a backup store.
+      description: Delete a backup store.
+      operationId: deleteBackupStore
+      security:
+        - AccessToken: []
+      tags:
+        - backup-stores
+      parameters:
+        - name: id
+          in: path
+          description: The ID of the backup store to delete.
+          required: true
+          schema:
+           type: string
+      responses:
+        "204":
+          description: Empty response indicating that the backup store deletion was initiated.
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    BackupStore:
+      type: object
+      required:
+        - id
+        - cloud_account_id
+        - cloud_account_type
+        - created_at
+        - updated_at
+        - status
+        - name
+      properties:
+        id:
+          type: string
+          description: The ID of the backup store.
+        cloud_account_id:
+          type: string
+          description: The ID of the cloud account used for the backup store.
+        cloud_account_type:
+          type: string
+          description: The type of the cloud account used for the backup store.
+        created_at:
+          type: string
+          description: The time the backup store was created.
+        updated_at:
+          type: string
+          description: The time the backup store was last updated.
+        status:
+          type: string
+          description: The status of the backup store.
+        name:
+          type: string
+          description: The name of the backup store.
+        properties:
+          type: object
+          description: The computed properties of the backup store.
+        cluster_ids:
+          type: array
+          items:
+            type: string
+          description: The IDs of the clusters that use the backup store.
+    CreateBackupStoreInput:
+      type: object
+      required:
+        - name
+        - cloud_account_id
+      properties:
+        name:
+          type: string
+          description: The name of the backup store.
+        cloud_account_id:
+          type: string
+          description: The ID of the cloud account to use for the backup store.
+        region:
+          type: string
+          description: The region to use for the backup store.
+

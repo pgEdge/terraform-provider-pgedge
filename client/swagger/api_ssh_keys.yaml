@@ -1,0 +1,191 @@
+paths:
+  /ssh-keys:
+    x-pgedge-plan: ["enterprise"]
+    get:
+      summary: List SSH keys.
+      description: List SSH keys.
+      operationId: listSshKeys
+      security:
+        - AccessToken: []
+      tags:
+        - ssh-keys
+      responses:
+        "200":
+          description: Response containing a list of SSH keys.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SshKey"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create an SSH key.
+      description: Create an SSH key.
+      operationId: createSshKey
+      security:
+        - AccessToken: []
+      tags:
+        - ssh-keys
+      requestBody:
+        description: The SSH key details.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSshKeyInput"
+      responses:
+        "200":
+          description: Response containing details about the newly created SSH key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SshKey"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /ssh-keys/{id}:
+    x-pgedge-plan: ["enterprise"]
+    get:
+      summary: Retrieve an SSH key.
+      description: Retrieve an SSH key.
+      operationId: getSshKey
+      security:
+        - AccessToken: []
+      tags:
+        - ssh-keys
+      parameters:
+        - name: id
+          in: path
+          description: ID of the SSH key to retrieve.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Response containing details about the specified SSH key.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SshKey"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete an SSH key.
+      description: Delete an SSH key.
+      operationId: deleteSshKey
+      security:
+        - AccessToken: []
+      tags:
+        - ssh-keys
+      parameters:
+        - name: id
+          in: path
+          description: ID of the SSH key to delete.
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Empty response indicating that the SSH key was deleted.
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    SshKey:
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier of the SSH key.
+        name:
+          type: string
+          description: The name of the SSH key.
+        public_key:
+          type: string
+          description: The public key of the SSH key.
+        created_at:
+          type: string
+          description: The date and time when the SSH key was created.
+      required:
+          - id
+          - name
+          - public_key
+          - created_at
+    CreateSshKeyInput:
+      type: object
+      properties:
+        name:
+          type: string
+          description: The name of the SSH key.
+        public_key:
+          type: string
+          description: The public key of the SSH key pair.
+      required:
+          - name
+          - public_key
+

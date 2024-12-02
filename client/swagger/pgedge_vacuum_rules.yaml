@@ -1,0 +1,6 @@
+extends: [[spectral:oas, recommended]]
+rules:
+  # Disabled until we describe components and provide examples.
+  description-duplication: false
+  component-description: false
+  oas3-missing-example: false

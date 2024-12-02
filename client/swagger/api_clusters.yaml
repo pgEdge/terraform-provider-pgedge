@@ -1,0 +1,734 @@
+paths:
+  /clusters:
+    x-pgedge-plan: ["enterprise"]
+    get:
+      summary: List clusters.
+      description: List clusters.
+      operationId: listClusters
+      security:
+        - AccessToken: []
+      tags:
+        - clusters
+      parameters:
+        - description: Start time for cluster retrieval as an RFC3339 timestamp.
+          in: query
+          name: created_after
+          schema:
+            type: string
+            format: date-time
+        - description: End time for cluster retrieval as an RFC3339 timestamp.
+          in: query
+          name: created_before
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          description: Maximum number of results to return.
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: Offset into the results for pagination.
+          required: false
+          schema:
+            type: integer
+        - description: Sort in descending order.
+          in: query
+          name: descending
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Response containing a list of clusters.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Cluster"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create a cluster.
+      description: Create a cluster.
+      operationId: createCluster
+      security:
+        - AccessToken: []
+      tags:
+        - clusters
+      requestBody:
+        description: The cluster definition.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateClusterInput"
+      responses:
+        "200":
+          description: Response containing details about the newly created cluster.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cluster"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /clusters/{id}:
+    x-pgedge-plan: ["enterprise"]
+    get:
+      summary: Retrieve a cluster.
+      description: Retrieve a cluster.
+      operationId: getCluster
+      security:
+        - AccessToken: []
+      tags:
+        - clusters
+      parameters:
+        - name: id
+          in: path
+          description: ID of the cluster to retrieve.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Response containing details about the specified cluster.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cluster"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      summary: Update a cluster.
+      description: Update a cluster.
+      operationId: updateCluster
+      security:
+          - AccessToken: []
+      tags:
+        - clusters
+      parameters:
+        - name: id
+          in: path
+          description: ID of the cluster to update.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The cluster definition.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClusterInput"
+      responses:
+        "200":
+          description: Response containing details about the updated cluster.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Cluster"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete a cluster.
+      description: Delete a cluster.
+      operationId: deleteCluster
+      security:
+        - AccessToken: []
+      tags:
+        - clusters
+      parameters:
+        - name: id
+          in: path
+          description: ID of the cluster to delete.
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Empty response indicating that the cluster deletion was initiated.
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /clusters/{id}/nodes:
+    x-pgedge-plan: ["enterprise"]
+    get:
+      summary: List nodes for a cluster.
+      description: List nodes for a cluster.
+      operationId: listClusterNodes
+      security:
+        - AccessToken: []
+      tags:
+        - clusters
+      parameters:
+        - name: id
+          in: path
+          description: ID of the cluster.
+          required: true
+          schema:
+            type: string
+        - name: near_lat
+          in: query
+          description: Latitude of the caller.
+          schema:
+            type: string
+        - name: near_lon
+          in: query
+          description: Longitude of the caller.
+          schema:
+            type: string
+        - name: order_by
+          in: query
+          description: Order by specification.
+          schema:
+            type: string
+            enum:
+              - distance
+      responses:
+        "200":
+          description: Response containing a list of nodes in the specified cluster.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClusterNode"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /clusters/{id}/nodes/{node_id}/logs/{log_name}:
+    x-pgedge-plan: ["enterprise"]
+    get:
+      summary: Retrieve logs for a cluster node.
+      description: Retrieve logs for a cluster node.
+      operationId: getClusterLogs
+      security:
+        - AccessToken: []
+      tags:
+        - clusters
+      parameters:
+        - name: id
+          in: path
+          description: ID of the cluster.
+          required: true
+          schema:
+            type: string
+        - name: node_id
+          in: path
+          description: ID of the node to get logs for.
+          required: true
+          schema:
+            type: string
+        - name: log_name
+          in: path
+          description: Name of the cluster log file.
+          required: true
+          schema:
+            type: string
+        - name: lines
+          in: query
+          description: Maximum number of log lines to retrieve.
+          schema:
+            type: integer
+        - name: since
+          in: query
+          description: Show entries on or after the specified date.
+          schema:
+            type: string
+        - name: until
+          in: query
+          description: Show entries on or before than the specified date.
+          schema:
+            type: string
+        - name: priority
+          in: query
+          description: The message priority to filter the log files by.
+          schema:
+            type: string
+        - name: grep
+          in: query
+          description: Filter output to entries where the message field matches the provided regular expression.
+          schema:
+            type: string
+        - name: case_sensitive
+          in: query
+          description: If set to true, make pattern matching case-sensitive; the default is false (case-insensitive).
+          schema:
+            type: boolean
+        - name: reverse
+          in: query
+          description: Reverse output so that the newest entries are displayed first.
+          schema:
+            type: boolean
+        - name: dmesg
+          in: query
+          description: Show only kernel entries.
+          schema:
+            type: boolean
+        - name: output
+          in: query
+          description: Controls the formatting of the journal entries that are shown.
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Response containing cluster logs for the specified node.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ClusterNodeLogMessage"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    CreateClusterInput:
+      type: object
+      required:
+        - name
+        - regions
+        - node_location
+      properties:
+        name:
+          type: string
+        cloud_account_id:
+          type: string
+        cloud_account:
+          $ref: "#/components/schemas/CloudAccountProperties"
+        ssh_key_id:
+          type: string
+        backup_store_ids:
+          type: array
+          items:
+            type: string
+        regions:
+          type: array
+          items:
+            type: string
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClusterNodeSettings"
+        networks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClusterNetworkSettings"
+        firewall_rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClusterFirewallRuleSettings"
+        node_location:
+          type: string
+        resource_tags:
+          type: object
+          additionalProperties:
+            type: string
+        capacity:
+          type: integer
+    UpdateClusterInput:
+      type: object
+      required:
+        - regions
+      properties:
+        regions:
+          type: array
+          items:
+            type: string
+        backup_store_ids:
+          type: array
+          items:
+            type: string
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClusterNodeSettings"
+        networks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClusterNetworkSettings"
+        firewall_rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClusterFirewallRuleSettings"
+        resource_tags:
+          type: object
+          additionalProperties:
+            type: string
+    ClusterNodeSettings:
+      type: object
+      required:
+          - region
+      properties:
+        name:
+          type: string
+        region:
+          type: string
+        availability_zone:
+          type: string
+        instance_type:
+          type: string
+        volume_size:
+          type: integer
+        volume_iops:
+          type: integer
+        volume_type:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+    ClusterNetworkSettings:
+      type: object
+      required:
+          - region
+      properties:
+        name:
+          type: string
+        region:
+          type: string
+        cidr:
+          type: string
+        public_subnets:
+          type: array
+          items:
+            type: string
+        private_subnets:
+          type: array
+          items:
+            type: string
+        external:
+          type: boolean
+        external_id:
+          type: string
+    ClusterFirewallRuleSettings:
+      type: object
+      required:
+          - port
+          - sources
+      properties:
+        name:
+          type: string
+        port:
+          type: integer
+        sources:
+          type: array
+          items:
+            type: string
+    CloudAccountProperties:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+    Cluster:
+      type: object
+      required:
+          - id
+          - name
+          - status
+          - created_at
+          - regions
+          - cloud_account
+          - node_location
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        created_at:
+          type: string
+        regions:
+          type: array
+          items:
+            type: string
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClusterNodeSettings"
+        networks:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClusterNetworkSettings"
+        firewall_rules:
+          type: array
+          items:
+            $ref: "#/components/schemas/ClusterFirewallRuleSettings"
+        node_location:
+          type: string
+        resource_tags:
+          type: object
+          additionalProperties:
+            type: string
+        cloud_account:
+          $ref: "#/components/schemas/CloudAccountProperties"
+        ssh_key_id:
+          type: string
+        capacity:
+          type: integer
+        backup_store_ids:
+          type: array
+          items:
+            type: string
+    ClusterNode:
+      type: object
+      required:
+        - id
+        - availability_zone
+        - image_id
+        - instance_id
+        - instance_type
+        - ip_address
+        - is_active
+        - key_name
+        - name
+        - region
+        - region_detail
+        - volume_size
+        - volume_type
+        - volume_iops
+        - location
+      properties:
+        id:
+          type: string
+        availability_zone:
+          type: string
+        image_id:
+          type: string
+        instance_id:
+          type: string
+        instance_type:
+          type: string
+        ip_address:
+          type: string
+        public_ip_address:
+          type: string
+        is_active:
+          type: boolean
+        key_name:
+          type: string
+        name:
+          type: string
+        display_name:
+          type: string
+        volume_size:
+          type: integer
+        volume_type:
+          type: string
+        volume_iops:
+          type: integer
+        region:
+          type: string
+        region_detail:
+          $ref: "#/components/schemas/Region"
+        location:
+          $ref: "#/components/schemas/Location"
+        distance_measurement:
+          $ref: "#/components/schemas/DistanceMeasurement"
+    Location:
+      type: object
+      required:
+        - latitude
+        - longitude
+      properties:
+        code:
+          type: string
+        name:
+          type: string
+        country:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        city:
+          type: string
+        metro_code:
+          type: string
+        postal_code:
+          type: string
+        region:
+          type: string
+        region_code:
+          type: string
+        timezone:
+          type: string
+    DistanceMeasurement:
+      type: object
+      required:
+        - distance
+        - unit
+        - from_latitude
+        - from_longitude
+      properties:
+        distance:
+          type: number
+          format: double
+        unit:
+          type: string
+        from_latitude:
+          type: number
+          format: double
+        from_longitude:
+          type: number
+          format: double
+    Region:
+      type: object
+      required:
+        - cloud
+        - code
+        - name
+        - availability_zones
+      properties:
+        cloud:
+          type: string
+        code:
+          type: string
+        parent:
+          type: string
+        name:
+          type: string
+        availability_zones:
+          type: array
+          items:
+            type: string
+        active:
+          type: boolean
+    ClusterNodeLogMessage:
+      type: object
+      required:
+        - time
+        - level
+        - message
+        - raw_text
+      properties:
+        time:
+          type: string
+        level:
+          type: string
+        message:
+          type: string
+        raw_text:
+          type: string

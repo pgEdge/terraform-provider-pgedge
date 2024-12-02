@@ -1,0 +1,1114 @@
+paths:
+  /databases:
+    get:
+      summary: List databases.
+      description: List databases.
+      operationId: listDatabases
+      security:
+        - AccessToken: []
+      tags:
+        - databases
+      parameters:
+        - description: Filter databases to a specific cluster ID.
+          in: query
+          name: cluster_id
+          schema:
+            type: string
+            format: uuid
+        - description: Start time for database retrieval as an RFC3339 timestamp.
+          in: query
+          name: created_after
+          schema:
+            type: string
+            format: date-time
+        - description: End time for database retrieval as an RFC3339 timestamp.
+          in: query
+          name: created_before
+          schema:
+            type: string
+            format: date-time
+        - name: limit
+          in: query
+          description: Maximum number of results to return.
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: Offset into the results for pagination.
+          required: false
+          schema:
+            type: integer
+        - description: Sort in descending order.
+          in: query
+          name: descending
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: Response containing a list of databases.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Database"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    post:
+      summary: Create a database.
+      description: Create a database.
+      operationId: createDatabase
+      security:
+        - AccessToken: []
+      tags:
+        - databases
+      requestBody:
+        description: The database definition.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateDatabaseInput"
+      responses:
+        "200":
+          description: Response containing details about the newly created database.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Database"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /databases/{id}:
+    get:
+      summary: Retrieve a database.
+      description: Retrieve a database.
+      operationId: getDatabase
+      security:
+        - AccessToken: []
+      tags:
+        - databases
+      parameters:
+        - name: id
+          in: path
+          description: ID of the database to retrieve.
+          required: true
+          schema:
+            type: string
+        - name: user_type
+          in: query
+          description: The user type whose credentials will be returned.
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Response containing the database definition.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Database"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    patch:
+      summary: Update a database.
+      description: Update a database.
+      operationId: updateDatabase
+      security:
+        - AccessToken: []
+      tags:
+        - databases
+      parameters:
+        - name: id
+          in: path
+          description: ID of the database to update.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The database parameters to update.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateDatabaseInput"
+      responses:
+        "200":
+          description: Response containing the updated database definition.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Database"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+    delete:
+      summary: Delete a database.
+      description: Delete a database.
+      operationId: deleteDatabase
+      security:
+        - AccessToken: []
+      tags:
+        - databases
+      parameters:
+        - name: id
+          in: path
+          description: ID of the database to delete.
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Empty response indicating that the database deletion was initiated.
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /databases/{id}/replicate:
+    post:
+      summary: Initiate replication for a database.
+      description: Initiate replication for a database.
+      operationId: replicateDatabase
+      security:
+        - AccessToken: []
+      tags:
+        - databases
+      parameters:
+        - name: id
+          in: path
+          description: ID of the database to replicate.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Empty response indicating that replication was initiated.
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /databases/{id}/restore:
+    post:
+      summary: Initiate a restore for a database.
+      description: Initiate a restore for a database.
+      operationId: restoreDatabase
+      security:
+        - AccessToken: []
+      tags:
+        - databases
+      parameters:
+        - name: id
+          in: path
+          description: ID of the database to restore.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The restore configuration.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRestoreInput"
+      responses:
+        "200":
+          description: Empty response indicating a restore was initiated.
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /databases/{id}/backup:
+    post:
+      summary: Initiate a backup for a database.
+      description: Initiate a backup for a database.
+      operationId: backupDatabase
+      security:
+        - AccessToken: []
+      tags:
+        - databases
+      parameters:
+        - name: id
+          in: path
+          description: ID of the database to backup.
+          required: true
+          schema:
+            type: string
+      requestBody:
+        description: The backup configuration.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBackupInput"
+      responses:
+        "200":
+          description: Empty response indicating a backup was initiated.
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /databases/{id}/metrics:
+    get:
+      summary: Retrieve metrics for a database.
+      description: Retrieve metrics for a database.
+      operationId: getDatabaseMetrics
+      security:
+        - AccessToken: []
+      tags:
+        - databases
+      parameters:
+        - name: id
+          in: path
+          description: ID of the database.
+          required: true
+          schema:
+            type: string
+        - name: interval
+          in: query
+          description: The interval to group the metrics by, specified in value, unit format.
+          required: false
+          schema:
+              type: string
+        - name: node_name
+          in: query
+          description: The node name to filter the metrics by.
+          required: false
+          schema:
+              type: string
+        - name: columns
+          in: query
+          description: The columns to return, comma separated.
+          required: false
+          schema:
+              type: string
+      responses:
+        "200":
+          description: Response containing metrics for the specified database.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MetricSeriesContainer"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /databases/{id}/table-query:
+    get:
+      summary: Run a query against a database table.
+      description: Run a query against a database table.
+      operationId: queryDatabaseTable
+      security:
+        - AccessToken: []
+      tags:
+        - databases
+      parameters:
+        - name: id
+          in: path
+          description: ID of the database.
+          required: true
+          schema:
+            type: string
+        - name: table
+          in: query
+          description: The table name.
+          required: true
+          schema:
+            type: string
+        - name: schema
+          in: query
+          description: The schema name.
+          required: false
+          schema:
+            type: string
+        - name: limit
+          in: query
+          description: The maximum number of rows to return.
+          required: false
+          schema:
+            type: integer
+        - name: offset
+          in: query
+          description: The number of rows to skip.
+          required: false
+          schema:
+            type: integer
+        - name: order_by
+          in: query
+          description: The column to order by.
+          required: false
+          schema:
+            type: string
+        - name: descending
+          in: query
+          description: Sort results in descending order.
+          required: false
+          schema:
+            type: boolean
+        - name: filter
+          in: query
+          description: The WHERE clause and values to inject in JSON string format.
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Response containing rows that satisfy the specified query.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TableQueryResponse"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /databases/{id}/logs:
+    get:
+      summary: Retrieve logs for a database.
+      description: Retrieve logs for a database.
+      operationId: getDatabaseLogs
+      security:
+        - AccessToken: []
+      tags:
+        - databases
+      parameters:
+        - name: id
+          in: path
+          description: ID of the database.
+          required: true
+          schema:
+            type: string
+        - name: component_name
+          in: query
+          description: Name of the database to get logs for.
+          required: true
+          schema:
+            type: string
+        - name: max_lines
+          in: query
+          description: Maximum number of log lines to retrieve.
+          required: false
+          schema:
+            type: integer
+            default: 100
+        - name: nodes
+          in: query
+          description: List of node(s) to get logs for.
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Response containing logs for the specified database.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DatabaseLogsResponse"
+        "400":
+          description: Bad request.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        default:
+          description: Unexpected error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /databases/{id}/roles/{role_name}/rotate-password:
+    post:
+      summary: Rotate the password for a built-in database role.
+      description: Rotate the password for a built-in database role.
+      operationId: rotateDatabaseRolePassword
+      security:
+        - AccessToken: []
+      tags:
+        - databases
+      parameters:
+        - name: id
+          in: path
+          description: ID of the database.
+          required: true
+          schema:
+            type: string
+        - name: role_name
+          in: path
+          description: Name of the built-in role.
+          required: true
+          schema:
+            type: string
+            enum: [admin, app, app_read_only]
+      responses:
+        "204":
+          description: Empty response indicating the password rotation was successful.
+        "400":
+          description: Bad request. The provided role is not a built-in role.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "401":
+          description: Authorization information is missing or invalid.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error. The password rotate operation failed.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+components:
+  schemas:
+    CreateDatabaseInput:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        display_name:
+          type: string
+          maxLength: 25
+          description: |
+            Display name for the database. Optional.
+            Must not exceed 25 characters.
+          nullable: true
+        cluster_id:
+          type: string
+        config_version:
+          type: string
+        pg_version:
+          type: string
+        options:
+          type: array
+          items:
+            type: string
+        extensions:
+          $ref: "#/components/schemas/Extensions"
+        backups:
+          $ref: "#/components/schemas/Backups"
+    Extensions:
+      type: object
+      properties:
+        auto_manage:
+          type: boolean
+        available:
+          type: array
+          items:
+            type: string
+        requested:
+          type: array
+          items:
+            type: string
+    Backups:
+      type: object
+      required:
+        - provider
+      properties:
+        provider:
+          type: string
+        config:
+          type: array
+          items:
+            $ref: "#/components/schemas/BackupConfig"
+    BackupConfig:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        node_name:
+          type: string
+        schedules:
+          type: array
+          items:
+            $ref: "#/components/schemas/BackupSchedule"
+        repositories:
+          type: array
+          items:
+            $ref: "#/components/schemas/BackupRepository"
+    BackupSchedule:
+      type: object
+      required:
+        - id
+        - type
+        - cron_expression
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        cron_expression:
+          type: string
+    BackupRepository:
+      type: object
+      properties:
+        id:
+          type: string
+        database_id:
+          type: string
+        created_at:
+          type: string
+        type:
+          type: string
+        backup_store_id:
+          type: string
+        base_path:
+          type: string
+        s3_bucket:
+          type: string
+        s3_region:
+          type: string
+        s3_endpoint:
+          type: string
+        gcs_bucket:
+          type: string
+        gcs_endpoint:
+          type: string
+        azure_account:
+          type: string
+        azure_container:
+          type: string
+        azure_endpoint:
+          type: string
+        retention_full:
+          type: integer
+        retention_full_type:
+          type: string
+    PgBackrestRestoreConfig:
+      type: object
+      required:
+        - node_name
+        - repositories
+      properties:
+        node_name:
+          type: string
+        repositories:
+          type: array
+          items:
+            type: string
+    PgBackrestRestoreCommand:
+      type: object
+      properties:
+        type:
+          type: string
+        target:
+          type: string
+        target_exclusive:
+          type: boolean
+        set:
+          type: string
+        delta:
+          type: boolean
+        force:
+          type: boolean
+    PgDumpRestoreConfig:
+      type: object
+      required:
+        - backup_id
+      properties:
+        backup_id:
+          type: string
+    PgDumpRestoreCommand:
+      type: object
+      properties:
+        schema_only:
+          type: boolean
+    CreateRestoreInput:
+      type: object
+      required:
+        - provider
+        - restore_config
+      properties:
+        provider:
+          type: string
+        target_nodes:
+          type: array
+          items:
+            type: string
+        restore_config:
+          oneOf:
+            - $ref: "#/components/schemas/PgBackrestRestoreConfig"
+            - $ref: "#/components/schemas/PgDumpRestoreConfig"
+        restore_command:
+          oneOf:
+            - $ref: "#/components/schemas/PgBackrestRestoreCommand"
+            - $ref: "#/components/schemas/PgDumpRestoreCommand"
+    CreateBackupInput:
+      type: object
+      required:
+        - provider
+      properties:
+        provider:
+          type: string
+        target_nodes:
+          type: array
+          items:
+            type: string
+        type:
+          type: string
+        name:
+          type: string
+    UpdateDatabaseInput:
+      type: object
+      properties:
+        display_name:
+          type: string
+          maxLength: 25
+          description: |
+            Display name for the database. Optional.
+            Set to empty string to remove existing display name.
+            Must not exceed 25 characters.
+          nullable: true
+        options:
+          type: array
+          items:
+            type: string
+        extensions:
+          $ref: "#/components/schemas/Extensions"
+        nodes:
+          type: array
+          items:
+              $ref: "#/components/schemas/DatabaseNode"
+    DatabaseNodeExtensions:
+      type: object
+      required:
+        - installed
+      properties:
+        installed:
+          type: array
+          items:
+            type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: string
+    DatabaseNode:
+      type: object
+      required:
+        - name
+        - connection
+        - location
+      properties:
+        name:
+          type: string
+        connection:
+          $ref: "#/components/schemas/Connection"
+        location:
+          $ref: "#/components/schemas/Location"
+        region:
+          $ref: "#/components/schemas/Region"
+        distance_measurement:
+          $ref: "#/components/schemas/DistanceMeasurement"
+        extensions:
+          $ref: "#/components/schemas/DatabaseNodeExtensions"
+    Database:
+      type: object
+      required:
+        - id
+        - cluster_id
+        - name
+        - status
+        - created_at
+        - updated_at
+      properties:
+        id:
+          type: string
+        cluster_id:
+          type: string
+        name:
+          type: string
+        display_name:
+          type: string
+          maxLength: 25
+          description: Display name of the database. Will be null if not set.
+          nullable: true
+        status:
+          type: string
+        created_at:
+          type: string
+        updated_at:
+          type: string
+        pg_version:
+          type: string
+        storage_used:
+          type: integer
+          format: int64
+        domain:
+          type: string
+        private_domain:
+          type: string
+        config_version:
+          type: string
+        tables:
+          type: array
+          items:
+            $ref: "#/components/schemas/DatabaseTable"
+        roles:
+          type: array
+          items:
+            $ref: "#/components/schemas/DatabaseRole"
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/DatabaseNode"
+        components:
+          type: array
+          items:
+            $ref: "#/components/schemas/DatabaseComponentVersion"
+        options:
+          type: array
+          items:
+            type: string
+        extensions:
+          $ref: "#/components/schemas/Extensions"
+        backups:
+          $ref: "#/components/schemas/Backups"
+    DatabaseTableStatus:
+      type: object
+      required:
+        - node_name
+        - present
+        - aligned
+        - replicating
+      properties:
+        node_name:
+          type: string
+        present:
+          type: boolean
+        aligned:
+          type: boolean
+        replicating:
+          type: boolean
+    DatabaseTable:
+      type: object
+      required:
+        - schema
+        - name
+        - primary_key
+        - replication_sets
+        - status
+      properties:
+        schema:
+          type: string
+        name:
+          type: string
+        primary_key:
+          type: array
+          items:
+            type: string
+        replication_sets:
+          type: array
+          items:
+            type: string
+        columns:
+          type: array
+          items:
+            $ref: "#/components/schemas/DatabaseColumn"
+        status:
+          type: array
+          items:
+            $ref: "#/components/schemas/DatabaseTableStatus"
+    DatabaseColumn:
+      type: object
+      required:
+        - name
+        - ordinal_position
+        - data_type
+        - default
+        - is_nullable
+        - is_primary_key
+      properties:
+        name:
+          type: string
+        ordinal_position:
+          type: integer
+        data_type:
+          type: string
+        default:
+          type: string
+        is_nullable:
+          type: boolean
+        is_primary_key:
+          type: boolean
+    DatabaseRole:
+      type: object
+      required:
+        - name
+        - connection_limit
+        - superuser
+        - create_role
+        - create_db
+        - login
+        - inherit
+        - replication
+        - bypass_rls
+      properties:
+        name:
+          type: string
+        connection_limit:
+          type: integer
+        superuser:
+          type: boolean
+        create_role:
+          type: boolean
+        create_db:
+          type: boolean
+        login:
+          type: boolean
+        inherit:
+          type: boolean
+        replication:
+          type: boolean
+        bypass_rls:
+          type: boolean
+    MetricSeriesContainer:
+      type: object
+      required:
+        - series
+      properties:
+        series:
+          type: array
+          items:
+            $ref: "#/components/schemas/MetricSeries"
+    MetricSeries:
+      type: object
+      required:
+        - name
+        - values
+        - columns
+      properties:
+        name:
+          type: string
+        values:
+          type: array
+          items:
+            type: array
+            items: {}
+        columns:
+          type: array
+          items:
+            type: string
+    TableQueryResponse:
+      type: object
+      required:
+        - rows
+        - count
+      properties:
+        rows:
+          type: array
+          items:
+            type: object
+        count:
+          type: integer
+    DatabaseLogsResponse:
+      type: object
+      required:
+        - logs
+      properties:
+        logs:
+          type: array
+          items:
+            type: object
+    DatabaseComponentVersion:
+      type: object
+      required:
+        - id
+        - name
+        - version
+        - release_date
+        - status
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        version:
+          type: string
+        release_date:
+          type: string
+        status:
+          type: string
+    Connection:
+      type: object
+      required:
+        - username
+        - password
+        - port
+        - database
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        host:
+          type: string
+        internal_host:
+          type: string
+        external_ip_address:
+          type: string
+        internal_ip_address:
+          type: string
+        port:
+          type: integer
+        database:
+          type: string
