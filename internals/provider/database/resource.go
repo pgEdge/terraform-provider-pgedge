@@ -1764,12 +1764,13 @@ func (r *databaseResource) ImportState(ctx context.Context, req resource.ImportS
 }
 
 type databaseResourceModel struct {
-	ID        types.String `tfsdk:"id"`
-	Name      types.String `tfsdk:"name"`
-	ClusterID types.String `tfsdk:"cluster_id"`
-	Status    types.String `tfsdk:"status"`
-	CreatedAt types.String `tfsdk:"created_at"`
-	PgVersion types.String `tfsdk:"pg_version"`
+	ID          types.String `tfsdk:"id"`
+	Name        types.String `tfsdk:"name"`
+	DisplayName types.String `tfsdk:"display_name"`
+	ClusterID   types.String `tfsdk:"cluster_id"`
+	Status      types.String `tfsdk:"status"`
+	CreatedAt   types.String `tfsdk:"created_at"`
+	PgVersion   types.String `tfsdk:"pg_version"`
 	// StorageUsed   types.Int64  `tfsdk:"storage_used"`
 	Domain        types.String `tfsdk:"domain"`
 	ConfigVersion types.String `tfsdk:"config_version"`
