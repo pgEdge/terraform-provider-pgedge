@@ -228,6 +228,10 @@ func (r *databaseResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
+			"display_name": schema.StringAttribute{
+				Optional:    true,
+				Description: "Display name for the database. Maximum length is 25 characters.",
+			},
 			"created_at": schema.StringAttribute{
 				Description: "The timestamp when the database was created.",
 				Computed:    true,
@@ -698,6 +702,18 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 		Options:   convertToStringSlice(plan.Options),
 	}
 
+	if !plan.DisplayName.IsNull() && plan.DisplayName.ValueString() != "" {
+        if len(plan.DisplayName.ValueString()) > 25 {
+            resp.Diagnostics.AddError(
+                "Invalid Display Name Length",
+                "Display name must not exceed 25 characters.",
+            )
+            return
+        }
+        displayName := plan.DisplayName.ValueString()
+        createInput.DisplayName = &displayName
+    }
+
 	if !plan.ConfigVersion.IsNull() && !plan.ConfigVersion.IsUnknown() {
 		createInput.ConfigVersion = plan.ConfigVersion.ValueString()
 	}
@@ -875,6 +891,10 @@ func (r *databaseResource) Read(ctx context.Context, req resource.ReadRequest, r
 		return
 	}
 
+	if database.DisplayName != nil {
+		state.DisplayName = types.StringValue(*database.DisplayName)
+	}
+
 	// Map response body to schema and populate Computed attribute values
 	state = r.mapDatabaseToResourceModel(database)
 
@@ -968,6 +988,24 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
+	var updateInput *models.UpdateDatabaseInput
+	if !plan.DisplayName.Equal(state.DisplayName) {
+		if !plan.DisplayName.IsNull() && plan.DisplayName.ValueString() != "" {
+			if len(plan.DisplayName.ValueString()) > 25 {
+				resp.Diagnostics.AddError(
+					"Invalid Display Name Length",
+					"Display name must not exceed 25 characters.",
+				)
+				return
+			}
+			if updateInput == nil {
+				updateInput = &models.UpdateDatabaseInput{}
+			}
+			displayName := plan.DisplayName.ValueString()
+			updateInput.DisplayName = &displayName
+		} 
+	}
+
 	// Check how many fields are being updated
 	updateCount := 0
 	var updateField string
@@ -995,24 +1033,16 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 
 	switch updateField {
 	case "options":
-		extensionsUpdateInput := &models.UpdateDatabaseInput{
-			Options: convertToStringSlice(plan.Options),
+		if updateInput == nil {
+			updateInput = &models.UpdateDatabaseInput{}
 		}
+		updateInput.Options = convertToStringSlice(plan.Options)
 
 		tflog.Debug(ctx, "Updating pgEdge database options", map[string]interface{}{
-			"update_input": extensionsUpdateInput,
+			"update_input": updateInput,
 		})
 
-		updatedDatabase, err := r.client.UpdateDatabase(ctx, strfmt.UUID(plan.ID.ValueString()), extensionsUpdateInput)
-		if err != nil {
-			resp.Diagnostics.Append(common.HandleProviderError(err, "database options update"))
-			return
-		}
-		plan = r.mapDatabaseToResourceModel(updatedDatabase)
-
 	case "extensions":
-		extensionsUpdateInput := &models.UpdateDatabaseInput{}
-
 		if !plan.Extensions.IsNull() {
 			var extensionsData extensionsModel
 			diags := plan.Extensions.As(ctx, &extensionsData, basetypes.ObjectAsOptions{})
@@ -1021,7 +1051,10 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 				return
 			}
 
-			extensionsUpdateInput.Extensions = &models.Extensions{
+			if updateInput == nil {
+				updateInput = &models.UpdateDatabaseInput{}
+			}
+			updateInput.Extensions = &models.Extensions{
 				AutoManage: extensionsData.AutoManage.ValueBoolPointer(),
 				Requested:  common.ConvertTFListToStringSlice(extensionsData.Requested),
 			}
@@ -1030,20 +1063,42 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 				"auto_manage": extensionsData.AutoManage.ValueBool(),
 				"requested":   extensionsData.Requested,
 			})
+		}
 
-			updatedDatabase, err := r.client.UpdateDatabase(ctx, strfmt.UUID(plan.ID.ValueString()), extensionsUpdateInput)
-			if err != nil {
-				resp.Diagnostics.Append(common.HandleProviderError(err, "database extensions update"))
-				return
-			}
+	case "nodes":
+		if updateInput == nil {
+			updateInput = &models.UpdateDatabaseInput{}
+		}
 
-			updatedModel := r.mapDatabaseToResourceModel(updatedDatabase)
+		nodes, diags := r.nodesToUpdateInput(ctx, plan.Nodes)
+		resp.Diagnostics.Append(diags...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		updateInput.Nodes = nodes
 
-			if !updatedModel.Extensions.IsNull() {
-				var extensions extensionsModel
-				diags := updatedModel.Extensions.As(ctx, &extensions, basetypes.ObjectAsOptions{})
+		tflog.Debug(ctx, "Updating pgEdge database nodes", map[string]interface{}{
+			"update_input": updateInput,
+		})
+	}
+
+	if updateInput != nil {
+		updatedDatabase, err := r.client.UpdateDatabase(ctx, strfmt.UUID(plan.ID.ValueString()), updateInput)
+		if err != nil {
+			resp.Diagnostics.Append(common.HandleProviderError(err, "database update"))
+			return
+		}
+
+		plan = r.mapDatabaseToResourceModel(updatedDatabase)
+
+		if updateField == "extensions" && !plan.Extensions.IsNull() {
+			var extensions extensionsModel
+			diags := plan.Extensions.As(ctx, &extensions, basetypes.ObjectAsOptions{})
+			if !diags.HasError() {
+				var planExtensions extensionsModel
+				diags := req.Plan.Get(ctx, &planExtensions)
 				if !diags.HasError() {
-					extensions.AutoManage = extensionsData.AutoManage
+					extensions.AutoManage = planExtensions.AutoManage
 
 					attrTypes := map[string]attr.Type{
 						"auto_manage": types.BoolType,
@@ -1051,10 +1106,10 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 						"requested":   types.ListType{ElemType: types.StringType},
 					}
 
-					updatedModel.Extensions, diags = types.ObjectValue(
+					plan.Extensions, diags = types.ObjectValue(
 						attrTypes,
 						map[string]attr.Value{
-							"auto_manage": types.BoolValue(extensionsData.AutoManage.ValueBool()),
+							"auto_manage": types.BoolValue(planExtensions.AutoManage.ValueBool()),
 							"available":   extensions.Available,
 							"requested":   extensions.Requested,
 						},
@@ -1065,31 +1120,7 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 					}
 				}
 			}
-
-			plan = updatedModel
 		}
-
-	case "nodes":
-		nodesUpdateInput := &models.UpdateDatabaseInput{}
-
-		nodes, diags := r.nodesToUpdateInput(ctx, plan.Nodes)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		nodesUpdateInput.Nodes = nodes
-
-		tflog.Debug(ctx, "Updating pgEdge database nodes", map[string]interface{}{
-			"update_input": nodesUpdateInput,
-		})
-
-		updatedDatabase, err := r.client.UpdateDatabase(ctx, strfmt.UUID(plan.ID.ValueString()), nodesUpdateInput)
-		if err != nil {
-			resp.Diagnostics.Append(common.HandleProviderError(err, "database nodes update"))
-			return
-		}
-
-		plan = r.mapDatabaseToResourceModel(updatedDatabase)
 	}
 
 	plan.ConfigVersion = state.ConfigVersion
@@ -1291,12 +1322,12 @@ func (r *databaseResource) extensionsFromObject(ctx context.Context, obj types.O
 
 func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database) databaseResourceModel {
 	model := databaseResourceModel{
-		ID:        types.StringValue(database.ID.String()),
-		Name:      types.StringPointerValue(database.Name),
-		ClusterID: types.StringValue(database.ClusterID.String()),
-		Status:    types.StringPointerValue(database.Status),
-		CreatedAt: types.StringPointerValue(database.CreatedAt),
-		PgVersion: types.StringValue(database.PgVersion),
+		ID:          types.StringValue(database.ID.String()),
+		Name:        types.StringPointerValue(database.Name),
+		ClusterID:   types.StringValue(database.ClusterID.String()),
+		Status:      types.StringPointerValue(database.Status),
+		CreatedAt:   types.StringPointerValue(database.CreatedAt),
+		PgVersion:   types.StringValue(database.PgVersion),
 		// StorageUsed:   types.Int64Value(database.StorageUsed),
 		Domain:        types.StringValue(database.Domain),
 		ConfigVersion: types.StringValue(database.ConfigVersion),
@@ -1307,6 +1338,10 @@ func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database)
 		Nodes:         r.mapNodesToResourceModel(database.Nodes),
 		Roles:         r.mapRolesToResourceModel(database.Roles),
 	}
+
+	if database.DisplayName != nil {
+        model.DisplayName = types.StringValue(*database.DisplayName)
+    }
 	if r.backupsChanged(database.Backups, model.Backups) {
 		model.Backups = r.mapBackupsToResourceModel(database.Backups)
 	}
