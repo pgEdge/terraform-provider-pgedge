@@ -38,6 +38,10 @@ type Database struct {
 	// Required: true
 	CreatedAt *string `json:"created_at"`
 
+	// Display name for the database. Will be null if not set.
+	// Max Length: 25
+	DisplayName *string `json:"display_name,omitempty"`
+
 	// domain
 	Domain string `json:"domain,omitempty"`
 
@@ -97,6 +101,10 @@ func (m *Database) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateCreatedAt(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateDisplayName(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -199,6 +207,18 @@ func (m *Database) validateComponents(formats strfmt.Registry) error {
 func (m *Database) validateCreatedAt(formats strfmt.Registry) error {
 
 	if err := validate.Required("created_at", "body", m.CreatedAt); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *Database) validateDisplayName(formats strfmt.Registry) error {
+	if swag.IsZero(m.DisplayName) { // not required
+		return nil
+	}
+
+	if err := validate.MaxLength("display_name", "body", *m.DisplayName, 25); err != nil {
 		return err
 	}
 
