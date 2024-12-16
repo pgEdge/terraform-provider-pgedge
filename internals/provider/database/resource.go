@@ -3,8 +3,11 @@ package database
 import (
 	"context"
 	"fmt"
+	"math"
 	"reflect"
 	"sort"
+	"strings"
+	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -703,16 +706,16 @@ func (r *databaseResource) Create(ctx context.Context, req resource.CreateReques
 	}
 
 	if !plan.DisplayName.IsNull() && plan.DisplayName.ValueString() != "" {
-        if len(plan.DisplayName.ValueString()) > 25 {
-            resp.Diagnostics.AddError(
-                "Invalid Display Name Length",
-                "Display name must not exceed 25 characters.",
-            )
-            return
-        }
-        displayName := plan.DisplayName.ValueString()
-        createInput.DisplayName = &displayName
-    }
+		if len(plan.DisplayName.ValueString()) > 25 {
+			resp.Diagnostics.AddError(
+				"Invalid Display Name Length",
+				"Display name must not exceed 25 characters.",
+			)
+			return
+		}
+		displayName := plan.DisplayName.ValueString()
+		createInput.DisplayName = &displayName
+	}
 
 	if !plan.ConfigVersion.IsNull() && !plan.ConfigVersion.IsUnknown() {
 		createInput.ConfigVersion = plan.ConfigVersion.ValueString()
@@ -989,8 +992,17 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 
 	var updateInput *models.UpdateDatabaseInput
-	if !plan.DisplayName.Equal(state.DisplayName) {
-		if !plan.DisplayName.IsNull() && plan.DisplayName.ValueString() != "" {
+
+	displayNameChanged := !plan.DisplayName.Equal(state.DisplayName)
+	if displayNameChanged {
+		if updateInput == nil {
+			updateInput = &models.UpdateDatabaseInput{}
+		}
+
+		if plan.DisplayName.IsNull() || plan.DisplayName.ValueString() == "" {
+			emptyString := ""
+			updateInput.DisplayName = &emptyString
+		} else {
 			if len(plan.DisplayName.ValueString()) > 25 {
 				resp.Diagnostics.AddError(
 					"Invalid Display Name Length",
@@ -998,12 +1010,9 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 				)
 				return
 			}
-			if updateInput == nil {
-				updateInput = &models.UpdateDatabaseInput{}
-			}
 			displayName := plan.DisplayName.ValueString()
 			updateInput.DisplayName = &displayName
-		} 
+		}
 	}
 
 	// Check how many fields are being updated
@@ -1038,10 +1047,6 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 		}
 		updateInput.Options = convertToStringSlice(plan.Options)
 
-		tflog.Debug(ctx, "Updating pgEdge database options", map[string]interface{}{
-			"update_input": updateInput,
-		})
-
 	case "extensions":
 		if !plan.Extensions.IsNull() {
 			var extensionsData extensionsModel
@@ -1058,38 +1063,43 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 				AutoManage: extensionsData.AutoManage.ValueBoolPointer(),
 				Requested:  common.ConvertTFListToStringSlice(extensionsData.Requested),
 			}
-
-			tflog.Debug(ctx, "Updating pgEdge database extensions", map[string]interface{}{
-				"auto_manage": extensionsData.AutoManage.ValueBool(),
-				"requested":   extensionsData.Requested,
-			})
 		}
 
 	case "nodes":
 		if updateInput == nil {
 			updateInput = &models.UpdateDatabaseInput{}
 		}
-
 		nodes, diags := r.nodesToUpdateInput(ctx, plan.Nodes)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
 		updateInput.Nodes = nodes
-
-		tflog.Debug(ctx, "Updating pgEdge database nodes", map[string]interface{}{
-			"update_input": updateInput,
-		})
 	}
 
 	if updateInput != nil {
-		updatedDatabase, err := r.client.UpdateDatabase(ctx, strfmt.UUID(plan.ID.ValueString()), updateInput)
-		if err != nil {
+		maxRetries := 3
+		var updatedDatabase *models.Database
+		var err error
+
+		for i := 0; i < maxRetries; i++ {
+			updatedDatabase, err = r.client.UpdateDatabase(ctx, strfmt.UUID(plan.ID.ValueString()), updateInput)
+			if err == nil {
+				break
+			}
+
+			if strings.Contains(err.Error(), "no active task found for database") && i < maxRetries-1 {
+				time.Sleep(time.Duration(math.Pow(2, float64(i))) * time.Second)
+				continue
+			}
+
 			resp.Diagnostics.Append(common.HandleProviderError(err, "database update"))
 			return
 		}
 
 		plan = r.mapDatabaseToResourceModel(updatedDatabase)
+
+		plan.ConfigVersion = state.ConfigVersion
 
 		if updateField == "extensions" && !plan.Extensions.IsNull() {
 			var extensions extensionsModel
@@ -1123,17 +1133,11 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 		}
 	}
 
-	plan.ConfigVersion = state.ConfigVersion
-
 	diags = resp.State.Set(ctx, plan)
 	resp.Diagnostics.Append(diags...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
-	tflog.Info(ctx, "Updated pgEdge database", map[string]interface{}{
-		"database_id": plan.ID.ValueString(),
-	})
 }
 
 func (r *databaseResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
@@ -1322,12 +1326,12 @@ func (r *databaseResource) extensionsFromObject(ctx context.Context, obj types.O
 
 func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database) databaseResourceModel {
 	model := databaseResourceModel{
-		ID:          types.StringValue(database.ID.String()),
-		Name:        types.StringPointerValue(database.Name),
-		ClusterID:   types.StringValue(database.ClusterID.String()),
-		Status:      types.StringPointerValue(database.Status),
-		CreatedAt:   types.StringPointerValue(database.CreatedAt),
-		PgVersion:   types.StringValue(database.PgVersion),
+		ID:        types.StringValue(database.ID.String()),
+		Name:      types.StringPointerValue(database.Name),
+		ClusterID: types.StringValue(database.ClusterID.String()),
+		Status:    types.StringPointerValue(database.Status),
+		CreatedAt: types.StringPointerValue(database.CreatedAt),
+		PgVersion: types.StringValue(database.PgVersion),
 		// StorageUsed:   types.Int64Value(database.StorageUsed),
 		Domain:        types.StringValue(database.Domain),
 		ConfigVersion: types.StringValue(database.ConfigVersion),
@@ -1340,8 +1344,8 @@ func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database)
 	}
 
 	if database.DisplayName != nil {
-        model.DisplayName = types.StringValue(*database.DisplayName)
-    }
+		model.DisplayName = types.StringValue(*database.DisplayName)
+	}
 	if r.backupsChanged(database.Backups, model.Backups) {
 		model.Backups = r.mapBackupsToResourceModel(database.Backups)
 	}
