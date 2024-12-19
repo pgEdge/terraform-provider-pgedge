@@ -26,6 +26,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
+	"github.com/oapi-codegen/nullable"
 
 	// "github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"github.com/hashicorp/terraform-plugin-log/tflog"
@@ -991,30 +992,6 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 		return
 	}
 
-	var updateInput *models.UpdateDatabaseInput
-
-	displayNameChanged := !plan.DisplayName.Equal(state.DisplayName)
-	if displayNameChanged {
-		if updateInput == nil {
-			updateInput = &models.UpdateDatabaseInput{}
-		}
-
-		if plan.DisplayName.IsNull() || plan.DisplayName.ValueString() == "" {
-			emptyString := ""
-			updateInput.DisplayName = &emptyString
-		} else {
-			if len(plan.DisplayName.ValueString()) > 25 {
-				resp.Diagnostics.AddError(
-					"Invalid Display Name Length",
-					"Display name must not exceed 25 characters.",
-				)
-				return
-			}
-			displayName := plan.DisplayName.ValueString()
-			updateInput.DisplayName = &displayName
-		}
-	}
-
 	// Check how many fields are being updated
 	updateCount := 0
 	var updateField string
@@ -1031,16 +1008,42 @@ func (r *databaseResource) Update(ctx context.Context, req resource.UpdateReques
 		updateCount++
 		updateField = "nodes"
 	}
+	if !plan.DisplayName.Equal(state.DisplayName) {
+		updateCount++
+		updateField = "display_name"
+	}
 
 	if updateCount > 1 {
 		resp.Diagnostics.AddError(
 			"Multiple Field Update Not Allowed",
-			"Only one field (options, extensions, or nodes) can be updated at a time.",
+			"Only one field (options, extensions, nodes, or display_name) can be updated at a time.",
 		)
 		return
 	}
 
+	var updateInput *models.UpdateDatabaseInput
+
 	switch updateField {
+	case "display_name":
+		if updateInput == nil {
+			updateInput = &models.UpdateDatabaseInput{}
+		}
+
+		if plan.DisplayName.IsNull() || plan.DisplayName.IsUnknown() {
+			displayName := nullable.NewNullNullable[string]()
+			updateInput.DisplayName = displayName
+		} else if !plan.DisplayName.IsUnknown() {
+			displayName := plan.DisplayName.ValueString()
+			if len(displayName) > 25 {
+				resp.Diagnostics.AddError(
+					"Invalid Display Name Length",
+					"Display name must not exceed 25 characters.",
+				)
+				return
+			}
+			updateInput.DisplayName = nullable.NewNullableWithValue(displayName)
+		}
+
 	case "options":
 		if updateInput == nil {
 			updateInput = &models.UpdateDatabaseInput{}
@@ -1343,9 +1346,12 @@ func (r *databaseResource) mapDatabaseToResourceModel(database *models.Database)
 		Roles:         r.mapRolesToResourceModel(database.Roles),
 	}
 
-	if database.DisplayName != nil {
+	if database.DisplayName == nil {
+		model.DisplayName = types.StringNull()
+	} else {
 		model.DisplayName = types.StringValue(*database.DisplayName)
 	}
+
 	if r.backupsChanged(database.Backups, model.Backups) {
 		model.Backups = r.mapBackupsToResourceModel(database.Backups)
 	}
