@@ -29,6 +29,10 @@ type CreateDatabaseInput struct {
 	// config version
 	ConfigVersion string `json:"config_version,omitempty"`
 
+	// Display name for the database. Will be null if not set.
+	// Max Length: 25
+	DisplayName *string `json:"display_name,omitempty"`
+
 	// extensions
 	Extensions *Extensions `json:"extensions,omitempty"`
 
@@ -49,6 +53,10 @@ func (m *CreateDatabaseInput) Validate(formats strfmt.Registry) error {
 	}
 
 	if err := m.validateClusterID(formats); err != nil {
+		res = append(res, err)
+	}
+
+	if err := m.validateDisplayName(formats); err != nil {
 		res = append(res, err)
 	}
 
@@ -91,6 +99,18 @@ func (m *CreateDatabaseInput) validateClusterID(formats strfmt.Registry) error {
 	}
 
 	if err := validate.FormatOf("cluster_id", "body", "uuid", m.ClusterID.String(), formats); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (m *CreateDatabaseInput) validateDisplayName(formats strfmt.Registry) error {
+	if swag.IsZero(m.DisplayName) { // not required
+		return nil
+	}
+
+	if err := validate.MaxLength("display_name", "body", *m.DisplayName, 25); err != nil {
 		return err
 	}
 

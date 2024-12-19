@@ -62,7 +62,7 @@ Read-Only:
 - `host` (String)
 - `internal_host` (String)
 - `internal_ip_address` (String)
-- `password` (String)
+- `password` (String, Sensitive)
 - `port` (Number)
 - `username` (String)
 

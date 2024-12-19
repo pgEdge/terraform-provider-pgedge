@@ -473,6 +473,11 @@ definitions:
         type: string
       config_version:
         type: string
+      display_name:
+        description: Display name for the database. Will be null if not set.
+        maxLength: 25
+        type: string
+        x-nullable: true
       extensions:
         $ref: '#/definitions/Extensions'
       name:
@@ -511,6 +516,11 @@ definitions:
         type: string
       created_at:
         type: string
+      display_name:
+        description: Display name for the database. Will be null if not set.
+        maxLength: 25
+        type: string
+        x-nullable: true
       domain:
         type: string
       extensions:
@@ -918,6 +928,12 @@ definitions:
     type: object
   UpdateDatabaseInput:
     properties:
+      display_name:
+        description: Display name for the database. Set to null to remove existing
+          display name
+        maxLength: 25
+        type: string
+        x-nullable: true
       extensions:
         $ref: '#/definitions/Extensions'
       nodes:

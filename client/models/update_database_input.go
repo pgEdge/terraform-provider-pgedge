@@ -12,12 +12,18 @@ import (
 	"github.com/go-openapi/errors"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/go-openapi/validate"
+	nullable "github.com/oapi-codegen/nullable"
 )
 
 // UpdateDatabaseInput update database input
 //
 // swagger:model UpdateDatabaseInput
 type UpdateDatabaseInput struct {
+
+	// Display name for the database. Set to null to remove existing display name
+	// Max Length: 25
+	DisplayName nullable.Nullable[string] `json:"display_name,omitempty"`
 
 	// extensions
 	Extensions *Extensions `json:"extensions,omitempty"`
@@ -33,6 +39,10 @@ type UpdateDatabaseInput struct {
 func (m *UpdateDatabaseInput) Validate(formats strfmt.Registry) error {
 	var res []error
 
+	if err := m.validateDisplayName(formats); err != nil {
+		res = append(res, err)
+	}
+
 	if err := m.validateExtensions(formats); err != nil {
 		res = append(res, err)
 	}
@@ -46,6 +56,25 @@ func (m *UpdateDatabaseInput) Validate(formats strfmt.Registry) error {
 	}
 	return nil
 }
+
+func (m *UpdateDatabaseInput) validateDisplayName(formats strfmt.Registry) error {
+    if !m.DisplayName.IsSpecified() {
+        return nil
+    }
+
+    if m.DisplayName.IsNull() {
+        return nil
+    }
+
+    if value, err := m.DisplayName.Get(); err == nil {
+        if err := validate.MaxLength("display_name", "body", value, 25); err != nil {
+            return err
+        }
+    }
+
+    return nil
+}
+
 
 func (m *UpdateDatabaseInput) validateExtensions(formats strfmt.Registry) error {
 	if swag.IsZero(m.Extensions) { // not required
