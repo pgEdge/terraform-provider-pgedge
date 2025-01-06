@@ -155,6 +155,11 @@ definitions:
     properties:
       name:
         type: string
+      display_name:
+        type: string
+        maxLength: 25
+        description: Display name for the database. Will be null if not set.
+        x-nullable: true  # Swagger 2.0 compatible way to indicate nullable
       cluster_id:
         type: string
         format: uuid
@@ -171,6 +176,11 @@ definitions:
   UpdateDatabaseInput:
     type: object
     properties:
+      display_name:
+        type: string
+        maxLength: 25
+        description: Display name for the database. Set to null to remove existing display name
+        x-nullable: true
       options:
         type: array
         items:
@@ -199,6 +209,11 @@ definitions:
         format: uuid
       name:
         type: string
+      display_name:
+        type: string
+        maxLength: 25
+        description: Display name for the database. Will be null if not set.
+        x-nullable: true
       status:
         type: string
       created_at:
