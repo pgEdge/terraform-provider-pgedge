@@ -10,6 +10,7 @@ We welcome and appreciate contributions from the community! This document outlin
 4. [Running Tests](#running-tests)
 5. [Submitting a Pull Request](#submitting-a-pull-request)
 6. [Code Style and Guidelines](#code-style-and-guidelines)
+7. [Release Process](#release-process)
 
 ## Prerequisites
 
@@ -106,5 +107,19 @@ Note: Running acceptance tests will create real resources in your pgEdge account
 - Keep your changes focused. If you're addressing multiple issues, consider creating separate PRs.
 - Add or update tests to cover your changes.
 - Update documentation, including the README if necessary.
+
+## Release Process
+
+Releases are managed by members of the pgEdge team. In order to create a new release, simply create a new tag in the 
+format `vX.Y.Z` (e.g., `v1.0.0`) and push it to the `main` branch. 
+
+This can be done using the following command:
+
+```bash
+git tag vX.Y.Z
+git push origin vX.Y.Z
+```
+
+The release will be automatically built and published through GitHub Actions.
 
 Thank you for contributing to the pgEdge Terraform Provider!
