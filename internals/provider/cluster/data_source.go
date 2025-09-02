@@ -3,6 +3,7 @@ package cluster
 import (
 	"context"
 	"fmt"
+	"sort"
 
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
+	"github.com/pgEdge/terraform-provider-pgedge/client/models"
 	"github.com/pgEdge/terraform-provider-pgedge/internals/provider/common"
 )
 
@@ -346,9 +348,21 @@ func (c *clustersDataSource) Read(ctx context.Context, req datasource.ReadReques
 		}
 		clusterDetails.FirewallRules = firewallRules
 
-		// Set Nodes
+		// Set Nodes - sort by name for consistent ordering
 		nodes := make([]types.Object, len(cluster.Nodes))
+		nodeNames := make([]string, len(cluster.Nodes))
+		nodeMap := make(map[string]*models.ClusterNodeSettings)
+		
 		for i, node := range cluster.Nodes {
+			nodeNames[i] = node.Name
+			nodeMap[node.Name] = node
+		}
+		
+		// Sort node names
+		sort.Strings(nodeNames)
+		
+		for i, nodeName := range nodeNames {
+			node := nodeMap[nodeName]
 			nodeObj, diags := types.ObjectValue(
 				map[string]attr.Type{
 					"name":              types.StringType,
