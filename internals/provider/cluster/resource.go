@@ -84,11 +84,11 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				ElementType: types.StringType,
 			},
 			"node_location": schema.StringAttribute{
-				Required: true,
+				Required:    true,
 				Description: "Node location of the cluster. Must be either 'public' or 'private'.",
 				Validators: []validator.String{
-                    stringvalidator.OneOf("public", "private"),
-                },
+					stringvalidator.OneOf("public", "private"),
+				},
 			},
 			"status": schema.StringAttribute{
 				Computed: true,
@@ -122,32 +122,32 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 							Description: "CIDR of the network",
 						},
 						"external": schema.BoolAttribute{
-							Optional:    true,
-							Computed:    true,
+							Optional: true,
+							Computed: true,
 							PlanModifiers: []planmodifier.Bool{
 								boolplanmodifier.UseStateForUnknown(),
 							},
 							Description: "Whether the network is external",
 						},
 						"external_id": schema.StringAttribute{
-							Optional:    true,
-							Computed:    true,
+							Optional: true,
+							Computed: true,
 							PlanModifiers: []planmodifier.String{
 								stringplanmodifier.UseStateForUnknown(),
 							},
 							Description: "External ID of the network",
 						},
 						"name": schema.StringAttribute{
-							Optional:    true,
-							Computed:    true,
+							Optional: true,
+							Computed: true,
 							PlanModifiers: []planmodifier.String{
 								stringplanmodifier.UseStateForUnknown(),
 							},
 							Description: "Name of the network",
 						},
 						"private_subnets": schema.ListAttribute{
-							Optional:    true,
-							Computed:    true,
+							Optional: true,
+							Computed: true,
 							PlanModifiers: []planmodifier.List{
 								listplanmodifier.UseStateForUnknown(),
 							},
@@ -200,119 +200,119 @@ func (r *clusterResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 }
 
 func ValidateFirewallRuleName(name string) error {
-    validChars := "abcdefghijklmnopqrstuvwxyz0123456789-"
-    for _, char := range name {
-        if !strings.ContainsRune(validChars, char) {
-            return fmt.Errorf("firewall rule name can only contain lowercase letters, numbers, and hyphens, got: %s", name)
-        }
-    }
+	validChars := "abcdefghijklmnopqrstuvwxyz0123456789-"
+	for _, char := range name {
+		if !strings.ContainsRune(validChars, char) {
+			return fmt.Errorf("firewall rule name can only contain lowercase letters, numbers, and hyphens, got: %s", name)
+		}
+	}
 
-    if len(name) < 3 || len(name) > 63 {
-        return fmt.Errorf("firewall rule name must be between 3 and 63 characters, got length: %d", len(name))
-    }
+	if len(name) < 3 || len(name) > 63 {
+		return fmt.Errorf("firewall rule name must be between 3 and 63 characters, got length: %d", len(name))
+	}
 
-    if name[0] < 'a' || name[0] > 'z' {
-        return fmt.Errorf("firewall rule name must start with a lowercase letter, got: %s", name)
-    }
+	if name[0] < 'a' || name[0] > 'z' {
+		return fmt.Errorf("firewall rule name must start with a lowercase letter, got: %s", name)
+	}
 
-    return nil
+	return nil
 }
 
 func ValidateClusterConfiguration(plan *clusterResourceModel) error {
-    if err := validateFirewallRules(plan.FirewallRules); err != nil {
-        return err
-    }
+	if err := validateFirewallRules(plan.FirewallRules); err != nil {
+		return err
+	}
 
-    if err := validateNetworks(plan.Networks, plan.Nodes, plan.NodeLocation); err != nil {
-        return err
-    }
+	if err := validateNetworks(plan.Networks, plan.Nodes, plan.NodeLocation); err != nil {
+		return err
+	}
 
-    return nil
+	return nil
 }
 
 func validateFirewallRules(rules []firewallRuleModel) error {
-    for i, rule := range rules {
-        if err := ValidateFirewallRuleName(rule.Name.ValueString()); err != nil {
-            return fmt.Errorf("invalid firewall rule at index %d: %w", i, err)
-        }
+	for i, rule := range rules {
+		if err := ValidateFirewallRuleName(rule.Name.ValueString()); err != nil {
+			return fmt.Errorf("invalid firewall rule at index %d: %w", i, err)
+		}
 
-        port := rule.Port.ValueInt64()
-        if port < 1 || port > 65535 {
-            return fmt.Errorf("invalid port number %d at index %d: must be between 1 and 65535", port, i)
-        }
+		port := rule.Port.ValueInt64()
+		if port < 1 || port > 65535 {
+			return fmt.Errorf("invalid port number %d at index %d: must be between 1 and 65535", port, i)
+		}
 
-        sources := common.ConvertTFListToStringSlice(rule.Sources)
-        if len(sources) == 0 {
-            return fmt.Errorf("firewall rule at index %d must have at least one source", i)
-        }
-        
-        for _, source := range sources {
-            if !isValidCIDR(source) {
-                return fmt.Errorf("invalid CIDR format %s in firewall rule at index %d", source, i)
-            }
-        }
-    }
-    return nil
+		sources := common.ConvertTFListToStringSlice(rule.Sources)
+		if len(sources) == 0 {
+			return fmt.Errorf("firewall rule at index %d must have at least one source", i)
+		}
+
+		for _, source := range sources {
+			if !isValidCIDR(source) {
+				return fmt.Errorf("invalid CIDR format %s in firewall rule at index %d", source, i)
+			}
+		}
+	}
+	return nil
 }
 
 func validateNetworks(networks []networkModel, nodes []nodeModel, nodeLocation types.String) error {
-    if nodeLocation.ValueString() == "private" {
-        nodesPerRegion := make(map[string]int)
-        for _, node := range nodes {
-            nodesPerRegion[node.Region.ValueString()]++
-        }
+	if nodeLocation.ValueString() == "private" {
+		nodesPerRegion := make(map[string]int)
+		for _, node := range nodes {
+			nodesPerRegion[node.Region.ValueString()]++
+		}
 
-        for i, network := range networks {
-            region := network.Region.ValueString()
+		for i, network := range networks {
+			region := network.Region.ValueString()
 
-            if network.PrivateSubnets.IsNull() || len(network.PrivateSubnets.Elements()) == 0 {
-                return fmt.Errorf("private subnets are required at node_groups.aws[%d].private_subnets for private nodes", i)
-            }
+			if network.PrivateSubnets.IsNull() || len(network.PrivateSubnets.Elements()) == 0 {
+				return fmt.Errorf("private subnets are required at node_groups.aws[%d].private_subnets for private nodes", i)
+			}
 
-            nodeCount := nodesPerRegion[region]
-            subnetCount := len(network.PrivateSubnets.Elements())
-            if nodeCount > subnetCount {
-                return fmt.Errorf("more nodes (%d) than available subnets (%d) in node_groups.aws[%d] for private nodes", 
-                    nodeCount, subnetCount, i)
-            }
-        }
-    }
-    return nil
+			nodeCount := nodesPerRegion[region]
+			subnetCount := len(network.PrivateSubnets.Elements())
+			if nodeCount > subnetCount {
+				return fmt.Errorf("more nodes (%d) than available subnets (%d) in node_groups.aws[%d] for private nodes",
+					nodeCount, subnetCount, i)
+			}
+		}
+	}
+	return nil
 }
 
 func isValidCIDR(cidr string) bool {
-    parts := strings.Split(cidr, "/")
-    if len(parts) != 2 {
-        return false
-    }
+	parts := strings.Split(cidr, "/")
+	if len(parts) != 2 {
+		return false
+	}
 
-    ipParts := strings.Split(parts[0], ".")
-    if len(ipParts) != 4 {
-        return false
-    }
-    
-    for _, part := range ipParts {
-        num := 0
-        for _, digit := range part {
-            if digit < '0' || digit > '9' {
-                return false
-            }
-            num = num*10 + int(digit-'0')
-        }
-        if num < 0 || num > 255 {
-            return false
-        }
-    }
+	ipParts := strings.Split(parts[0], ".")
+	if len(ipParts) != 4 {
+		return false
+	}
 
-    prefix, err := strconv.Atoi(parts[1])
-    if err != nil {
-        return false
-    }
-    if prefix < 0 || prefix > 32 {
-        return false
-    }
+	for _, part := range ipParts {
+		num := 0
+		for _, digit := range part {
+			if digit < '0' || digit > '9' {
+				return false
+			}
+			num = num*10 + int(digit-'0')
+		}
+		if num < 0 || num > 255 {
+			return false
+		}
+	}
 
-    return true
+	prefix, err := strconv.Atoi(parts[1])
+	if err != nil {
+		return false
+	}
+	if prefix < 0 || prefix > 32 {
+		return false
+	}
+
+	return true
 }
 
 func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
@@ -324,21 +324,24 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 
 	if err := ValidateClusterConfiguration(&plan); err != nil {
-        resp.Diagnostics.AddError(
-            "Invalid Cluster Configuration",
-            err.Error(),
-        )
-        return
+		resp.Diagnostics.AddError(
+			"Invalid Cluster Configuration",
+			err.Error(),
+		)
+		return
 	}
 
 	if err := validateRegions(plan.Nodes, plan.Regions, plan.Networks); err != nil {
-        resp.Diagnostics.AddError(
-            "Invalid Region Configuration",
-            err.Error(),
-        )
-        return
-    }
+		resp.Diagnostics.AddError(
+			"Invalid Region Configuration",
+			err.Error(),
+		)
+		return
+	}
 
+	sort.Slice(plan.Nodes, func(i, j int) bool {
+		return plan.Nodes[i].Name.ValueString() < plan.Nodes[j].Name.ValueString()
+	})
 
 	regions, diags := convertToStringSlice(ctx, plan.Regions)
 	resp.Diagnostics.Append(diags...)
@@ -400,6 +403,10 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 			return
 		}
 
+		// Ensure deterministic ordering
+		sort.Strings(publicSubnets)
+		sort.Strings(privateSubnets)
+
 		createInput.Networks = append(createInput.Networks, &models.ClusterNetworkSettings{
 			Region:         network.Region.ValueStringPointer(),
 			Cidr:           network.Cidr.ValueString(),
@@ -429,18 +436,18 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 
 	cluster, err := r.client.CreateCluster(ctx, createInput)
 	if err != nil {
-        if cluster != nil {
-            mappedCluster := r.mapClusterToResourceModel(cluster)
-            mappedCluster.ResourceTags = types.MapNull(types.StringType)
+		if cluster != nil {
+			mappedCluster := r.mapClusterToResourceModel(cluster)
+			mappedCluster.ResourceTags = types.MapNull(types.StringType)
 			mappedCluster.BackupStoreIDs = types.ListNull(types.StringType)
 			mappedCluster.Regions = types.ListNull(types.StringType)
-            
-            diags = resp.State.Set(ctx, mappedCluster)
-            resp.Diagnostics.Append(diags...)
-        }
-        resp.Diagnostics.Append(common.HandleProviderError(err, "cluster creation"))
-        return
-    }
+
+			diags = resp.State.Set(ctx, mappedCluster)
+			resp.Diagnostics.Append(diags...)
+		}
+		resp.Diagnostics.Append(common.HandleProviderError(err, "cluster creation"))
+		return
+	}
 
 	tflog.Debug(ctx, "Created cluster", map[string]interface{}{"cluster": cluster})
 
@@ -456,36 +463,29 @@ func (r *clusterResource) Create(ctx context.Context, req resource.CreateRequest
 		plan.SSHKeyID = types.StringValue(cluster.SSHKeyID)
 	}
 
-	// Update Nodes
-	nodes := make([]nodeModel, 0)
-	for _, node := range cluster.Nodes {
-		nodes = append(nodes, nodeModel{
-			Name:             types.StringValue(node.Name),
-			Region:           types.StringValue(*node.Region),
-			InstanceType:     types.StringValue(node.InstanceType),
-			AvailabilityZone: types.StringValue(node.AvailabilityZone),
-			VolumeSize:       types.Int64Value(node.VolumeSize),
-			VolumeType:       types.StringValue(node.VolumeType),
-			VolumeIops:       types.Int64Value(node.VolumeIops),
-		})
-	}
-	plan.Nodes = nodes
+	// Update Nodes - ensure consistent ordering by sorting by name
+	plan.Nodes = r.mapNodesToResourceModel(cluster.Nodes)
 
 	networks := make([]networkModel, 0)
 	for _, network := range cluster.Networks {
+		// Sort subnets to ensure deterministic ordering in state
+		pub := append([]string(nil), network.PublicSubnets...)
+		priv := append([]string(nil), network.PrivateSubnets...)
+		sort.Strings(pub)
+		sort.Strings(priv)
 		networks = append(networks, networkModel{
 			Region: types.StringPointerValue(network.Region),
 			Cidr:   types.StringValue(network.Cidr),
 			PublicSubnets: types.ListValueMust(types.StringType, func() []attr.Value {
-				subnets := make([]attr.Value, len(network.PublicSubnets))
-				for i, subnet := range network.PublicSubnets {
+				subnets := make([]attr.Value, len(pub))
+				for i, subnet := range pub {
 					subnets[i] = types.StringValue(subnet)
 				}
 				return subnets
 			}()),
 			PrivateSubnets: types.ListValueMust(types.StringType, func() []attr.Value {
-				subnets := make([]attr.Value, len(network.PrivateSubnets))
-				for i, subnet := range network.PrivateSubnets {
+				subnets := make([]attr.Value, len(priv))
+				for i, subnet := range priv {
 					subnets[i] = types.StringValue(subnet)
 				}
 				return subnets
@@ -556,13 +556,13 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 	cluster, err := r.client.GetCluster(ctx, strfmt.UUID(state.ID.ValueString()))
 	if err != nil {
 		diag := common.HandleProviderError(err, "reading cluster")
-        if diag == nil {
-            resp.State.RemoveResource(ctx)
-            return
-        }
-        resp.Diagnostics.Append(diag)
-        return
-    }
+		if diag == nil {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.Append(diag)
+		return
+	}
 
 	state.Name = types.StringPointerValue(cluster.Name)
 	state.CloudAccountID = types.StringPointerValue(cluster.CloudAccount.ID)
@@ -612,35 +612,27 @@ func (r *clusterResource) Read(ctx context.Context, req resource.ReadRequest, re
 		return
 	}
 
-	nodes := make([]nodeModel, 0)
-	for _, node := range cluster.Nodes {
-		nodes = append(nodes, nodeModel{
-			Name:             types.StringValue(node.Name),
-			Region:           types.StringValue(*node.Region),
-			InstanceType:     types.StringValue(node.InstanceType),
-			AvailabilityZone: types.StringValue(node.AvailabilityZone),
-			VolumeSize:       types.Int64Value(node.VolumeSize),
-			VolumeType:       types.StringValue(node.VolumeType),
-			VolumeIops:       types.Int64Value(node.VolumeIops),
-		})
-	}
-	state.Nodes = nodes
+	state.Nodes = r.mapNodesToResourceModel(cluster.Nodes)
 
 	networks := make([]networkModel, 0)
 	for _, network := range cluster.Networks {
+		pub := append([]string(nil), network.PublicSubnets...)
+		priv := append([]string(nil), network.PrivateSubnets...)
+		sort.Strings(pub)
+		sort.Strings(priv)
 		networks = append(networks, networkModel{
 			Region: types.StringPointerValue(network.Region),
 			Cidr:   types.StringValue(network.Cidr),
 			PublicSubnets: types.ListValueMust(types.StringType, func() []attr.Value {
-				subnets := make([]attr.Value, len(network.PublicSubnets))
-				for i, subnet := range network.PublicSubnets {
+				subnets := make([]attr.Value, len(pub))
+				for i, subnet := range pub {
 					subnets[i] = types.StringValue(subnet)
 				}
 				return subnets
 			}()),
 			PrivateSubnets: types.ListValueMust(types.StringType, func() []attr.Value {
-				subnets := make([]attr.Value, len(network.PrivateSubnets))
-				for i, subnet := range network.PrivateSubnets {
+				subnets := make([]attr.Value, len(priv))
+				for i, subnet := range priv {
 					subnets[i] = types.StringValue(subnet)
 				}
 				return subnets
@@ -688,12 +680,12 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 
 	if err := validateRegions(plan.Nodes, plan.Regions, plan.Networks); err != nil {
-        resp.Diagnostics.AddError(
-            "Invalid Region Configuration",
-            err.Error(),
-        )
-        return
-    }
+		resp.Diagnostics.AddError(
+			"Invalid Region Configuration",
+			err.Error(),
+		)
+		return
+	}
 
 	regions, diags := convertToStringSlice(ctx, plan.Regions)
 	resp.Diagnostics.Append(diags...)
@@ -729,103 +721,126 @@ func (r *clusterResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 	updateInput.ResourceTags = resourceTags
 
-	// Add nodes
-	for _, node := range plan.Nodes {
-		nodeSettings := &models.ClusterNodeSettings{
-			Name:             node.Name.ValueString(),
-			Region:           node.Region.ValueStringPointer(),
-			AvailabilityZone: node.AvailabilityZone.ValueString(),
-			InstanceType:     node.InstanceType.ValueString(),
-			VolumeSize:       node.VolumeSize.ValueInt64(),
-			VolumeType:       node.VolumeType.ValueString(),
-			VolumeIops:       node.VolumeIops.ValueInt64(),
-		}
+	// Check if nodes have changed
+	nodesChanged := !compareNodes(plan.Nodes, state.Nodes)
 
-		updateInput.Nodes = append(updateInput.Nodes, nodeSettings)
+	// Add nodes only if they have changed
+	if nodesChanged {
+		for _, node := range plan.Nodes {
+			nodeSettings := &models.ClusterNodeSettings{
+				Name:             node.Name.ValueString(),
+				Region:           node.Region.ValueStringPointer(),
+				AvailabilityZone: node.AvailabilityZone.ValueString(),
+				InstanceType:     node.InstanceType.ValueString(),
+				VolumeSize:       node.VolumeSize.ValueInt64(),
+				VolumeType:       node.VolumeType.ValueString(),
+				VolumeIops:       node.VolumeIops.ValueInt64(),
+			}
+
+			updateInput.Nodes = append(updateInput.Nodes, nodeSettings)
+		}
 	}
 
-	// Add Networks
-	for _, network := range plan.Networks {
-		publicSubnets, diags := convertToStringSlice(ctx, network.PublicSubnets)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+	// Check if networks have changed
+	networksChanged := !compareNetworks(plan.Networks, state.Networks)
 
-		privateSubnets, diags := convertToStringSlice(ctx, network.PrivateSubnets)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+	// Add Networks only if they have changed
+	if networksChanged {
+		for _, network := range plan.Networks {
+			publicSubnets, diags := convertToStringSlice(ctx, network.PublicSubnets)
+			resp.Diagnostics.Append(diags...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
 
-		networkSettings := &models.ClusterNetworkSettings{
-			Region:         network.Region.ValueStringPointer(),
-			Cidr:           network.Cidr.ValueString(),
-			PublicSubnets:  publicSubnets,
-			PrivateSubnets: privateSubnets,
-			Name:           network.Name.ValueString(),
-			External:       network.External.ValueBool(),
-			ExternalID:     network.ExternalID.ValueString(),
-		}
+			privateSubnets, diags := convertToStringSlice(ctx, network.PrivateSubnets)
+			resp.Diagnostics.Append(diags...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
 
-		updateInput.Networks = append(updateInput.Networks, networkSettings)
+			// Ensure deterministic ordering
+			sort.Strings(publicSubnets)
+			sort.Strings(privateSubnets)
+
+			networkSettings := &models.ClusterNetworkSettings{
+				Region:         network.Region.ValueStringPointer(),
+				Cidr:           network.Cidr.ValueString(),
+				PublicSubnets:  publicSubnets,
+				PrivateSubnets: privateSubnets,
+				Name:           network.Name.ValueString(),
+				External:       network.External.ValueBool(),
+				ExternalID:     network.ExternalID.ValueString(),
+			}
+
+			updateInput.Networks = append(updateInput.Networks, networkSettings)
+		}
 	}
 
-	// Set FirewallRules
-	for _, rule := range plan.FirewallRules {
-		sources, diags := convertToStringSlice(ctx, rule.Sources)
-		resp.Diagnostics.Append(diags...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
+	// Check if firewall rules have changed
+	firewallRulesChanged := !compareFirewallRules(plan.FirewallRules, state.FirewallRules)
 
-		updateInput.FirewallRules = append(updateInput.FirewallRules, &models.ClusterFirewallRuleSettings{
-			Name:    rule.Name.ValueString(),
-			Port:    rule.Port.ValueInt64Pointer(),
-			Sources: sources,
-		})
+	// Set FirewallRules only if they have changed
+	if firewallRulesChanged {
+		for _, rule := range plan.FirewallRules {
+			sources, diags := convertToStringSlice(ctx, rule.Sources)
+			resp.Diagnostics.Append(diags...)
+			if resp.Diagnostics.HasError() {
+				return
+			}
+
+			updateInput.FirewallRules = append(updateInput.FirewallRules, &models.ClusterFirewallRuleSettings{
+				Name:    rule.Name.ValueString(),
+				Port:    rule.Port.ValueInt64Pointer(),
+				Sources: sources,
+			})
+		}
 	}
 
 	cluster, err := r.client.UpdateCluster(ctx, strfmt.UUID(*plan.ID.ValueStringPointer()), updateInput)
 	if err != nil {
-        resp.Diagnostics.Append(common.HandleProviderError(err, "updating cluster"))
-        return
-    }
+		resp.Diagnostics.Append(common.HandleProviderError(err, "updating cluster"))
+		return
+	}
 
 	updatedPlan := r.mapClusterToResourceModel(cluster)
 
 	if len(updateInput.BackupStoreIds) > 0 {
-        updatedPlan.BackupStoreIDs = types.ListValueMust(types.StringType, 
-            func() []attr.Value {
-                values := make([]attr.Value, len(updateInput.BackupStoreIds))
-                for i, id := range updateInput.BackupStoreIds {
-                    values[i] = types.StringValue(id)
-                }
-                return values
-            }(),
-        )
-    } else {
-        updatedPlan.BackupStoreIDs = state.BackupStoreIDs
-    }
+		updatedPlan.BackupStoreIDs = types.ListValueMust(types.StringType,
+			func() []attr.Value {
+				values := make([]attr.Value, len(updateInput.BackupStoreIds))
+				for i, id := range updateInput.BackupStoreIds {
+					values[i] = types.StringValue(id)
+				}
+				return values
+			}(),
+		)
+	} else {
+		updatedPlan.BackupStoreIDs = state.BackupStoreIDs
+	}
 	updatedPlan.Regions = plan.Regions
 	updatedPlan.Status = types.StringPointerValue(cluster.Status)
 	updatedPlan.ResourceTags = plan.ResourceTags
 
 	updatedPlan.Networks = make([]networkModel, 0)
 	for _, network := range cluster.Networks {
+		pub := append([]string(nil), network.PublicSubnets...)
+		priv := append([]string(nil), network.PrivateSubnets...)
+		sort.Strings(pub)
+		sort.Strings(priv)
 		updatedPlan.Networks = append(updatedPlan.Networks, networkModel{
 			Region: types.StringPointerValue(network.Region),
 			Cidr:   types.StringValue(network.Cidr),
 			PublicSubnets: types.ListValueMust(types.StringType, func() []attr.Value {
-				subnets := make([]attr.Value, len(network.PublicSubnets))
-				for i, subnet := range network.PublicSubnets {
+				subnets := make([]attr.Value, len(pub))
+				for i, subnet := range pub {
 					subnets[i] = types.StringValue(subnet)
 				}
 				return subnets
 			}()),
 			PrivateSubnets: types.ListValueMust(types.StringType, func() []attr.Value {
-				subnets := make([]attr.Value, len(network.PrivateSubnets))
-				for i, subnet := range network.PrivateSubnets {
+				subnets := make([]attr.Value, len(priv))
+				for i, subnet := range priv {
 					subnets[i] = types.StringValue(subnet)
 				}
 				return subnets
@@ -884,6 +899,12 @@ func (r *clusterResource) mapNodesToResourceModel(nodes []*models.ClusterNodeSet
 			VolumeIops:       types.Int64Value(node.VolumeIops),
 		})
 	}
+
+	// Sort nodes by name to ensure consistent ordering
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Name.ValueString() < result[j].Name.ValueString()
+	})
+
 	return result
 }
 
@@ -917,9 +938,9 @@ func (r *clusterResource) Delete(ctx context.Context, req resource.DeleteRequest
 
 	err := r.client.DeleteCluster(ctx, strfmt.UUID(state.ID.ValueString()))
 	if err != nil {
-        resp.Diagnostics.Append(common.HandleProviderError(err, "cluster deletion"))
-        return
-    }
+		resp.Diagnostics.Append(common.HandleProviderError(err, "cluster deletion"))
+		return
+	}
 }
 
 type clusterResourceModel struct {
@@ -1039,40 +1060,149 @@ func compareStringSlices(a, b []string) bool {
 	return true
 }
 
+func compareNodes(planNodes, stateNodes []nodeModel) bool {
+	if len(planNodes) != len(stateNodes) {
+		return false
+	}
+
+	// Sort both slices by name for comparison
+	planCopy := make([]nodeModel, len(planNodes))
+	stateCopy := make([]nodeModel, len(stateNodes))
+	copy(planCopy, planNodes)
+	copy(stateCopy, stateNodes)
+
+	sort.Slice(planCopy, func(i, j int) bool {
+		return planCopy[i].Name.ValueString() < planCopy[j].Name.ValueString()
+	})
+	sort.Slice(stateCopy, func(i, j int) bool {
+		return stateCopy[i].Name.ValueString() < stateCopy[j].Name.ValueString()
+	})
+
+	for i := range planCopy {
+		if planCopy[i].Name.ValueString() != stateCopy[i].Name.ValueString() ||
+			planCopy[i].Region.ValueString() != stateCopy[i].Region.ValueString() ||
+			planCopy[i].AvailabilityZone.ValueString() != stateCopy[i].AvailabilityZone.ValueString() ||
+			planCopy[i].InstanceType.ValueString() != stateCopy[i].InstanceType.ValueString() ||
+			planCopy[i].VolumeSize.ValueInt64() != stateCopy[i].VolumeSize.ValueInt64() ||
+			planCopy[i].VolumeType.ValueString() != stateCopy[i].VolumeType.ValueString() ||
+			planCopy[i].VolumeIops.ValueInt64() != stateCopy[i].VolumeIops.ValueInt64() {
+			return false
+		}
+	}
+	return true
+}
+
+func compareNetworks(planNetworks, stateNetworks []networkModel) bool {
+	if len(planNetworks) != len(stateNetworks) {
+		return false
+	}
+
+	// Sort both slices by region for comparison
+	planCopy := make([]networkModel, len(planNetworks))
+	stateCopy := make([]networkModel, len(stateNetworks))
+	copy(planCopy, planNetworks)
+	copy(stateCopy, stateNetworks)
+
+	sort.Slice(planCopy, func(i, j int) bool {
+		return planCopy[i].Region.ValueString() < planCopy[j].Region.ValueString()
+	})
+	sort.Slice(stateCopy, func(i, j int) bool {
+		return stateCopy[i].Region.ValueString() < stateCopy[j].Region.ValueString()
+	})
+
+	for i := range planCopy {
+		if planCopy[i].Region.ValueString() != stateCopy[i].Region.ValueString() ||
+			planCopy[i].Cidr.ValueString() != stateCopy[i].Cidr.ValueString() ||
+			planCopy[i].Name.ValueString() != stateCopy[i].Name.ValueString() ||
+			planCopy[i].External.ValueBool() != stateCopy[i].External.ValueBool() ||
+			planCopy[i].ExternalID.ValueString() != stateCopy[i].ExternalID.ValueString() {
+			return false
+		}
+
+		// Compare public subnets
+		planPublicSubnets, _ := convertToStringSlice(context.Background(), planCopy[i].PublicSubnets)
+		statePublicSubnets, _ := convertToStringSlice(context.Background(), stateCopy[i].PublicSubnets)
+		if !compareStringSlices(planPublicSubnets, statePublicSubnets) {
+			return false
+		}
+
+		// Compare private subnets
+		planPrivateSubnets, _ := convertToStringSlice(context.Background(), planCopy[i].PrivateSubnets)
+		statePrivateSubnets, _ := convertToStringSlice(context.Background(), stateCopy[i].PrivateSubnets)
+		if !compareStringSlices(planPrivateSubnets, statePrivateSubnets) {
+			return false
+		}
+	}
+	return true
+}
+
+func compareFirewallRules(planRules, stateRules []firewallRuleModel) bool {
+	if len(planRules) != len(stateRules) {
+		return false
+	}
+
+	// Sort both slices by name for comparison
+	planCopy := make([]firewallRuleModel, len(planRules))
+	stateCopy := make([]firewallRuleModel, len(stateRules))
+	copy(planCopy, planRules)
+	copy(stateCopy, stateRules)
+
+	sort.Slice(planCopy, func(i, j int) bool {
+		return planCopy[i].Name.ValueString() < planCopy[j].Name.ValueString()
+	})
+	sort.Slice(stateCopy, func(i, j int) bool {
+		return stateCopy[i].Name.ValueString() < stateCopy[j].Name.ValueString()
+	})
+
+	for i := range planCopy {
+		if planCopy[i].Name.ValueString() != stateCopy[i].Name.ValueString() ||
+			planCopy[i].Port.ValueInt64() != stateCopy[i].Port.ValueInt64() {
+			return false
+		}
+
+		// Compare sources
+		planSources, _ := convertToStringSlice(context.Background(), planCopy[i].Sources)
+		stateSources, _ := convertToStringSlice(context.Background(), stateCopy[i].Sources)
+		if !compareStringSlices(planSources, stateSources) {
+			return false
+		}
+	}
+	return true
+}
 
 func validateRegions(nodes []nodeModel, regions types.List, networks []networkModel) error {
-    nodeRegions := make(map[string]bool)
-    for _, node := range nodes {
-        nodeRegions[node.Region.ValueString()] = true
-    }
+	nodeRegions := make(map[string]bool)
+	for _, node := range nodes {
+		nodeRegions[node.Region.ValueString()] = true
+	}
 
-    networkRegions := make(map[string]bool)
-    for _, network := range networks {
-        networkRegions[network.Region.ValueString()] = true
-    }
+	networkRegions := make(map[string]bool)
+	for _, network := range networks {
+		networkRegions[network.Region.ValueString()] = true
+	}
 
-    regionsArray := make(map[string]bool)
-    for _, region := range regions.Elements() {
-        if str, ok := region.(types.String); ok {
-            regionsArray[str.ValueString()] = true
-        }
-    }
+	regionsArray := make(map[string]bool)
+	for _, region := range regions.Elements() {
+		if str, ok := region.(types.String); ok {
+			regionsArray[str.ValueString()] = true
+		}
+	}
 
-    if len(nodeRegions) != len(networkRegions) || len(nodeRegions) != len(regionsArray) {
-        return fmt.Errorf("regions mismatch: the number of unique regions in nodes, networks, and regions array must be the same")
-    }
+	if len(nodeRegions) != len(networkRegions) || len(nodeRegions) != len(regionsArray) {
+		return fmt.Errorf("regions mismatch: the number of unique regions in nodes, networks, and regions array must be the same")
+	}
 
-    for region := range nodeRegions {
-        if !regionsArray[region] {
-            return fmt.Errorf("regions mismatch: all regions specified in nodes must be present in the regions array")
-        }
-    }
+	for region := range nodeRegions {
+		if !regionsArray[region] {
+			return fmt.Errorf("regions mismatch: all regions specified in nodes must be present in the regions array")
+		}
+	}
 
-    for region := range networkRegions {
-        if !regionsArray[region] {
-            return fmt.Errorf("regions mismatch: all regions specified in networks must be present in the regions array")
-        }
-    }
+	for region := range networkRegions {
+		if !regionsArray[region] {
+			return fmt.Errorf("regions mismatch: all regions specified in networks must be present in the regions array")
+		}
+	}
 
-    return nil
+	return nil
 }
