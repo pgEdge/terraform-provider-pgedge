@@ -1,6 +1,6 @@
 <img alt="pgEdge" src="https://pgedge-public-assets.s3.amazonaws.com/product/images/pgedge_mark.svg" width="100px">
 
-# pgEdge Terraform Provider
+# pgEdge Cloud Terraform Provider
 
 The official Terraform provider for [pgEdge Cloud](https://www.pgedge.com/cloud), designed to simplify the management of pgEdge Cloud resources for both **Developer** and **Enterprise** edition.
 
