@@ -2,7 +2,7 @@ module github.com/pgEdge/terraform-provider-pgedge
 
 go 1.23.0
 
-toolchain go1.23.10
+toolchain go1.23.12
 
 require (
 	github.com/go-openapi/errors v0.22.0
