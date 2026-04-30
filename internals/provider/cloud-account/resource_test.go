@@ -1,6 +1,7 @@
 package cloudaccount_test
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
@@ -33,6 +34,33 @@ func TestAccCloudAccountResource(t *testing.T) {
 					resource.TestCheckResourceAttr("pgedge_cloud_account.aws_account", "type", "aws"),
 					resource.TestCheckResourceAttrSet("pgedge_cloud_account.aws_account", "id"),
 				),
+			},
+		},
+	})
+}
+
+// An explicit empty description is indistinguishable from absent on the API
+// wire (string field, no Update endpoint), so the schema rejects it at plan
+// time rather than letting it drift on the next refresh.
+func TestAccCloudAccountResource_RejectsEmptyDescription(t *testing.T) {
+	api := fakeapi.New(t)
+	api.ConfigureProvider(t)
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: common.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: common.ProviderConfig + `
+				resource "pgedge_cloud_account" "empty_desc" {
+					name        = "empty_desc"
+					type        = "aws"
+					description = ""
+					credentials = {
+						role_arn = "arn:aws:iam::000000000000:role/test"
+					}
+				}
+				`,
+				ExpectError: regexp.MustCompile(`(?i)attribute description string length must be at least 1`),
 			},
 		},
 	})
