@@ -1,3 +1,6 @@
+//go:build integration
+// +build integration
+
 package client
 
 import (
@@ -96,7 +99,7 @@ func TestGetSSHKeys(t *testing.T) {
     // Check if our created SSH key is in the list
     found := false
     for _, key := range sshKeys {
-        if key.ID == SSHKeyID {
+        if key.ID != nil && SSHKeyID != nil && key.ID.String() == SSHKeyID.String() {
             found = true
             break
         }
@@ -160,17 +163,6 @@ func TestGetBackupStores(t *testing.T) {
         }
     }
     assert.True(t, found, "Created backup store not found in the list")
-}
-
-func TestDeleteBackupStore(t *testing.T) {
-    client := NewClient(BaseUrl, "Bearer "+*AccessToken)
-
-    err := client.DeleteBackupStore(context.Background(), *BackupStoreID)
-    assert.Nil(t, err)
-
-    time.Sleep(5 * time.Second)
-    _, err = client.GetBackupStore(context.Background(), *BackupStoreID)
-    assert.NotNil(t, err)
 }
 
 func stringPtr(s string) *string {
@@ -304,14 +296,29 @@ func TestGetAllClusters(t *testing.T) {
 func TestCreateDatabase(t *testing.T) {
 	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
 
+	provider := "pgbackrest"
+	repoID := "repo1"
 	request := &models.CreateDatabaseInput{
 		Name:      stringPtr("testdb"),
 		ClusterID: *ClusterID,
+		Backups: &models.Backups{
+			Provider: &provider,
+			Config: []*models.BackupConfig{{
+				ID: &repoID,
+				Repositories: []*models.BackupRepository{{
+					ID:            repoID,
+					BackupStoreID: BackupStoreID.String(),
+					Type:          "s3",
+				}},
+			}},
+		},
 	}
 
 	database, err := client.CreateDatabase(context.Background(), request)
 	assert.Nil(t, err)
-	assert.NotNil(t, database)
+	if !assert.NotNil(t, database) {
+		return
+	}
 	assert.Equal(t, "available", *database.Status)
 
 	// Store the database ID for use in other tests
@@ -368,6 +375,17 @@ func TestDeleteDatabase(t *testing.T) {
 	time.Sleep(5 * time.Second) // Give some time for deletion to propagate
 	_, err = client.GetDatabase(context.Background(), *DatabaseID)
 	assert.NotNil(t, err) // Expect an error as the database should not exist
+}
+
+func TestDeleteBackupStore(t *testing.T) {
+	client := NewClient(BaseUrl, "Bearer "+*AccessToken)
+
+	err := client.DeleteBackupStore(context.Background(), *BackupStoreID)
+	assert.Nil(t, err)
+
+	time.Sleep(5 * time.Second)
+	_, err = client.GetBackupStore(context.Background(), *BackupStoreID)
+	assert.NotNil(t, err)
 }
 
 func TestDeleteCluster(t *testing.T) {
