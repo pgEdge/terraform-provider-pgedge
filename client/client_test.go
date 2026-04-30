@@ -344,7 +344,7 @@ func TestGetDatabases(t *testing.T) {
 	// Check if our created database is in the list
 	found := false
 	for _, db := range databases {
-		if db.ID == DatabaseID {
+		if db.ID != nil && DatabaseID != nil && db.ID.String() == DatabaseID.String() {
 			found = true
 			break
 		}

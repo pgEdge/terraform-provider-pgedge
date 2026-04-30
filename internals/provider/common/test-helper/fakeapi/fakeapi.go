@@ -128,6 +128,9 @@ func (a *API) SeedCluster(c *models.Cluster) *models.Cluster {
 func (a *API) SeedDatabase(d *models.Database) *models.Database {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	if d.Name == nil || *d.Name == "" {
+		d.Name = ptr("db")
+	}
 	fillID(&d.ID)
 	fillTime(&d.CreatedAt)
 	fillTime(&d.UpdatedAt)
@@ -211,7 +214,7 @@ func (a *API) handleTasks(w http.ResponseWriter, r *http.Request) {
 		}
 		out = append(out, t)
 	}
-	sortByCreatedAt(out, func(t *models.Task) string { return strDeref(t.CreatedAt) })
+	sortByCreatedAt(out, func(t *models.Task) string { return strDeref(t.CreatedAt) + "\x00" + strDeref(t.ID) })
 
 	writeJSON(w, http.StatusOK, out)
 
@@ -330,7 +333,7 @@ func (a *API) listCloudAccounts(w http.ResponseWriter, _ *http.Request) {
 	for _, c := range a.cloudAccounts {
 		out = append(out, c)
 	}
-	sortByCreatedAt(out, func(c *models.CloudAccount) string { return strDeref(c.CreatedAt) })
+	sortByCreatedAt(out, func(c *models.CloudAccount) string { return strDeref(c.CreatedAt) + "\x00" + uuidStr(c.ID) })
 	writeJSON(w, http.StatusOK, out)
 }
 
@@ -355,18 +358,20 @@ func (a *API) createCloudAccount(w http.ResponseWriter, r *http.Request) {
 		Properties:  props,
 	}
 	a.SeedCloudAccount(c)
-	writeJSON(w, http.StatusOK, c)
+	writeJSON(w, http.StatusOK, snapshot(&a.mu, c))
 }
 
 func (a *API) getCloudAccount(w http.ResponseWriter, _ *http.Request, id string) {
 	a.mu.Lock()
 	c, ok := a.cloudAccounts[id]
-	a.mu.Unlock()
 	if !ok {
+		a.mu.Unlock()
 		writeAPIError(w, http.StatusNotFound, "cloud account not found")
 		return
 	}
-	writeJSON(w, http.StatusOK, c)
+	snap := *c
+	a.mu.Unlock()
+	writeJSON(w, http.StatusOK, &snap)
 }
 
 func (a *API) deleteCloudAccount(w http.ResponseWriter, _ *http.Request, id string) {
@@ -389,7 +394,7 @@ func (a *API) listSSHKeys(w http.ResponseWriter, _ *http.Request) {
 	for _, s := range a.sshKeys {
 		out = append(out, s)
 	}
-	sortByCreatedAt(out, func(s *models.SSHKey) string { return strDeref(s.CreatedAt) })
+	sortByCreatedAt(out, func(s *models.SSHKey) string { return strDeref(s.CreatedAt) + "\x00" + uuidStr(s.ID) })
 	writeJSON(w, http.StatusOK, out)
 }
 
@@ -405,18 +410,20 @@ func (a *API) createSSHKey(w http.ResponseWriter, r *http.Request) {
 	}
 	s := &models.SSHKey{Name: in.Name, PublicKey: in.PublicKey}
 	a.SeedSSHKey(s)
-	writeJSON(w, http.StatusOK, s)
+	writeJSON(w, http.StatusOK, snapshot(&a.mu, s))
 }
 
 func (a *API) getSSHKey(w http.ResponseWriter, _ *http.Request, id string) {
 	a.mu.Lock()
 	s, ok := a.sshKeys[id]
-	a.mu.Unlock()
 	if !ok {
+		a.mu.Unlock()
 		writeAPIError(w, http.StatusNotFound, "ssh key not found")
 		return
 	}
-	writeJSON(w, http.StatusOK, s)
+	snap := *s
+	a.mu.Unlock()
+	writeJSON(w, http.StatusOK, &snap)
 }
 
 func (a *API) deleteSSHKey(w http.ResponseWriter, _ *http.Request, id string) {
@@ -439,7 +446,7 @@ func (a *API) listBackupStores(w http.ResponseWriter, _ *http.Request) {
 	for _, b := range a.backupStores {
 		out = append(out, b)
 	}
-	sortByCreatedAt(out, func(b *models.BackupStore) string { return strDeref(b.CreatedAt) })
+	sortByCreatedAt(out, func(b *models.BackupStore) string { return strDeref(b.CreatedAt) + "\x00" + uuidStr(b.ID) })
 	writeJSON(w, http.StatusOK, out)
 }
 
@@ -467,18 +474,20 @@ func (a *API) createBackupStore(w http.ResponseWriter, r *http.Request) {
 	}
 	a.SeedBackupStore(b)
 	a.recordTask(b.ID.String(), "backup_store")
-	writeJSON(w, http.StatusOK, b)
+	writeJSON(w, http.StatusOK, snapshot(&a.mu, b))
 }
 
 func (a *API) getBackupStore(w http.ResponseWriter, _ *http.Request, id string) {
 	a.mu.Lock()
 	b, ok := a.backupStores[id]
-	a.mu.Unlock()
 	if !ok {
+		a.mu.Unlock()
 		writeAPIError(w, http.StatusNotFound, "backup store not found")
 		return
 	}
-	writeJSON(w, http.StatusOK, b)
+	snap := *b
+	a.mu.Unlock()
+	writeJSON(w, http.StatusOK, &snap)
 }
 
 func (a *API) deleteBackupStore(w http.ResponseWriter, _ *http.Request, id string) {
@@ -503,7 +512,7 @@ func (a *API) listClusters(w http.ResponseWriter, _ *http.Request) {
 	for _, c := range a.clusters {
 		out = append(out, c)
 	}
-	sortByCreatedAt(out, func(c *models.Cluster) string { return strDeref(c.CreatedAt) })
+	sortByCreatedAt(out, func(c *models.Cluster) string { return strDeref(c.CreatedAt) + "\x00" + uuidStr(c.ID) })
 	writeJSON(w, http.StatusOK, out)
 }
 
@@ -550,41 +559,41 @@ func (a *API) createCluster(w http.ResponseWriter, r *http.Request) {
 			Name: strDeref(ca.Name),
 			Type: strDeref(ca.Type),
 		},
-		// Real backend (saas/.../clusters/cluster.go:134-140) initializes new
-		// clusters with status "creating"; the async provisioning task flips
-		// it to "available" on completion. handleTasks mirrors that.
+		// New clusters/databases start in "creating" and flip to "available"
+		// once their provisioning task succeeds; handleTasks does that.
 		Status: ptr("creating"),
 	}
 	a.SeedCluster(c)
 	a.recordTask(c.ID.String(), "cluster")
-	writeJSON(w, http.StatusOK, c)
+	writeJSON(w, http.StatusOK, snapshot(&a.mu, c))
 }
 
 func (a *API) getCluster(w http.ResponseWriter, _ *http.Request, id string) {
 	a.mu.Lock()
 	c, ok := a.clusters[id]
-	a.mu.Unlock()
 	if !ok {
+		a.mu.Unlock()
 		writeAPIError(w, http.StatusNotFound, "cluster not found")
 		return
 	}
-	writeJSON(w, http.StatusOK, c)
+	snap := *c
+	a.mu.Unlock()
+	writeJSON(w, http.StatusOK, &snap)
 }
 
 func (a *API) patchCluster(w http.ResponseWriter, r *http.Request, id string) {
-	a.mu.Lock()
-	c, ok := a.clusters[id]
-	a.mu.Unlock()
-	if !ok {
-		writeAPIError(w, http.StatusNotFound, "cluster not found")
-		return
-	}
 	var in models.UpdateClusterInput
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 		writeAPIError(w, http.StatusBadRequest, "invalid body: "+err.Error())
 		return
 	}
 	a.mu.Lock()
+	c, ok := a.clusters[id]
+	if !ok {
+		a.mu.Unlock()
+		writeAPIError(w, http.StatusNotFound, "cluster not found")
+		return
+	}
 	if len(in.Regions) > 0 {
 		c.Regions = in.Regions
 	}
@@ -600,9 +609,10 @@ func (a *API) patchCluster(w http.ResponseWriter, r *http.Request, id string) {
 	if len(in.BackupStoreIds) > 0 {
 		c.BackupStoreIds = in.BackupStoreIds
 	}
+	snap := *c
 	a.mu.Unlock()
 	a.recordTask(id, "cluster")
-	writeJSON(w, http.StatusOK, c)
+	writeJSON(w, http.StatusOK, &snap)
 }
 
 func (a *API) deleteCluster(w http.ResponseWriter, _ *http.Request, id string) {
@@ -621,19 +631,24 @@ func (a *API) deleteCluster(w http.ResponseWriter, _ *http.Request, id string) {
 func (a *API) listClusterNodes(w http.ResponseWriter, _ *http.Request, id string) {
 	a.mu.Lock()
 	c, ok := a.clusters[id]
-	a.mu.Unlock()
 	if !ok {
+		a.mu.Unlock()
 		writeAPIError(w, http.StatusNotFound, "cluster not found")
 		return
 	}
-	out := make([]*models.ClusterNode, 0, len(c.Nodes))
-	for _, n := range c.Nodes {
+	nodes := append([]*models.ClusterNodeSettings(nil), c.Nodes...)
+	a.mu.Unlock()
+
+	out := make([]*models.ClusterNode, 0, len(nodes))
+	for _, n := range nodes {
 		nodeID := newID().String()
+		name := n.Name
+		instanceType := n.InstanceType
 		out = append(out, &models.ClusterNode{
 			ID:           &nodeID,
-			Name:         &n.Name,
+			Name:         &name,
 			Region:       n.Region,
-			InstanceType: &n.InstanceType,
+			InstanceType: &instanceType,
 		})
 	}
 	writeJSON(w, http.StatusOK, out)
@@ -648,7 +663,7 @@ func (a *API) listDatabases(w http.ResponseWriter, _ *http.Request) {
 	for _, d := range a.databases {
 		out = append(out, d)
 	}
-	sortByCreatedAt(out, func(d *models.Database) string { return strDeref(d.CreatedAt) })
+	sortByCreatedAt(out, func(d *models.Database) string { return strDeref(d.CreatedAt) + "\x00" + uuidStr(d.ID) })
 	writeJSON(w, http.StatusOK, out)
 }
 
@@ -708,41 +723,43 @@ func (a *API) createDatabase(w http.ResponseWriter, r *http.Request) {
 	}
 	a.SeedDatabase(d)
 	a.recordTask(d.ID.String(), "database")
-	writeJSON(w, http.StatusOK, d)
+	writeJSON(w, http.StatusOK, snapshot(&a.mu, d))
 }
 
 func (a *API) getDatabase(w http.ResponseWriter, _ *http.Request, id string) {
 	a.mu.Lock()
 	d, ok := a.databases[id]
-	a.mu.Unlock()
 	if !ok {
+		a.mu.Unlock()
 		writeAPIError(w, http.StatusNotFound, "database not found")
 		return
 	}
-	writeJSON(w, http.StatusOK, d)
+	snap := *d
+	a.mu.Unlock()
+	writeJSON(w, http.StatusOK, &snap)
 }
 
 func (a *API) patchDatabase(w http.ResponseWriter, r *http.Request, id string) {
-	a.mu.Lock()
-	d, ok := a.databases[id]
-	a.mu.Unlock()
-	if !ok {
-		writeAPIError(w, http.StatusNotFound, "database not found")
-		return
-	}
 	var in models.UpdateDatabaseInput
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
 		writeAPIError(w, http.StatusBadRequest, "invalid body: "+err.Error())
 		return
 	}
 	a.mu.Lock()
+	d, ok := a.databases[id]
+	if !ok {
+		a.mu.Unlock()
+		writeAPIError(w, http.StatusNotFound, "database not found")
+		return
+	}
 	if in.Options != nil {
 		d.Options = in.Options
 	}
 	d.UpdatedAt = ptr(time.Now().UTC().Format(time.RFC3339))
+	snap := *d
 	a.mu.Unlock()
 	a.recordTask(id, "database")
-	writeJSON(w, http.StatusOK, d)
+	writeJSON(w, http.StatusOK, &snap)
 }
 
 func (a *API) deleteDatabase(w http.ResponseWriter, _ *http.Request, id string) {
@@ -774,11 +791,28 @@ func writeAPIError(w http.ResponseWriter, status int, msg string) {
 
 func ptr[T any](v T) *T { return &v }
 
+// snapshot returns a shallow copy of *src taken under mu, so writeJSON can
+// serialize it without racing with concurrent handlers that mutate the
+// in-map struct under the same lock.
+func snapshot[T any](mu *sync.Mutex, src *T) *T {
+	mu.Lock()
+	defer mu.Unlock()
+	cp := *src
+	return &cp
+}
+
 func strDeref(s *string) string {
 	if s == nil {
 		return ""
 	}
 	return *s
+}
+
+func uuidStr(u *strfmt.UUID) string {
+	if u == nil {
+		return ""
+	}
+	return u.String()
 }
 
 // fillID assigns a fresh UUID when the caller left the field nil.
