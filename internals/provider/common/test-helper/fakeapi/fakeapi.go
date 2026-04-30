@@ -216,13 +216,34 @@ func (a *API) handleTasks(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 
 	// After a subject-scoped (no id) list, advance any running tasks to
-	// "succeeded" so the next poll-by-id call completes the loop.
+	// "succeeded" so the next poll-by-id call completes the loop. When a
+	// task succeeds, transition its subject from "creating" → "available"
+	// to mirror the real backend's async provisioning lifecycle.
 	if idFilter == "" {
 		succeeded := "succeeded"
 		for _, t := range out {
 			if t.Status != nil && *t.Status == "running" {
 				t.Status = &succeeded
+				a.advanceSubjectStatus(t)
 			}
+		}
+	}
+}
+
+// advanceSubjectStatus flips a "creating" cluster or database to "available"
+// once its provisioning task succeeds. Caller holds a.mu.
+func (a *API) advanceSubjectStatus(t *models.Task) {
+	if t.SubjectID == nil || t.SubjectKind == nil {
+		return
+	}
+	switch *t.SubjectKind {
+	case "cluster":
+		if c, ok := a.clusters[*t.SubjectID]; ok && c.Status != nil && *c.Status == "creating" {
+			c.Status = ptr("available")
+		}
+	case "database":
+		if d, ok := a.databases[*t.SubjectID]; ok && d.Status != nil && *d.Status == "creating" {
+			d.Status = ptr("available")
 		}
 	}
 }
@@ -529,6 +550,10 @@ func (a *API) createCluster(w http.ResponseWriter, r *http.Request) {
 			Name: strDeref(ca.Name),
 			Type: strDeref(ca.Type),
 		},
+		// Real backend (saas/.../clusters/cluster.go:134-140) initializes new
+		// clusters with status "creating"; the async provisioning task flips
+		// it to "available" on completion. handleTasks mirrors that.
+		Status: ptr("creating"),
 	}
 	a.SeedCluster(c)
 	a.recordTask(c.ID.String(), "cluster")
@@ -679,6 +704,7 @@ func (a *API) createDatabase(w http.ResponseWriter, r *http.Request) {
 		Backups:       in.Backups,
 		Extensions:    in.Extensions,
 		Nodes:         dbNodes,
+		Status:        ptr("creating"),
 	}
 	a.SeedDatabase(d)
 	a.recordTask(d.ID.String(), "database")
