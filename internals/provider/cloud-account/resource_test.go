@@ -37,3 +37,34 @@ func TestAccCloudAccountResource(t *testing.T) {
 		},
 	})
 }
+
+// Description is Optional (no Computed). When the user omits it, the API
+// returns "" — the Read flow used to lift that into a known string, which
+// drifted from a null config and triggered a non-empty plan on every refresh.
+// Update is unimplemented, so the user would be stuck. This test would fail
+// (non-empty plan after apply) if that regression returned.
+func TestAccCloudAccountResource_OmittedDescription(t *testing.T) {
+	api := fakeapi.New(t)
+	api.ConfigureProvider(t)
+
+	resource.Test(t, resource.TestCase{
+		ProtoV6ProviderFactories: common.TestAccProtoV6ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: common.ProviderConfig + `
+				resource "pgedge_cloud_account" "no_desc" {
+					name = "no_desc_account"
+					type = "aws"
+					credentials = {
+						role_arn = "arn:aws:iam::000000000000:role/test"
+					}
+				}
+				`,
+				Check: resource.ComposeAggregateTestCheckFunc(
+					resource.TestCheckResourceAttr("pgedge_cloud_account.no_desc", "name", "no_desc_account"),
+					resource.TestCheckNoResourceAttr("pgedge_cloud_account.no_desc", "description"),
+				),
+			},
+		},
+	})
+}

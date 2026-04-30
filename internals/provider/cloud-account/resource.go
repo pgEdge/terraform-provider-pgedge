@@ -147,7 +147,14 @@ func (r *cloudAccountResource) Read(ctx context.Context, req resource.ReadReques
 
 	state.Name = types.StringValue(*account.Name)
 	state.Type = types.StringValue(*account.Type)
-	state.Description = types.StringValue(account.Description)
+	// description is Optional (no Computed); lifting "" into a known string
+	// would diverge from a config that omits the field, causing perpetual
+	// drift on a resource whose Update is unimplemented.
+	if account.Description == "" {
+		state.Description = types.StringNull()
+	} else {
+		state.Description = types.StringValue(account.Description)
+	}
 	state.CreatedAt = types.StringValue(*account.CreatedAt)
 
 	// Note: We don't update the credentials here as they are not returned by the API for security reasons
