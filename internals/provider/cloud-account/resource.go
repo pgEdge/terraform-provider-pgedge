@@ -5,10 +5,12 @@ import (
 	"fmt"
 
 	"github.com/go-openapi/strfmt"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	pgEdge "github.com/pgEdge/terraform-provider-pgedge/client"
 	"github.com/pgEdge/terraform-provider-pgedge/client/models"
@@ -75,6 +77,13 @@ func (r *cloudAccountResource) Schema(_ context.Context, _ resource.SchemaReques
 			},
 			"description": schema.StringAttribute{
 				Optional: true,
+				// API stores Description as a non-nullable string and the
+				// resource has no Update, so an explicit empty string is
+				// indistinguishable from absent on the wire and would
+				// drift on the next refresh. Force users to pick one.
+				Validators: []validator.String{
+					stringvalidator.LengthAtLeast(1),
+				},
 			},
 			"created_at": schema.StringAttribute{
 				Computed: true,
@@ -147,7 +156,14 @@ func (r *cloudAccountResource) Read(ctx context.Context, req resource.ReadReques
 
 	state.Name = types.StringValue(*account.Name)
 	state.Type = types.StringValue(*account.Type)
-	state.Description = types.StringValue(account.Description)
+	// description is Optional (no Computed); lifting "" into a known string
+	// would diverge from a config that omits the field, causing perpetual
+	// drift on a resource whose Update is unimplemented.
+	if account.Description == "" {
+		state.Description = types.StringNull()
+	} else {
+		state.Description = types.StringValue(account.Description)
+	}
 	state.CreatedAt = types.StringValue(*account.CreatedAt)
 
 	// Note: We don't update the credentials here as they are not returned by the API for security reasons
