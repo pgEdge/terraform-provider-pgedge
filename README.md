@@ -1,3 +1,8 @@
+> [!WARNING]
+> **This provider is deprecated and no longer maintained.**
+> It won't get updates, bug fixes or security patches, and new issues and pull requests won't be reviewed. The repository is archived and kept read-only for reference.
+
+
 <img alt="pgEdge" src="https://pgedge-public-assets.s3.amazonaws.com/product/images/pgedge_mark.svg" width="100px">
 
 # pgEdge Cloud Terraform Provider
